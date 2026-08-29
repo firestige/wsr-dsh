@@ -5,6 +5,23 @@ const TRACE_ID = /^[a-f0-9]{32}$/u;
 const SPAN_ID = /^[a-f0-9]{16}$/u;
 const encoder = new TextEncoder();
 
+export function createBrowserStudioLocation({ location, history } = globalThis) {
+  if (location === undefined || history === undefined) return undefined;
+  return Object.freeze({
+    getItem() { return new URL(location.href).searchParams.get("wsr-studio"); },
+    setItem(_key, value) {
+      const url = new URL(location.href);
+      url.searchParams.set("wsr-studio", value);
+      history.replaceState(history.state ?? null, "", url.href);
+    },
+    removeItem() {
+      const url = new URL(location.href);
+      url.searchParams.delete("wsr-studio");
+      history.replaceState(history.state ?? null, "", url.href);
+    },
+  });
+}
+
 function validIds(ids) {
   return Array.isArray(ids) && ids.length >= 1 && ids.length <= 24 &&
     ids.every((id) => typeof id === "string" && TASK_ID.test(id)) &&
@@ -175,7 +192,8 @@ function validTaskPage(value) {
     value.contract?.name === "evidence.query" && value.contract?.revision === "1.0.0" &&
     value.observation_profile === "2.0.0" && value.read_model_revision === "2.0.0" &&
     typeof value.snapshot === "string" && value.snapshot !== "" &&
-    Array.isArray(value.items) && value.items.length <= 200 &&
+    Array.isArray(value.items) && value.items.length <= 200 && value.items.every((item) =>
+      item !== null && typeof item === "object" && TASK_ID.test(item.task_id)) &&
     (value.next_cursor === null || typeof value.next_cursor === "string");
 }
 
@@ -220,6 +238,9 @@ export function createEvaluateController({ gateway, storage, initialContext } = 
     refreshing: false,
   };
   const listeners = new Set();
+  let repositoryChosen = initialContext?.repository !== undefined;
+  let workspaceChosen = initialContext?.workspaceId !== undefined;
+  let selectionChosen = route.selection !== undefined;
   const publish = (change) => {
     snapshot = { ...snapshot, ...change };
     for (const listener of listeners) listener();
@@ -232,13 +253,33 @@ export function createEvaluateController({ gateway, storage, initialContext } = 
   const controller = {
     getSnapshot: () => snapshot,
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
+    seedContext(context) {
+      if (context === undefined) return;
+      const change = {};
+      if (!repositoryChosen && boundedText(context.repository, 512)) {
+        change.repository = context.repository;
+        repositoryChosen = true;
+      }
+      if (!workspaceChosen && boundedText(context.workspaceId, 256)) {
+        change.workspaceId = context.workspaceId;
+        workspaceChosen = true;
+      }
+      if (!selectionChosen && typeof context.taskId === "string" && TASK_ID.test(context.taskId)) {
+        const selection = { mode: "single", taskIds: [context.taskId] };
+        Object.assign(change, { selection, route: { page: "results", selection } });
+        selectionChosen = true;
+      }
+      if (Object.keys(change).length > 0) publish(change);
+    },
     setSelection(selection) {
       bodyFor(selection);
+      selectionChosen = true;
       publish({ selection, route: { page: "results", selection }, phase: "idle", error: undefined });
       storage?.setItem(STORAGE_KEY, serializeStudioLocation({ page: "results", selection }));
     },
     setRepository(repository) {
       if (!boundedText(repository, 512)) throw new Error("INVALID_REPOSITORY");
+      repositoryChosen = true;
       publish({ repository });
     },
     async loadTasks(cursor) {
@@ -253,7 +294,9 @@ export function createEvaluateController({ gateway, storage, initialContext } = 
         return;
       }
       const prior = cursor === undefined ? [] : snapshot.taskList.items;
-      publish({ taskList: { phase: "ready", items: [...prior, ...(answer.value.items ?? [])], page: answer.value } });
+      const byId = new Map([...prior, ...answer.value.items].map((item) => [item.task_id, item]));
+      const items = [...byId.values()].sort((left, right) => canonicalIds([left.task_id, right.task_id])[0] === left.task_id ? -1 : 1);
+      publish({ taskList: { phase: "ready", items, page: answer.value } });
     },
     async evaluate() {
       if (snapshot.selection === undefined) throw new Error("INVALID_SELECTION");

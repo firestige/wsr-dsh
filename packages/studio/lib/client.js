@@ -41,6 +41,7 @@ __export(browser_entry_exports, {
 });
 module.exports = __toCommonJS(browser_entry_exports);
 var import_react = __toESM(require("react"), 1);
+var Primitives = __toESM(require("@deepseek-ai/dsh-client-ui-primitives"), 1);
 
 // packages/studio/src/client/evaluate-model.js
 var STORAGE_KEY = "wsr.studio.location@1";
@@ -49,6 +50,24 @@ var TASK_ID = /^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,127}$/u;
 var TRACE_ID = /^[a-f0-9]{32}$/u;
 var SPAN_ID = /^[a-f0-9]{16}$/u;
 var encoder = new TextEncoder();
+function createBrowserStudioLocation({ location, history } = globalThis) {
+  if (location === void 0 || history === void 0) return void 0;
+  return Object.freeze({
+    getItem() {
+      return new URL(location.href).searchParams.get("wsr-studio");
+    },
+    setItem(_key, value) {
+      const url = new URL(location.href);
+      url.searchParams.set("wsr-studio", value);
+      history.replaceState(history.state ?? null, "", url.href);
+    },
+    removeItem() {
+      const url = new URL(location.href);
+      url.searchParams.delete("wsr-studio");
+      history.replaceState(history.state ?? null, "", url.href);
+    }
+  });
+}
 function validIds(ids) {
   return Array.isArray(ids) && ids.length >= 1 && ids.length <= 24 && ids.every((id) => typeof id === "string" && TASK_ID.test(id)) && new Set(ids).size === ids.length;
 }
@@ -197,7 +216,7 @@ var incompatibleResponse = Object.freeze({
   message: "Studio received an incompatible formal API response"
 });
 function validTaskPage(value) {
-  return value !== null && typeof value === "object" && !Array.isArray(value) && value.contract?.name === "evidence.query" && value.contract?.revision === "1.0.0" && value.observation_profile === "2.0.0" && value.read_model_revision === "2.0.0" && typeof value.snapshot === "string" && value.snapshot !== "" && Array.isArray(value.items) && value.items.length <= 200 && (value.next_cursor === null || typeof value.next_cursor === "string");
+  return value !== null && typeof value === "object" && !Array.isArray(value) && value.contract?.name === "evidence.query" && value.contract?.revision === "1.0.0" && value.observation_profile === "2.0.0" && value.read_model_revision === "2.0.0" && typeof value.snapshot === "string" && value.snapshot !== "" && Array.isArray(value.items) && value.items.length <= 200 && value.items.every((item) => item !== null && typeof item === "object" && TASK_ID.test(item.task_id)) && (value.next_cursor === null || typeof value.next_cursor === "string");
 }
 function side(value) {
   return value?.tag === "SIDE_RESULT" ? Array.isArray(value.metric_results) && value.receipt !== null && typeof value.receipt === "object" : value?.tag === "SIDE_ERROR" && typeof value.code === "string";
@@ -231,6 +250,9 @@ function createEvaluateController({ gateway, storage, initialContext } = {}) {
     refreshing: false
   };
   const listeners = /* @__PURE__ */ new Set();
+  let repositoryChosen = initialContext?.repository !== void 0;
+  let workspaceChosen = initialContext?.workspaceId !== void 0;
+  let selectionChosen = route.selection !== void 0;
   const publish = (change) => {
     snapshot = { ...snapshot, ...change };
     for (const listener of listeners) listener();
@@ -246,13 +268,33 @@ function createEvaluateController({ gateway, storage, initialContext } = {}) {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+    seedContext(context) {
+      if (context === void 0) return;
+      const change = {};
+      if (!repositoryChosen && boundedText(context.repository, 512)) {
+        change.repository = context.repository;
+        repositoryChosen = true;
+      }
+      if (!workspaceChosen && boundedText(context.workspaceId, 256)) {
+        change.workspaceId = context.workspaceId;
+        workspaceChosen = true;
+      }
+      if (!selectionChosen && typeof context.taskId === "string" && TASK_ID.test(context.taskId)) {
+        const selection = { mode: "single", taskIds: [context.taskId] };
+        Object.assign(change, { selection, route: { page: "results", selection } });
+        selectionChosen = true;
+      }
+      if (Object.keys(change).length > 0) publish(change);
+    },
     setSelection(selection) {
       bodyFor(selection);
+      selectionChosen = true;
       publish({ selection, route: { page: "results", selection }, phase: "idle", error: void 0 });
       storage?.setItem(STORAGE_KEY, serializeStudioLocation({ page: "results", selection }));
     },
     setRepository(repository) {
       if (!boundedText(repository, 512)) throw new Error("INVALID_REPOSITORY");
+      repositoryChosen = true;
       publish({ repository });
     },
     async loadTasks(cursor) {
@@ -267,7 +309,9 @@ function createEvaluateController({ gateway, storage, initialContext } = {}) {
         return;
       }
       const prior = cursor === void 0 ? [] : snapshot.taskList.items;
-      publish({ taskList: { phase: "ready", items: [...prior, ...answer.value.items ?? []], page: answer.value } });
+      const byId = new Map([...prior, ...answer.value.items].map((item) => [item.task_id, item]));
+      const items = [...byId.values()].sort((left, right) => canonicalIds([left.task_id, right.task_id])[0] === left.task_id ? -1 : 1);
+      publish({ taskList: { phase: "ready", items, page: answer.value } });
     },
     async evaluate() {
       if (snapshot.selection === void 0) throw new Error("INVALID_SELECTION");
@@ -333,9 +377,14 @@ function boundedText(value, maximum) {
 }
 
 // packages/studio/src/client/studio.js
+var STUDIO_PAGES = Object.freeze([
+  Object.freeze({ id: "evaluate", label: "Evaluate", routePrefix: "/evaluate" })
+]);
 var ACCESSIBILITY = Object.freeze({
-  routes: Object.freeze(["Evaluate"]),
-  landmarks: Object.freeze(["dialog", "navigation", "main"]),
+  routes: Object.freeze(STUDIO_PAGES.map((page) => page.label)),
+  surface: "top-level-view",
+  modal: false,
+  landmarks: Object.freeze(["region", "navigation", "main"]),
   closeKey: "Escape",
   focusReturnsToTrigger: true,
   liveRegions: Object.freeze({ loading: "polite", error: "assertive" }),
@@ -394,17 +443,18 @@ function createOpenStore() {
 }
 var frameStyle = {
   position: "fixed",
-  inset: "24px",
+  inset: 0,
   zIndex: 1e3,
   overflow: "auto",
+  maxWidth: "100vw",
   color: "var(--dsw-alias-label-primary)",
   background: "var(--dsw-alias-bg-base)",
   border: "1px solid var(--dsw-alias-border-l2)",
-  borderRadius: "12px",
-  boxShadow: "var(--dsw-specific-shadow-modal)",
-  padding: "20px"
+  padding: "clamp(12px, 3vw, 32px)",
+  boxSizing: "border-box"
 };
 var controlStyle = { minHeight: "44px", minWidth: "44px" };
+var listStyle = { maxHeight: "min(42vh, 480px)", overflow: "auto", overflowWrap: "anywhere" };
 function metricRows(result) {
   if (result?.mode === "SINGLE") return result.result?.metric_results ?? [];
   if (result?.mode === "COMPARE") {
@@ -416,17 +466,25 @@ function metricRows(result) {
   }
   return [];
 }
-function StudioAction(React2, store) {
-  return function StudioActionView({ wide = true }) {
-    return React2.createElement("button", {
+function StudioAction(React2, Button, store, controller) {
+  return function StudioActionView({ wide = true, useSessions }) {
+    const session = typeof useSessions === "function" ? useSessions((state) => state.byId?.[state.current]) : void 0;
+    return React2.createElement(Button, {
       type: "button",
       style: controlStyle,
-      "aria-haspopup": "dialog",
-      onClick: (event) => store.open(event.currentTarget)
+      "aria-controls": "wsr-studio-view",
+      "aria-current": store.getSnapshot() ? "page" : void 0,
+      onClick: (event) => {
+        controller.seedContext({ repository: session?.cwd, workspaceId: session?.workspaceId });
+        store.open(event.currentTarget);
+      }
     }, wide ? "WSR Studio" : "Studio");
   };
 }
-function StudioOverlay(React2, store, controller) {
+function StudioOverlay(React2, Primitives2, store, controller) {
+  const Button = Primitives2.Button ?? "button";
+  const Input = Primitives2.Input ?? "input";
+  const DisclosureRow = Primitives2.DisclosureRow;
   return function StudioOverlayView() {
     const snapshot = React2.useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
     const close = () => store.close();
@@ -438,6 +496,14 @@ function StudioOverlay(React2, store, controller) {
       document.addEventListener("keydown", listener);
       return () => document.removeEventListener("keydown", listener);
     }, []);
+    React2.useEffect(() => {
+      if (snapshot.drilldown.phase !== "idle") return;
+      if (snapshot.route.page === "facts") void controller.loadFacts({ limit: 50 });
+      if (snapshot.route.page === "trace") void controller.loadTrace({
+        trace_id: snapshot.route.traceId,
+        limit: 200
+      });
+    }, [snapshot.route.page]);
     const presentation = projectStudioPresentation(snapshot);
     const taskItems = snapshot.taskList.items ?? [];
     const current = snapshot.selection?.mode === "single" ? snapshot.selection.taskIds : [];
@@ -466,10 +532,10 @@ function StudioOverlay(React2, store, controller) {
     return React2.createElement(
       "section",
       {
-        role: "dialog",
-        "aria-modal": "true",
+        id: "wsr-studio-view",
+        role: "region",
         "aria-labelledby": "wsr-studio-title",
-        "data-wsr-studio": "evaluate",
+        "data-wsr-studio-view": "evaluate",
         style: frameStyle,
         onKeyDown: (event) => {
           if (event.key === "Escape") close();
@@ -480,9 +546,9 @@ function StudioOverlay(React2, store, controller) {
         null,
         React2.createElement("p", null, "Workflow Self-Recursive"),
         React2.createElement("h1", { id: "wsr-studio-title" }, "WSR Studio"),
-        React2.createElement("button", { type: "button", style: controlStyle, "aria-label": "Close WSR Studio", onClick: close }, "Close")
+        React2.createElement(Button, { type: "button", style: controlStyle, "aria-label": "Close WSR Studio", onClick: close }, "Close")
       ),
-      React2.createElement("nav", { "aria-label": "Studio" }, React2.createElement("span", { "aria-current": "page" }, "Evaluate")),
+      React2.createElement("nav", { "aria-label": "Studio" }, ...STUDIO_PAGES.map((page) => React2.createElement("span", { key: page.id, "aria-current": page.id === "evaluate" ? "page" : void 0 }, page.label))),
       React2.createElement(
         "main",
         { tabIndex: -1 },
@@ -492,7 +558,7 @@ function StudioOverlay(React2, store, controller) {
           { role: "alert", "aria-live": "assertive" },
           React2.createElement("h2", null, snapshot.result === void 0 ? "Evaluate unavailable" : "Showing the last result"),
           React2.createElement("p", null, snapshot.error.message),
-          React2.createElement("button", { type: "button", style: controlStyle, onClick: () => controller.refresh() }, "Retry")
+          React2.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.refresh() }, "Retry")
         ),
         React2.createElement(
           "section",
@@ -502,7 +568,7 @@ function StudioOverlay(React2, store, controller) {
             "label",
             null,
             "Repository",
-            React2.createElement("input", {
+            React2.createElement(Input, {
               type: "text",
               "aria-label": "Repository",
               defaultValue: snapshot.repository ?? "",
@@ -528,7 +594,7 @@ function StudioOverlay(React2, store, controller) {
               "Compare"
             )
           ),
-          snapshot.taskList.phase === "idle" ? React2.createElement("button", { type: "button", style: controlStyle, onClick: () => controller.loadTasks() }, "Load Tasks") : null,
+          snapshot.taskList.phase === "idle" ? React2.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.loadTasks() }, "Load Tasks") : null,
           snapshot.taskList.phase === "error" ? React2.createElement("p", { role: "alert" }, "Task list unavailable; the current selection remains usable.") : null,
           snapshot.selection?.mode === "compare" ? React2.createElement("div", null, ...[["Before", "left", before], ["After", "right", after]].map(([label, side2, selected]) => React2.createElement(
             "fieldset",
@@ -540,7 +606,7 @@ function StudioOverlay(React2, store, controller) {
               React2.createElement("input", { type: "checkbox", checked: selected.includes(task.task_id), onChange: (event) => setComparedTask(side2, task.task_id, event.target.checked) }),
               task.display_name ?? task.task_id
             ))
-          ))) : React2.createElement("ul", null, ...taskItems.map((task) => React2.createElement(
+          ))) : React2.createElement("ul", { style: listStyle }, ...taskItems.map((task) => React2.createElement(
             "li",
             { key: task.task_id },
             React2.createElement(
@@ -550,20 +616,34 @@ function StudioOverlay(React2, store, controller) {
               task.display_name ?? task.task_id
             )
           ))),
-          React2.createElement("button", { type: "button", style: controlStyle, disabled: snapshot.selection === void 0, onClick: () => controller.evaluate() }, "Evaluate selection")
+          snapshot.taskList.phase === "ready" && taskItems.length === 0 ? React2.createElement("p", { role: "status" }, "No Tasks found for this repository.") : null,
+          snapshot.taskList.page?.next_cursor ? React2.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.loadTasks(snapshot.taskList.page.next_cursor) }, "Load more Tasks") : null,
+          React2.createElement(Button, { type: "button", style: controlStyle, disabled: snapshot.selection === void 0, onClick: () => controller.evaluate() }, "Evaluate selection")
         ),
         snapshot.result === void 0 ? React2.createElement("p", null, "Choose one or more Tasks to evaluate.") : React2.createElement(
           "section",
           { "aria-label": snapshot.result.mode === "COMPARE" ? "Compared Metric Results" : "Metric Results" },
           snapshot.phase === "partial" ? React2.createElement("p", { role: "status" }, "Partial comparison: the available side remains visible.") : null,
-          React2.createElement("button", { type: "button", style: controlStyle, onClick: () => controller.openReceipt() }, "View receipt"),
-          ...metricRows(snapshot.result).map((metric) => React2.createElement(
-            "article",
-            { key: `${metric.metric_id}@${metric.metric_version}` },
-            React2.createElement("h3", null, `${metric.metric_id}@${metric.metric_version}`),
-            React2.createElement("p", null, `${metric.slices?.length ?? 0} result slice(s)`),
-            React2.createElement("button", { type: "button", style: controlStyle, onClick: () => controller.openFacts(`${metric.metric_id}@${metric.metric_version}`) }, "Fact drill-down")
-          )),
+          React2.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.openReceipt() }, "View receipt"),
+          ...metricRows(snapshot.result).map((metric) => {
+            const coordinate = `${metric.metric_id}@${metric.metric_version}`;
+            const content = React2.createElement(
+              "article",
+              { key: coordinate },
+              React2.createElement("h3", null, coordinate),
+              React2.createElement("p", null, `${metric.slices?.length ?? 0} result slice(s)`),
+              React2.createElement(Button, { type: "button", style: controlStyle, onClick: () => {
+                controller.openFacts(coordinate);
+                void controller.loadFacts({ limit: 50 });
+              } }, "Fact drill-down")
+            );
+            return DisclosureRow === void 0 ? content : React2.createElement(DisclosureRow, {
+              key: coordinate,
+              title: coordinate,
+              open: true,
+              expandable: false
+            }, content);
+          }),
           ...presentation.deltas.map((delta) => React2.createElement(
             "p",
             { key: `${delta.metric_coordinate}-${JSON.stringify(delta.slice_key)}` },
@@ -574,6 +654,7 @@ function StudioOverlay(React2, store, controller) {
           "section",
           { "aria-label": "Evaluation receipts" },
           React2.createElement("h2", null, "Receipts"),
+          React2.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Metric Results"),
           ...presentation.receipts.map(({ side: side2, receipt }) => React2.createElement(
             "article",
             { key: side2 },
@@ -586,13 +667,23 @@ function StudioOverlay(React2, store, controller) {
           "section",
           { "aria-label": "Fact drill-down" },
           React2.createElement("h2", null, "Facts"),
+          React2.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Metric Results"),
           presentation.drilldownError === void 0 ? null : React2.createElement("p", { role: "alert" }, presentation.drilldownError.message),
-          ...presentation.facts.map((fact) => React2.createElement("article", { key: fact.id }, `${fact.kind ?? "Fact"} \xB7 ${fact.id}`))
+          ...presentation.facts.map((fact) => React2.createElement(
+            "article",
+            { key: fact.id },
+            `${fact.kind ?? "Fact"} \xB7 ${fact.id}`,
+            typeof fact.source?.trace_id === "string" ? React2.createElement(Button, { type: "button", onClick: () => {
+              controller.openTrace(fact.source.trace_id, fact.source.span_id);
+              void controller.loadTrace({ trace_id: fact.source.trace_id, limit: 200 });
+            } }, "Open recorded trace") : null
+          ))
         ) : null,
         snapshot.route.page === "trace" ? React2.createElement(
           "section",
           { "aria-label": "Recorded Trace drill-down" },
           React2.createElement("h2", null, "Recorded Trace"),
+          React2.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Metric Results"),
           presentation.drilldownError === void 0 ? null : React2.createElement("p", { role: "alert" }, presentation.drilldownError.message),
           ...presentation.trace.map((item) => React2.createElement("article", { key: item.id }, `${item.kind ?? "Trace item"} \xB7 ${item.id}`))
         ) : null
@@ -600,36 +691,38 @@ function StudioOverlay(React2, store, controller) {
     );
   };
 }
-function createStudioClientPlugin({ React: React2, initialContext, storage } = {}) {
+function createStudioClientPlugin({ React: React2, Primitives: Primitives2 = {}, initialContext, storage } = {}) {
   if (React2 === void 0) throw new Error("STUDIO_REACT_REQUIRED");
   return {
     name: "wsr-studio-client",
     inject: ["connection", "slots"],
     apply(ctx) {
       const store = createOpenStore();
+      const resolvedStorage = storage ?? (typeof window === "undefined" ? void 0 : createBrowserStudioLocation(window));
       const controller = createEvaluateController({
         gateway: createStudioGatewayPort(ctx),
         initialContext,
-        storage: storage ?? (typeof window === "undefined" ? void 0 : window.sessionStorage)
+        storage: resolvedStorage
       });
       ctx.slots.inject("sidebar.footer.action", () => ctx.slots.register({
         name: "sidebar.footer.action",
         id: "wsr-studio",
         order: 60,
         label: "WSR Studio"
-      }, StudioAction(React2, store)));
+      }, StudioAction(React2, Primitives2.Button ?? "button", store, controller)));
       ctx.slots.inject("shell.overlay", () => store.attach(() => ctx.slots.register({
         name: "shell.overlay",
         id: "wsr-studio",
         order: 60
-      }, StudioOverlay(React2, store, controller))));
+      }, StudioOverlay(React2, Primitives2, store, controller))));
+      if (controller.getSnapshot().route.page !== "select") store.open();
       return Object.assign(() => void 0, { controller, store });
     }
   };
 }
 
 // packages/studio/src/client/browser-entry.js
-var plugin = createStudioClientPlugin({ React: import_react.default });
+var plugin = createStudioClientPlugin({ React: import_react.default, Primitives });
 var name = plugin.name;
 var inject = plugin.inject;
 var apply = plugin.apply;

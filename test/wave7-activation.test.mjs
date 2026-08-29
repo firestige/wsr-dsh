@@ -24,7 +24,11 @@ test("Execution and Studio activate one Host and one generated browser module ea
     platform: "web",
   });
   assert.deepEqual(studio.dsh.client, {
-    inject: ["@deepseek-ai/dsh-client-connection", "@deepseek-ai/dsh-client-ui-sidebar"],
+    inject: [
+      "@deepseek-ai/dsh-client-connection",
+      "@deepseek-ai/dsh-client-ui-sidebar",
+      "@deepseek-ai/dsh-client-ui-primitives",
+    ],
     platform: "web",
   });
   const ownerAsset = "https://github.com/firestige/execution-system/releases/download/0.1.4-rc.1/wsr-execution-0.1.4.tgz";

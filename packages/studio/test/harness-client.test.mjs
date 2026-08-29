@@ -6,6 +6,7 @@ import test from "node:test";
 import {
   createStudioClientPlugin,
   createStudioGatewayPort,
+  STUDIO_PAGES,
   studioAccessibilityModel,
 } from "../src/client/studio.js";
 
@@ -76,7 +77,10 @@ test("Harness registration adds one Studio entry and an overlay without replacin
 test("the Studio shell advertises one Evaluate route and complete keyboard/screen-reader landmarks", () => {
   const model = studioAccessibilityModel();
   assert.deepEqual(model.routes, ["Evaluate"]);
-  assert.deepEqual(model.landmarks, ["dialog", "navigation", "main"]);
+  assert.deepEqual(STUDIO_PAGES, [{ id: "evaluate", label: "Evaluate", routePrefix: "/evaluate" }]);
+  assert.deepEqual(model.landmarks, ["region", "navigation", "main"]);
+  assert.equal(model.surface, "top-level-view");
+  assert.equal(model.modal, false);
   assert.equal(model.closeKey, "Escape");
   assert.equal(model.focusReturnsToTrigger, true);
   assert.equal(model.liveRegions.loading, "polite");
@@ -86,7 +90,7 @@ test("the Studio shell advertises one Evaluate route and complete keyboard/scree
   assert.equal(JSON.stringify(model).includes("improvement"), false);
 });
 
-test("the real slot components expose single/compare Task selection and repository switching without empty future entries", () => {
+test("the real slot components expose a non-modal top-level view and seed repository from the current Session", () => {
   const components = new Map();
   const ctx = {
     connection: { rpc: { call: async () => ({ ok: true, value: {} }) } },
@@ -104,12 +108,18 @@ test("the real slot components expose single/compare Task selection and reposito
     useState(initial) { return [typeof initial === "function" ? initial() : initial, () => undefined]; },
     useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot(); },
   };
-  const runtime = createStudioClientPlugin({ React, initialContext: { taskId: "task-a", repository: "repo-a" } }).apply(ctx);
+  const Primitives = { Button: "dsh-button", Input: "dsh-input", DisclosureRow: "dsh-disclosure", Pill: "dsh-pill", StateDot: "dsh-state-dot" };
+  const runtime = createStudioClientPlugin({ React, Primitives, initialContext: { taskId: "task-a" } }).apply(ctx);
   assert.equal(typeof runtime, "function");
-  runtime.store.open({ focus() {} });
+  const action = components.get("sidebar.footer.action")({
+    useSessions: (select) => select({ current: "session-a", byId: { "session-a": { cwd: "/repo/from-session", workspaceId: "workspace-a" } } }),
+  });
+  assert.equal(action.props["aria-controls"], "wsr-studio-view");
+  assert.equal(action.props["aria-haspopup"], undefined);
+  action.props.onClick({ currentTarget: { focus() {} } });
   const rendered = components.get("shell.overlay")();
   const text = textOf(rendered);
-  const inputs = elementsOf(rendered).filter((element) => element.type === "input");
+  const inputs = elementsOf(rendered).filter((element) => element.type === "input" || element.type === "dsh-input");
   assert.match(text, /Evaluate/);
   assert.match(text, /Single/);
   assert.match(text, /Compare/);
@@ -117,9 +127,14 @@ test("the real slot components expose single/compare Task selection and reposito
   assert.ok(inputs.some(({ props }) => props.type === "radio" && props.value === "single"));
   assert.ok(inputs.some(({ props }) => props.type === "radio" && props.value === "compare"));
   assert.doesNotMatch(text, /Builder|improvement/i);
-  const dialog = elementsOf(rendered).find((element) => element.props?.role === "dialog");
-  assert.equal(typeof dialog.props.onKeyDown, "function");
-  dialog.props.onKeyDown({ key: "Escape" });
+  const view = elementsOf(rendered).find((element) => element.props?.["data-wsr-studio-view"] === "evaluate");
+  assert.equal(view.props.role, "region");
+  assert.equal(view.props["aria-modal"], undefined);
+  assert.equal(view.props.id, "wsr-studio-view");
+  assert.equal(runtime.controller.getSnapshot().repository, "/repo/from-session");
+  assert.ok(elementsOf(rendered).some((element) => element.type === "dsh-button"));
+  assert.equal(typeof view.props.onKeyDown, "function");
+  view.props.onKeyDown({ key: "Escape" });
   assert.equal(runtime.store.getSnapshot(), false);
   assert.equal(components.has("shell.overlay"), false);
 });

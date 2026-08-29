@@ -23,11 +23,14 @@
     "provenance:verify": "node scripts/verify-provenance.mjs",
     "qualify:clean-profile": "node scripts/qualify-clean-profile.mjs",
     "qualify:real-harness": "node scripts/qualify-real-harness.mjs",
+    "studio:dev": "node scripts/serve-studio-dev-harness.mjs",
     "release:candidate": "node scripts/build-release-candidate.mjs"
   },
   "license": "Apache-2.0",
   "devDependencies": {
     "esbuild": "0.25.9",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "wsr-execution": "https://github.com/firestige/execution-system/releases/download/0.1.4-rc.1/wsr-execution-0.1.4.tgz"
   }
 }

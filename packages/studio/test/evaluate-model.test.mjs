@@ -3,10 +3,27 @@ import test from "node:test";
 
 import {
   createEvaluateController,
+  createBrowserStudioLocation,
   parseStudioLocation,
   projectStudioPresentation,
   serializeStudioLocation,
 } from "../src/client/evaluate-model.js";
+
+test("browser deep links preserve the host URL and refresh through history", () => {
+  const calls = [];
+  const location = { href: "https://harness.test/chat?keep=yes#anchor" };
+  const history = { replaceState(_state, _title, href) { calls.push(href); location.href = href; } };
+  const storage = createBrowserStudioLocation({ location, history });
+  assert.equal(storage.getItem("ignored"), null);
+  storage.setItem("ignored", "/evaluate?v=1&task=task-a");
+  assert.equal(new URL(location.href).searchParams.get("wsr-studio"), "/evaluate?v=1&task=task-a");
+  assert.equal(new URL(location.href).searchParams.get("keep"), "yes");
+  assert.equal(new URL(location.href).hash, "#anchor");
+  assert.equal(storage.getItem("ignored"), "/evaluate?v=1&task=task-a");
+  storage.removeItem("ignored");
+  assert.equal(new URL(location.href).searchParams.has("wsr-studio"), false);
+  assert.equal(calls.length, 2);
+});
 
 const taskPage = {
   contract: { name: "evidence.query", revision: "1.0.0" },
@@ -78,6 +95,31 @@ test("Session context seeds the first selection but never prevents task or repos
   assert.equal(controller.getSnapshot().repository, "repo-b");
   assert.deepEqual(controller.getSnapshot().selection, { mode: "single", taskIds: ["task-b"] });
   assert.deepEqual(calls.at(-1)[1].selection.task_ids, ["task-b"]);
+});
+
+test("Session context can seed an unset repository once without replacing user choice", () => {
+  const controller = createEvaluateController({ gateway: { call: async () => ({ ok: true, value: {} }) } });
+  controller.seedContext({ repository: "/repo/session-a", workspaceId: "workspace-a" });
+  assert.equal(controller.getSnapshot().repository, "/repo/session-a");
+  assert.equal(controller.getSnapshot().workspaceId, "workspace-a");
+  controller.setRepository("/repo/user-choice");
+  controller.seedContext({ repository: "/repo/session-b", workspaceId: "workspace-b" });
+  assert.equal(controller.getSnapshot().repository, "/repo/user-choice");
+  assert.equal(controller.getSnapshot().workspaceId, "workspace-a");
+});
+
+test("Task discovery appends cursor pages with deterministic de-duplication", async () => {
+  const controller = createEvaluateController({
+    gateway: { async call(_endpoint, payload) {
+      return { ok: true, value: { ...taskPage, items: payload.cursor === undefined
+        ? [{ task_id: "task-b" }, { task_id: "task-a" }]
+        : [{ task_id: "task-c" }, { task_id: "task-b" }], next_cursor: payload.cursor === undefined ? "next" : null } };
+    } },
+  });
+  await controller.loadTasks();
+  await controller.loadTasks("next");
+  assert.deepEqual(controller.getSnapshot().taskList.items.map((item) => item.task_id), ["task-a", "task-b", "task-c"]);
+  assert.equal(controller.getSnapshot().taskList.page.next_cursor, null);
 });
 
 test("reload restores the valid evaluate location and refresh recovery retains the last result", async () => {
