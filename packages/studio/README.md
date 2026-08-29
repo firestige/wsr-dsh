@@ -24,12 +24,11 @@ stack, malformed health, and incompatible health appear only as typed Studio
 degradation; they never change Execution Delivery lifecycle. Migration
 provenance is recorded in `src/client/UPSTREAM.md`.
 
-The DSH 0.1.1-rc.2 Session summary formally supplies `cwd`, so Studio can use
-it as replaceable repository context. It does not supply a WSR Task identity,
-and frozen `evidence.query@1.0.0` Task listing accepts only `limit` and
-`cursor`; consequently the current formal API cannot seed a Session Task or
-perform repository-scoped Task discovery. Studio does not infer, scrape, or
-client-filter either value.
+Studio queries the installation-wide Evidence Task catalog. Repository is not
+a Studio selection or Session context: there is no repository input and no
+`cwd` inference. When Evidence or Evolution includes repository provenance in
+a formal result or receipt, the complete value remains visible read-only in
+the DSH JSON disclosure; Studio never turns provenance into query authority.
 
 For local component work, `npm run studio:dev` mounts the production Studio
 plugin in a minimal development Harness at `127.0.0.1:4173`. It is not a

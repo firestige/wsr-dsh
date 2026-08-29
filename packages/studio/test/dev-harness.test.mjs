@@ -7,5 +7,5 @@ test("the independent development harness mounts the production Studio plugin in
   const source = await readFile(resolve(import.meta.dirname, "../dev/main.js"), "utf8");
   assert.match(source, /createStudioClientPlugin\(\{ React, Primitives \}\)\.apply\(ctx\)/u);
   assert.doesNotMatch(source, /function Studio|class Studio|fetch\s*\(|facts\/(?:write|delete)|traces\/(?:write|delete)/u);
-  assert.match(source, /useSessions/u);
+  assert.doesNotMatch(source, /useSessions|cwd|repository context/iu);
 });

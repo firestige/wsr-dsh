@@ -70,25 +70,20 @@ const frameStyle = {
 const controlStyle = { minHeight: "44px", minWidth: "44px" };
 const listStyle = { maxHeight: "min(42vh, 480px)", overflow: "auto", overflowWrap: "anywhere" };
 
-function StudioAction(React, Button, store, controller) {
-  return function StudioActionView({ wide = true, useSessions }) {
-    const session = typeof useSessions === "function" ? useSessions((state) => state.byId?.[state.current]) : undefined;
+function StudioAction(React, Button, store) {
+  return function StudioActionView({ wide = true }) {
     return React.createElement(Button, {
       type: "button",
       style: controlStyle,
       "aria-controls": "wsr-studio-view",
       "aria-current": store.getSnapshot() ? "page" : undefined,
-      onClick: (event) => {
-        controller.seedContext({ repository: session?.cwd, workspaceId: session?.workspaceId });
-        store.open(event.currentTarget);
-      },
+      onClick: (event) => store.open(event.currentTarget),
     }, wide ? "WSR Studio" : "Studio");
   };
 }
 
 function StudioOverlay(React, Primitives, store, controller) {
   const Button = Primitives.Button ?? "button";
-  const Input = Primitives.Input ?? "input";
   const DisclosureRow = Primitives.DisclosureRow;
   const JsonTree = Primitives.JsonTree;
   return function StudioOverlayView() {
@@ -161,12 +156,6 @@ function StudioOverlay(React, Primitives, store, controller) {
           React.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.refresh() }, "Retry")),
       React.createElement("section", { "aria-labelledby": "wsr-task-selection" },
         React.createElement("h2", { id: "wsr-task-selection" }, "Task selection"),
-        React.createElement("label", null, "Repository context",
-          React.createElement(Input, {
-            type: "text", "aria-label": "Repository", "aria-describedby": "wsr-repository-scope", defaultValue: snapshot.repository ?? "",
-            onBlur: (event) => { if (event.target.value.trim() !== "") controller.setRepository(event.target.value); },
-          })),
-        React.createElement("p", { id: "wsr-repository-scope" }, "Task discovery is installation-wide in Evidence query 1.0.0; repository context does not filter authoritative Tasks."),
         React.createElement("fieldset", null,
           React.createElement("legend", null, "Evaluation mode"),
           React.createElement("label", null,
@@ -190,7 +179,7 @@ function StudioOverlay(React, Primitives, store, controller) {
             React.createElement("label", null,
               React.createElement("input", { type: "checkbox", checked: current.includes(task.task_id), onChange: (event) => setTask(task.task_id, event.target.checked) }),
               task.display_name ?? task.task_id)))),
-        snapshot.taskList.phase === "ready" && taskItems.length === 0 ? React.createElement("p", { role: "status" }, "No Tasks found for this repository.") : null,
+        snapshot.taskList.phase === "ready" && taskItems.length === 0 ? React.createElement("p", { role: "status" }, "No Tasks are available in Evidence.") : null,
         snapshot.taskList.page?.next_cursor ? React.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.loadTasks(snapshot.taskList.page.next_cursor) }, "Load more Tasks") : null,
         React.createElement(Button, { type: "button", style: controlStyle, disabled: snapshot.selection === undefined, onClick: () => controller.evaluate() }, "Evaluate selection")),
       snapshot.result === undefined ? React.createElement("p", null, "Choose one or more Tasks to evaluate.")
@@ -259,7 +248,7 @@ export function createStudioClientPlugin({ React, Primitives = {}, initialContex
       });
       ctx.slots.inject("sidebar.footer.action", () => ctx.slots.register({
         name: "sidebar.footer.action", id: "wsr-studio", order: 60, label: "WSR Studio",
-      }, StudioAction(React, Primitives.Button ?? "button", store, controller)));
+      }, StudioAction(React, Primitives.Button ?? "button", store)));
       ctx.slots.inject("shell.overlay", () => store.attach(() => ctx.slots.register({
         name: "shell.overlay", id: "wsr-studio", order: 60,
       }, StudioOverlay(React, Primitives, store, controller))));

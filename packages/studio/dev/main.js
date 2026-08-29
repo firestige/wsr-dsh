@@ -10,9 +10,7 @@ const mount = (name, Component) => {
   roots.get(name)?.unmount();
   const root = createRoot(target);
   roots.set(name, root);
-  root.render(React.createElement(Component, {
-    useSessions: (select) => select({ current: "dev-session", byId: { "dev-session": { cwd: "/example/repository" } } }),
-  }));
+  root.render(React.createElement(Component));
   return () => { root.unmount(); roots.delete(name); };
 };
 

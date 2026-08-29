@@ -76,7 +76,7 @@ test("deep links round-trip bounded single, compare, receipt, Fact and Trace vie
   assert.deepEqual(parseStudioLocation(`/evaluate?v=1&task=${"x".repeat(129)}`), { page: "invalid", reason: "INVALID_SELECTION" });
 });
 
-test("Session context seeds the first selection but never prevents task or repository switching", async () => {
+test("an explicit formal Task context seeds selection without adding repository or Workspace context", async () => {
   const calls = [];
   const controller = createEvaluateController({
     gateway: {
@@ -86,26 +86,16 @@ test("Session context seeds the first selection but never prevents task or repos
         return { ok: true, value: singleResult(payload.selection.task_ids[0]) };
       },
     },
-    initialContext: { taskId: "task-a", workspaceId: "workspace-1", repository: "repo-a" },
+    initialContext: { taskId: "task-a", workspaceId: "ignored", repository: "ignored" },
   });
   assert.deepEqual(controller.getSnapshot().selection, { mode: "single", taskIds: ["task-a"] });
   controller.setSelection({ mode: "single", taskIds: ["task-b"] });
-  controller.setRepository("repo-b");
   await controller.evaluate();
-  assert.equal(controller.getSnapshot().repository, "repo-b");
+  assert.equal(Object.hasOwn(controller.getSnapshot(), "repository"), false);
+  assert.equal(Object.hasOwn(controller.getSnapshot(), "workspaceId"), false);
+  assert.equal(controller.setRepository, undefined);
   assert.deepEqual(controller.getSnapshot().selection, { mode: "single", taskIds: ["task-b"] });
   assert.deepEqual(calls.at(-1)[1].selection.task_ids, ["task-b"]);
-});
-
-test("Session context can seed an unset repository once without replacing user choice", () => {
-  const controller = createEvaluateController({ gateway: { call: async () => ({ ok: true, value: {} }) } });
-  controller.seedContext({ repository: "/repo/session-a", workspaceId: "workspace-a" });
-  assert.equal(controller.getSnapshot().repository, "/repo/session-a");
-  assert.equal(controller.getSnapshot().workspaceId, "workspace-a");
-  controller.setRepository("/repo/user-choice");
-  controller.seedContext({ repository: "/repo/session-b", workspaceId: "workspace-b" });
-  assert.equal(controller.getSnapshot().repository, "/repo/user-choice");
-  assert.equal(controller.getSnapshot().workspaceId, "workspace-a");
 });
 
 test("Task discovery appends cursor pages with deterministic de-duplication", async () => {

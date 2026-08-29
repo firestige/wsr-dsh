@@ -292,9 +292,10 @@ try {
     if (!view) return undefined;
     const style = getComputedStyle(view);
     return { role: view.getAttribute('role'), modal: view.getAttribute('aria-modal'), color: style.color, background: style.backgroundColor,
-      landmarks: ['nav', 'main'].every((name) => view.querySelector(name)), labelled: !!view.getAttribute('aria-labelledby') };
+      landmarks: ['nav', 'main'].every((name) => view.querySelector(name)), labelled: !!view.getAttribute('aria-labelledby'),
+      repositoryInput: view.querySelector('input[aria-label="Repository"]') !== null };
   })()`), "HARNESS_STUDIO_UNAVAILABLE");
-  if (studio.role !== "region" || studio.modal !== null || !studio.landmarks || !studio.labelled || studio.color === studio.background) {
+  if (studio.role !== "region" || studio.modal !== null || !studio.landmarks || !studio.labelled || studio.repositoryInput || studio.color === studio.background) {
     throw new Error(`HARNESS_THEME_OR_ACCESSIBILITY_FAILED: ${JSON.stringify(studio)}`);
   }
   const closeFocused = await cdp.evaluate(`(() => {

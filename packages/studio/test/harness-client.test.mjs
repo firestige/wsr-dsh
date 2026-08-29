@@ -90,7 +90,7 @@ test("the Studio shell advertises one Evaluate route and complete keyboard/scree
   assert.equal(JSON.stringify(model).includes("improvement"), false);
 });
 
-test("the real slot components expose a non-modal top-level view and seed repository from the current Session", () => {
+test("the real slot components expose a non-modal top-level Evidence view without Session repository context", () => {
   const components = new Map();
   const ctx = {
     connection: { rpc: { call: async () => ({ ok: true, value: {} }) } },
@@ -112,7 +112,7 @@ test("the real slot components expose a non-modal top-level view and seed reposi
   const runtime = createStudioClientPlugin({ React, Primitives, initialContext: { taskId: "task-a" } }).apply(ctx);
   assert.equal(typeof runtime, "function");
   const action = components.get("sidebar.footer.action")({
-    useSessions: (select) => select({ current: "session-a", byId: { "session-a": { cwd: "/repo/from-session", workspaceId: "workspace-a" } } }),
+    useSessions: () => { throw new Error("Studio must not read Session context"); },
   });
   assert.equal(action.props["aria-controls"], "wsr-studio-view");
   assert.equal(action.props["aria-haspopup"], undefined);
@@ -123,7 +123,7 @@ test("the real slot components expose a non-modal top-level view and seed reposi
   assert.match(text, /Evaluate/);
   assert.match(text, /Single/);
   assert.match(text, /Compare/);
-  assert.ok(inputs.some(({ props }) => props["aria-label"] === "Repository"));
+  assert.equal(inputs.some(({ props }) => props["aria-label"] === "Repository"), false);
   assert.ok(inputs.some(({ props }) => props.type === "radio" && props.value === "single"));
   assert.ok(inputs.some(({ props }) => props.type === "radio" && props.value === "compare"));
   assert.doesNotMatch(text, /Builder|improvement/i);
@@ -131,7 +131,8 @@ test("the real slot components expose a non-modal top-level view and seed reposi
   assert.equal(view.props.role, "region");
   assert.equal(view.props["aria-modal"], undefined);
   assert.equal(view.props.id, "wsr-studio-view");
-  assert.equal(runtime.controller.getSnapshot().repository, "/repo/from-session");
+  assert.equal(Object.hasOwn(runtime.controller.getSnapshot(), "repository"), false);
+  assert.equal(Object.hasOwn(runtime.controller.getSnapshot(), "workspaceId"), false);
   assert.ok(elementsOf(rendered).some((element) => element.type === "dsh-button"));
   assert.equal(typeof view.props.onKeyDown, "function");
   view.props.onKeyDown({ key: "Escape" });
