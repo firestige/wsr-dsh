@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { createServer } from "node:net";
+import { createServer as createHttpServer } from "node:http";
+import { createServer as createNetServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
@@ -21,7 +22,7 @@ function run(command, args, options = {}) {
 }
 
 async function freePort() {
-  const server = createServer();
+  const server = createNetServer();
   await new Promise((accept, reject) => server.once("error", reject).listen(0, "127.0.0.1", accept));
   const address = server.address();
   if (address === null || typeof address === "string") throw new Error("HARNESS_PORT_UNAVAILABLE");
@@ -97,6 +98,7 @@ const temporary = await mkdtemp(join(tmpdir(), "wsr-dsh-real-harness-"));
 let harness;
 let chrome;
 let cdp;
+let fixtureServer;
 let harnessLog = "";
 try {
   const packages = join(temporary, "packages");
@@ -148,7 +150,60 @@ try {
   }, null, 2)}\n`);
 
   const bindings = join(temporary, "bindings.json");
-  const unavailablePort = await freePort();
+  const fixturePort = await freePort();
+  const traceId = "a".repeat(32);
+  let fixtureAvailable = true;
+  fixtureServer = createHttpServer((request, response) => {
+    const json = (status, value) => {
+      response.writeHead(status, { "content-type": "application/json" });
+      response.end(JSON.stringify(value));
+    };
+    if (!fixtureAvailable) { json(503, { error: { code: "QUALIFICATION_DOWN" } }); return; }
+    if (request.url === "/healthz") {
+      if (request.headers.accept === "text/plain") { response.writeHead(200, { "content-type": "text/plain" }); response.end("ok"); }
+      else json(200, { status: "ok" });
+      return;
+    }
+    if (request.url === "/openapi.json") { json(200, { paths: { "/v1/evidence/tasks": {}, "/v1/evidence/facts": {}, "/v1/evidence/traces": {} } }); return; }
+    if (request.url?.startsWith("/v1/evidence/tasks")) { json(200, {
+      contract: { name: "evidence.query", revision: "1.0.0" }, observation_profile: "2.0.0",
+      read_model_revision: "2.0.0", snapshot: "qualification", items: [
+        { task_id: "task-a", display_name: "Alpha Task" }, { task_id: "task-b", display_name: "Beta Task" },
+      ], next_cursor: null,
+    }); return; }
+    if (request.url?.startsWith("/v1/evidence/facts")) { json(200, { items: [{ id: "fact-1", kind: "EVENT_CONTRIBUTION", source: { trace_id: traceId, span_id: "b".repeat(16) } }] }); return; }
+    if (request.url?.startsWith("/v1/evidence/traces")) { json(200, { items: [{ id: "trace-node-1", kind: "NODE", trace_id: traceId }] }); return; }
+    if (request.url === "/api/evolution/v1/evaluations:compute") {
+      let body = "";
+      request.on("data", (chunk) => { body += chunk; });
+      request.on("end", () => {
+        if (body === "{}") { json(400, { error: { code: "INVALID_REQUEST", retryable: false } }); return; }
+        const input = JSON.parse(body);
+        const side = (selection) => ({ tag: "SIDE_RESULT", receipt: {
+          selection, population_state: "COMPLETE", evidence_bindings: [{ fact_id: "fact-1" }], input_refs: [],
+        }, metric_results: [{ metric_id: "delivery-cycle-time-ms", metric_version: "2.0.0", slices: [{ slice_key: {}, state: "AVAILABLE", value: { kind: "DURATION_MS", value: "12", unit: "ms" } }] }] });
+        json(200, input.mode === "SINGLE" ? { api_version: 1, mode: "SINGLE", result: side(input.selection) } : {
+          api_version: 1, mode: "COMPARE", status: "FULL_COMPARE", left: side(input.left), right: side(input.right), deltas: [],
+        });
+      });
+      return;
+    }
+    json(404, { error: { code: "NOT_FOUND" } });
+  });
+  await new Promise((accept, reject) => fixtureServer.once("error", reject).listen(fixturePort, "127.0.0.1", accept));
+  const hostConfigFile = join(temporary, "wsr-loopback-host.json");
+  await writeFile(hostConfigFile, `${JSON.stringify({
+    schemaVersion: "wsr.loopback-host@1.0.0",
+    services: {
+      evidence: { baseUrl: `http://127.0.0.1:${fixturePort}`, healthPath: "/healthz", healthKind: "json-status-ok", contracts: [
+        { name: "evidence.query", revision: "0.1.0", operations: ["facts/read", "traces/read"] },
+        { name: "evidence.query", revision: "1.0.0", operations: ["tasks/list"] },
+      ] },
+      evolution: { baseUrl: `http://127.0.0.1:${fixturePort}`, healthPath: "/healthz", healthKind: "plain-ok", contracts: [
+        { name: "evolution.compute", revision: "1", operations: ["evaluations/compute"] },
+      ] },
+    }, observation: { baseUrl: `http://127.0.0.1:${fixturePort}` },
+  }, null, 2)}\n`);
   const overlay = join(temporary, "qualification.patch.yml");
   await writeFile(overlay, [
     "- id: ui-settings-models",
@@ -160,8 +215,7 @@ try {
     `    bindingFile: ${JSON.stringify(bindings)}`,
     "- id: wsr-studio",
     "  config:",
-    `    evidenceBaseUrl: http://127.0.0.1:${unavailablePort}`,
-    `    evolutionBaseUrl: http://127.0.0.1:${unavailablePort}`,
+    `    hostConfigFile: ${JSON.stringify(hostConfigFile)}`,
     "",
   ].join("\n"));
 
@@ -233,12 +287,13 @@ try {
 
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => /^(WSR )?Studio$/.test(node.textContent.trim())).click(); })()`);
   const studio = await waitFor(async () => cdp.evaluate(`(() => {
-    const dialog = document.querySelector('[data-wsr-studio="evaluate"]');
-    if (!dialog) return undefined;
-    const style = getComputedStyle(dialog);
-    return { role: dialog.getAttribute('role'), modal: dialog.getAttribute('aria-modal'), color: style.color, background: style.backgroundColor };
+    const view = document.querySelector('[data-wsr-studio-view="evaluate"]');
+    if (!view) return undefined;
+    const style = getComputedStyle(view);
+    return { role: view.getAttribute('role'), modal: view.getAttribute('aria-modal'), color: style.color, background: style.backgroundColor,
+      landmarks: ['nav', 'main'].every((name) => view.querySelector(name)), labelled: !!view.getAttribute('aria-labelledby') };
   })()`), "HARNESS_STUDIO_UNAVAILABLE");
-  if (studio.role !== "dialog" || studio.modal !== "true" || studio.color === studio.background) {
+  if (studio.role !== "region" || studio.modal !== null || !studio.landmarks || !studio.labelled || studio.color === studio.background) {
     throw new Error(`HARNESS_THEME_OR_ACCESSIBILITY_FAILED: ${JSON.stringify(studio)}`);
   }
   const closeFocused = await cdp.evaluate(`(() => {
@@ -247,24 +302,43 @@ try {
     return { focused: document.activeElement === close, inert: close.closest('[inert]') !== null };
   })()`);
   if (!closeFocused.focused || closeFocused.inert) throw new Error(`HARNESS_STUDIO_CLOSE_FOCUS_FAILED: ${JSON.stringify(closeFocused)}`);
+  await cdp.evaluate(`document.querySelector('button[aria-label="Close WSR Studio"]').blur()`);
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Load Tasks').click(); })()`);
+  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Alpha Task')`), "HARNESS_STUDIO_TASKS_FAILED");
+  await cdp.evaluate(`(() => { const row = [...document.querySelectorAll('li')].find((node) => node.textContent.includes('Alpha Task')); const input = row?.querySelector('input[type="checkbox"]'); if (!input) throw new Error('qualification task checkbox missing'); input.click(); })()`);
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Evaluate selection').click(); })()`);
+  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('delivery-cycle-time-ms@2.0.0')`), "HARNESS_STUDIO_METRIC_FAILED");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'View receipt').click(); })()`);
+  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Evidence bindings: 1')`), "HARNESS_STUDIO_RECEIPT_FAILED");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Back to Metric Results').click(); })()`);
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Fact drill-down').click(); })()`);
+  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('EVENT_CONTRIBUTION · fact-1')`), "HARNESS_STUDIO_FACT_FAILED");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Open recorded trace').click(); })()`);
+  const trace = await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('NODE · trace-node-1')`), "HARNESS_STUDIO_TRACE_FAILED");
+  const deepLink = await cdp.evaluate(`new URL(location.href).searchParams.get('wsr-studio')`);
+  if (!deepLink?.startsWith('/evaluate/trace/')) throw new Error(`HARNESS_STUDIO_DEEP_LINK_FAILED: ${deepLink}`);
+  await cdp.command("Emulation.setDeviceMetricsOverride", { width: 360, height: 720, deviceScaleFactor: 1, mobile: false });
+  const narrow = await cdp.evaluate(`(() => { const view = document.querySelector('[data-wsr-studio-view="evaluate"]'); return view.scrollWidth <= view.clientWidth; })()`);
+  if (!narrow) throw new Error("HARNESS_STUDIO_NARROW_OVERFLOW");
+  await cdp.command("Page.reload", { ignoreCache: true });
+  const restored = await waitFor(async () => cdp.evaluate(`(() => {
+    const view = document.querySelector('[data-wsr-studio-view="evaluate"]');
+    return Boolean(view && document.body.innerText.includes('NODE · trace-node-1'));
+  })()`), "HARNESS_STUDIO_REFRESH_RECOVERY_FAILED", 30_000);
+  fixtureAvailable = false;
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Back to Metric Results').click(); })()`);
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Load Tasks').click(); })()`);
+  const degraded = await waitFor(async () => cdp.evaluate(`(() => {
+    const alert = [...document.querySelectorAll('[role="alert"]')].find((node) => node.textContent.includes('Task list unavailable'));
+    return alert?.textContent.trim();
+  })()`), "HARNESS_STUDIO_DEGRADED_STATE_FAILED");
   await cdp.command("Page.bringToFront");
   await cdp.command("Input.dispatchKeyEvent", {
     type: "keyDown", key: "Escape", code: "Escape",
     windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 53,
   });
   await cdp.command("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 53 });
-  await waitFor(async () => cdp.evaluate(`document.querySelector('[data-wsr-studio="evaluate"]') === null`), "HARNESS_ESCAPE_CLOSE_FAILED", 3_000);
-
-  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => /^(WSR )?Studio$/.test(node.textContent.trim())).click(); })()`);
-  await waitFor(async () => cdp.evaluate(`(() => {
-    if (document.querySelector('[data-wsr-studio="evaluate"]') === null) return false;
-    return [...document.querySelectorAll('button')].some((node) => node.textContent.trim() === 'Load Tasks');
-  })()`), "HARNESS_STUDIO_REOPEN_FAILED");
-  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Load Tasks').click(); })()`);
-  const degraded = await waitFor(async () => cdp.evaluate(`(() => {
-    const alert = [...document.querySelectorAll('[role="alert"]')].find((node) => node.textContent.includes('Task list unavailable'));
-    return alert?.textContent.trim();
-  })()`), "HARNESS_STUDIO_DEGRADED_STATE_FAILED");
+  await waitFor(async () => cdp.evaluate(`document.querySelector('[data-wsr-studio-view="evaluate"]') === null`), "HARNESS_ESCAPE_CLOSE_FAILED", 3_000);
 
   const severe = cdp.events.filter((event) => event.method === "Runtime.exceptionThrown"
     || (event.method === "Log.entryAdded" && ["error"].includes(event.params.entry.level)));
@@ -278,7 +352,8 @@ try {
       csp: csp === "" ? "absent-in-dsh-0.1.1-rc.2" : createHash("sha256").update(csp).digest("hex"),
       activation: ["wsr-execution", "wsr-studio"],
     },
-    browser: { deliveryInventory: "empty-ready", keyboardDisclosure: `${before.expanded}->${after}`, studio, escapeClose: "native", reopen: "ready", degraded, errors: 0 },
+    browser: { deliveryInventory: "empty-ready", keyboardDisclosure: `${before.expanded}->${after}`, studio, escapeClose: "native",
+      evaluate: "metric-receipt-fact-trace", deepLink, refreshRecovery: restored, degraded, narrow, trace, errors: 0 },
   }, null, 2)}\n`);
 } catch (error) {
   process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`);
@@ -295,5 +370,6 @@ try {
   cdp?.close();
   if (chrome !== undefined) await stop(chrome);
   if (harness !== undefined) await stop(harness);
+  if (fixtureServer !== undefined) await new Promise((accept) => fixtureServer.close(accept));
   await rm(temporary, { recursive: true, force: true });
 }

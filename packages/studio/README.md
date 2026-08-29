@@ -1,7 +1,7 @@
 # WSR Studio
 
 `dsh-wsr-studio` is the independently installable **WSR Studio** bundle. It
-provides the Harness-native Evaluate overlay, Task single/compare selection,
+provides the Harness-native, non-modal top-level Evaluate view, Task single/compare selection,
 Metric Result, receipt, Fact, and recorded Trace navigation.
 
 The browser calls only the DSH Host channel. The Host gateway accepts exact
@@ -23,3 +23,7 @@ Service outage, restart, timeout, partial
 stack, malformed health, and incompatible health appear only as typed Studio
 degradation; they never change Execution Delivery lifecycle. Migration
 provenance is recorded in `src/client/UPSTREAM.md`.
+
+For local component work, `npm run studio:dev` mounts the production Studio
+plugin in a minimal development Harness at `127.0.0.1:4173`. It is not a
+separate product or release artifact and deliberately owns no domain logic.

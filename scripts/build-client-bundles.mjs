@@ -24,7 +24,7 @@ const bundles = Object.freeze([
     id: "dsh-wsr-studio",
     entry: "packages/studio/src/client/browser-entry.js",
     output: "packages/studio/lib/client.js",
-    external: ["react"],
+    external: ["react", "@deepseek-ai/dsh-client-ui-primitives"],
   }),
 ]);
 

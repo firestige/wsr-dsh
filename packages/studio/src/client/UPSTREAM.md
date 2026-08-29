@@ -10,3 +10,19 @@ retention, refresh recovery, and accessible loading/error states. This package
 does not copy Evidence or Evolution validators, formulas, persistence, or query
 semantics. Those remain owned by their versioned HTTP APIs. `wsr-ui` remains
 historical migration provenance and is not a second product publisher.
+
+## #120 handoff inventory
+
+The retained behavior mapping is complete for the current milestone:
+
+- `/evaluate` selection and compare -> `evaluate-model.js` plus the single
+  Evaluate page in `studio.js`;
+- metric result, receipt, Fact, and recorded Trace navigation -> formal
+  Evolution compute and Evidence read responses rendered by `studio.js`;
+- refresh/deep-link recovery -> the bounded `wsr-studio` host URL parameter;
+- the old standalone development role -> `dev/main.js`, which mounts the same
+  production plugin and is never packed.
+
+No old validator, formula, persistence adapter, HTTP transport, or execution
+archive was migrated. Repository rename/archive and historical disposition
+remain exclusively owned by workflow-self-recursive #120.
