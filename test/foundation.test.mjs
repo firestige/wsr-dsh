@@ -13,7 +13,7 @@ import {
   validateReleaseRequest,
   validateSourceFile,
 } from "../scripts/lib/foundation-policy.mjs";
-import { assertCompositionDump, commandFailureDetail, localSuiteOverrideYaml, localSuiteOverrides, suiteOnlyLayers } from "../scripts/lib/clean-profile-policy.mjs";
+import { assertCompositionDump, commandFailureDetail, localSuiteOverrideYaml, localSuiteOverrides, reconcileSuiteLayers, suiteOnlyLayers } from "../scripts/lib/clean-profile-policy.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 
@@ -25,7 +25,7 @@ test("the repository is one exact-version workspace with the three fixed bundle 
     "dsh-wsr-studio",
     "dsh-wsr",
   ]);
-  assert.equal(report.version, "0.0.0-development");
+  assert.equal(report.version, "0.1.0");
   assert.equal(report.dshVersion, "0.1.1-rc.2");
   assert.deepEqual(report.displayNames, {
     "dsh-wsr-execution": "WSR",
@@ -38,8 +38,8 @@ test("the suite composes exact Execution and Studio versions without an activati
   const patch = await readFile(join(root, "packages/suite/cordis.patch.yml"), "utf8");
 
   assert.deepEqual(suite.dependencies, {
-    "dsh-wsr-execution": "0.0.0-development",
-    "dsh-wsr-studio": "0.0.0-development",
+    "dsh-wsr-execution": "0.1.0",
+    "dsh-wsr-studio": "0.1.0",
   });
   assert.equal(suite.wsr.displayName, undefined);
   assert.equal(suite.main, undefined);
@@ -141,28 +141,19 @@ test("pack inventory requires license, notice, generated client and only declare
   );
 });
 
-test("release skeleton permits only an exact clean candidate and never stable promotion", () => {
+test("candidate construction permits only an exact clean candidate", () => {
   assert.doesNotThrow(() => validateReleaseRequest({
     channel: "candidate",
     clean: true,
     commit: "199331516bf2a58cf0b09bca5a8d630ec8c5f028",
-    version: "0.0.0-development",
+    version: "0.1.0",
   }));
-  assert.throws(
-    () => validateReleaseRequest({
-      channel: "stable",
-      clean: true,
-      commit: "199331516bf2a58cf0b09bca5a8d630ec8c5f028",
-      version: "0.0.0-development",
-    }),
-    (error) => error instanceof BoundaryViolation && error.code === "STABLE_PROMOTION_DISABLED",
-  );
   assert.throws(
     () => validateReleaseRequest({
       channel: "candidate",
       clean: false,
       commit: "199331516bf2a58cf0b09bca5a8d630ec8c5f028",
-      version: "0.0.0-development",
+      version: "0.1.0",
     }),
     (error) => error instanceof BoundaryViolation && error.code === "DIRTY_RELEASE",
   );
@@ -180,6 +171,16 @@ test("suite qualification removes direct component layers and keeps one suite la
     "@deepseek-ai/dsh-web-app",
     "dsh-wsr",
   ]);
+});
+
+test("suite reconcile collapses repeated add layers deterministically", () => {
+  assert.deepEqual(reconcileSuiteLayers([
+    "@deepseek-ai/dsh-base",
+    "dsh-wsr-execution",
+    "dsh-wsr-studio",
+    "dsh-wsr",
+    "dsh-wsr",
+  ]), ["@deepseek-ai/dsh-base", "dsh-wsr"]);
 });
 
 test("composed config requires each expected activation exactly once", () => {
@@ -202,14 +203,14 @@ test("local suite qualification resolves exact dependencies only from supplied a
     execution: "/tmp/dsh-wsr-execution.tgz",
     studio: "/tmp/dsh-wsr-studio.tgz",
   }), {
-    "dsh-wsr-execution@0.0.0-development": "file:/tmp/dsh-wsr-execution.tgz",
-    "dsh-wsr-studio@0.0.0-development": "file:/tmp/dsh-wsr-studio.tgz",
+    "dsh-wsr-execution@0.1.0": "file:/tmp/dsh-wsr-execution.tgz",
+    "dsh-wsr-studio@0.1.0": "file:/tmp/dsh-wsr-studio.tgz",
   });
 });
 
 test("pnpm 11 local qualification overrides are rendered into workspace policy", () => {
   assert.equal(localSuiteOverrideYaml({
-    "dsh-wsr-execution@0.0.0-development": "file:/tmp/execution.tgz",
-    "dsh-wsr-studio@0.0.0-development": "file:/tmp/studio.tgz",
-  }), 'overrides:\n  "dsh-wsr-execution@0.0.0-development": "file:/tmp/execution.tgz"\n  "dsh-wsr-studio@0.0.0-development": "file:/tmp/studio.tgz"\n');
+    "dsh-wsr-execution@0.1.0": "file:/tmp/execution.tgz",
+    "dsh-wsr-studio@0.1.0": "file:/tmp/studio.tgz",
+  }), 'overrides:\n  "dsh-wsr-execution@0.1.0": "file:/tmp/execution.tgz"\n  "dsh-wsr-studio@0.1.0": "file:/tmp/studio.tgz"\n');
 });

@@ -1,0 +1,7 @@
+# Release and installation lifecycle
+
+The three packages share one version. A candidate tag such as `0.1.0-rc.1` is built from one clean commit, then qualified before any stable publication. Promotion verifies the exact candidate bytes and publishes Execution, Studio, then the suite through npm OIDC. The final GitHub release is created with the repository-scoped release App.
+
+`dsh-wsr-execution` and `dsh-wsr-studio` can each be added, upgraded, rolled back, and removed independently. The suite pins both packages exactly and owns the single composition layer; it has no UI identity. When moving from separately installed components to the suite, remove the component bundle layers and retain one `dsh-wsr` layer. Repeated suite adds are reconciled to one suite layer. To return to Execution alone, remove the suite and Studio roots, retain/add the exact Execution root, and reconcile the profile to one `dsh-wsr-execution` layer.
+
+Release qualification exercises those transitions in temporary DSH homes, checks independent and suite composition, boots the real DSH web Host in Chrome, tests Studio downstream outage, and rejects duplicate activations. It also admits two Roles to distinct Copilot SDK and Codex CLI Provider descriptors through the exact published Execution owner without opening either Provider or reading credential material. Provider routing remains an Execution concern: installing the suite does not collapse the mapping to one Provider.

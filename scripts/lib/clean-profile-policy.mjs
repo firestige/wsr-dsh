@@ -6,6 +6,12 @@ export function suiteOnlyLayers(layers) {
   return layers.filter((name) => name !== "dsh-wsr-execution" && name !== "dsh-wsr-studio");
 }
 
+export function reconcileSuiteLayers(layers) {
+  if (!Array.isArray(layers) || !layers.includes("dsh-wsr")) throw new Error("CLEAN_PROFILE_SUITE_LAYER_MISSING");
+  const withoutWsr = layers.filter((name) => !["dsh-wsr-execution", "dsh-wsr-studio", "dsh-wsr"].includes(name));
+  return [...withoutWsr, "dsh-wsr"];
+}
+
 export function assertCompositionDump(dump, expectedIds) {
   for (const id of expectedIds) {
     const escaped = id.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
@@ -19,7 +25,7 @@ export function commandFailureDetail({ stdout, stderr }) {
   return [stdout, stderr].map((value) => value?.trim()).filter(Boolean).join("\n");
 }
 
-export function localSuiteOverrides({ execution, studio }, version = "0.0.0-development") {
+export function localSuiteOverrides({ execution, studio }, version = "0.1.0") {
   return {
     [`dsh-wsr-execution@${version}`]: `file:${execution}`,
     [`dsh-wsr-studio@${version}`]: `file:${studio}`,

@@ -31,7 +31,7 @@ test("Execution and Studio activate one Host and one generated browser module ea
     ],
     platform: "web",
   });
-  const ownerAsset = "https://github.com/firestige/execution-system/releases/download/0.1.4-rc.1/wsr-execution-0.1.4.tgz";
+  const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.1.4-rc.1/wsr-execution-0.1.4.tgz";
   assert.equal(execution.dependencies?.["wsr-execution"], undefined);
   assert.equal(execution.peerDependencies["wsr-execution"], "0.1.4");
   assert.deepEqual(execution.wsr.ownerAsset, {
@@ -60,7 +60,7 @@ test("Execution and Studio activate one Host and one generated browser module ea
   });
 
   const cleanQualifier = await readFile(join(root, "scripts/qualify-clean-profile.mjs"), "utf8");
-  assert.match(cleanQualifier, /const ownerAsset = "https:\/\/github\.com\/firestige\/execution-system\/releases\/download\/0\.1\.4-rc\.1\/wsr-execution-0\.1\.4\.tgz"/u);
+  assert.match(cleanQualifier, /const ownerAsset = "https:\/\/github\.com\/firestige\/wsr-execution\/releases\/download\/0\.1\.4-rc\.1\/wsr-execution-0\.1\.4\.tgz"/u);
   assert.match(cleanQualifier, /ownerRequired: true,[\s\S]*id: "execution"/u);
   assert.match(cleanQualifier, /ownerRequired: true,[\s\S]*id: "suite"/u);
 });

@@ -10,8 +10,8 @@ import { spawn, spawnSync } from "node:child_process";
 import { packWorkspaces } from "./lib/package-artifacts.mjs";
 
 const root = resolve(new URL("../", import.meta.url).pathname);
-const chromeBinary = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const ownerAsset = "https://github.com/firestige/execution-system/releases/download/0.1.4-rc.1/wsr-execution-0.1.4.tgz";
+const chromeBinary = process.env.WSR_CHROME_BINARY ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.1.4-rc.1/wsr-execution-0.1.4.tgz";
 
 function run(command, args, options = {}) {
   const answer = spawnSync(command, args, { encoding: "utf8", ...options });
@@ -126,8 +126,8 @@ try {
     },
     workflowSource: {
       kind: "github",
-      repository: "firestige/workflow-package",
-      releasesBaseUrl: "https://api.github.com/repos/firestige/workflow-package/releases",
+      repository: "firestige/wsr-workflow-package",
+      releasesBaseUrl: "https://api.github.com/repos/firestige/wsr-workflow-package/releases",
       assetPattern: "workflow-package-{name}-{version}.tar.gz",
     },
     runner: {

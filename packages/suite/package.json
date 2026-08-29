@@ -1,6 +1,6 @@
 {
   "name": "dsh-wsr",
-  "version": "0.0.0-development",
+  "version": "0.1.0",
   "description": "Exact composition bundle for compatible WSR and WSR Studio DSH packages.",
   "type": "module",
   "files": [
@@ -21,8 +21,8 @@
     "foundationOnly": false
   },
   "dependencies": {
-    "dsh-wsr-execution": "0.0.0-development",
-    "dsh-wsr-studio": "0.0.0-development"
+    "dsh-wsr-execution": "0.1.0",
+    "dsh-wsr-studio": "0.1.0"
   },
   "peerDependencies": {
     "@deepseek-ai/dsh": "0.1.1-rc.2"
