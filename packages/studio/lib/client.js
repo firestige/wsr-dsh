@@ -1,6 +1,7 @@
 window.__ModuleLoader__.load({
   id: "dsh-wsr-studio",
-  factory: (require) => {
+  factory: (platformRequire) => {
+    const require = platformRequire;
     const module = { exports: {} };
     const exports = module.exports;
 var __create = Object.create;
@@ -350,9 +351,14 @@ function createStudioGatewayPort(ctx) {
 function createOpenStore() {
   let open = false;
   let trigger;
+  let registerOverlay;
+  let disposeOverlay;
   const listeners = /* @__PURE__ */ new Set();
   const publish = () => {
     for (const listener of listeners) listener();
+  };
+  const mount = () => {
+    if (open && disposeOverlay === void 0 && registerOverlay !== void 0) disposeOverlay = registerOverlay();
   };
   return {
     getSnapshot: () => open,
@@ -360,13 +366,27 @@ function createOpenStore() {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+    attach(register) {
+      registerOverlay = register;
+      mount();
+      return () => {
+        registerOverlay = void 0;
+        const dispose = disposeOverlay;
+        disposeOverlay = void 0;
+        dispose?.();
+      };
+    },
     open(element) {
       trigger = element;
       open = true;
+      mount();
       publish();
     },
     close() {
       open = false;
+      const dispose = disposeOverlay;
+      disposeOverlay = void 0;
+      dispose?.();
       publish();
       trigger?.focus?.();
     }
@@ -408,17 +428,16 @@ function StudioAction(React2, store) {
 }
 function StudioOverlay(React2, store, controller) {
   return function StudioOverlayView() {
-    const open = React2.useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
     const snapshot = React2.useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
+    const close = () => store.close();
     React2.useEffect(() => {
-      if (!open || typeof document === "undefined") return void 0;
+      if (typeof document === "undefined") return void 0;
       const listener = (event) => {
-        if (event.key === "Escape") store.close();
+        if (event.key === "Escape") close();
       };
       document.addEventListener("keydown", listener);
       return () => document.removeEventListener("keydown", listener);
-    }, [open]);
-    if (!open) return null;
+    }, []);
     const presentation = projectStudioPresentation(snapshot);
     const taskItems = snapshot.taskList.items ?? [];
     const current = snapshot.selection?.mode === "single" ? snapshot.selection.taskIds : [];
@@ -451,14 +470,17 @@ function StudioOverlay(React2, store, controller) {
         "aria-modal": "true",
         "aria-labelledby": "wsr-studio-title",
         "data-wsr-studio": "evaluate",
-        style: frameStyle
+        style: frameStyle,
+        onKeyDown: (event) => {
+          if (event.key === "Escape") close();
+        }
       },
       React2.createElement(
         "header",
         null,
         React2.createElement("p", null, "Workflow Self-Recursive"),
         React2.createElement("h1", { id: "wsr-studio-title" }, "WSR Studio"),
-        React2.createElement("button", { type: "button", style: controlStyle, "aria-label": "Close WSR Studio", onClick: () => store.close() }, "Close")
+        React2.createElement("button", { type: "button", style: controlStyle, "aria-label": "Close WSR Studio", onClick: close }, "Close")
       ),
       React2.createElement("nav", { "aria-label": "Studio" }, React2.createElement("span", { "aria-current": "page" }, "Evaluate")),
       React2.createElement(
@@ -596,12 +618,12 @@ function createStudioClientPlugin({ React: React2, initialContext, storage } = {
         order: 60,
         label: "WSR Studio"
       }, StudioAction(React2, store)));
-      ctx.slots.inject("shell.overlay", () => ctx.slots.register({
+      ctx.slots.inject("shell.overlay", () => store.attach(() => ctx.slots.register({
         name: "shell.overlay",
         id: "wsr-studio",
         order: 60
-      }, StudioOverlay(React2, store, controller)));
-      return { controller, store };
+      }, StudioOverlay(React2, store, controller))));
+      return Object.assign(() => void 0, { controller, store });
     }
   };
 }

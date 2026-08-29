@@ -5,6 +5,11 @@ import {
   createDeliveryControlPlaneGateway,
   createDshSessionControlPlaneReadModel,
 } from "../src/host/delivery-control-plane.js";
+import { inject as intakeInject } from "../src/intake/plugin.js";
+
+test("DSH Intake declares the Host connection service used by its formal projection gateway", () => {
+  assert.ok(intakeInject.includes("connection"));
+});
 import {
   createDeliveryControlPlaneClient,
 } from "../src/client/delivery/control-plane-port.js";

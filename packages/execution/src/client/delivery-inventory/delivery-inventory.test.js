@@ -109,8 +109,8 @@ test("Harness composition owns the single slot and renders Workspace as a child 
     useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot(); },
   };
   function WorkspaceBrowser() { return null; }
-  const workspaceUi = { apply(ctx) {
-    ctx.slots.inject("sidebar.workspaces", () => ctx.slots.register({ name: "sidebar.workspaces" }, WorkspaceBrowser));
+  const workspaceUi = { apply(forked) {
+    forked.slots.inject("sidebar.workspaces", () => forked.slots.register({ name: "sidebar.workspaces" }, WorkspaceBrowser));
   } };
   const ctx = { slots: {
     inject(_name, factory) { return factory(); },

@@ -76,6 +76,5 @@ export function applyDeliverySidebar(ctx, { React, workspaceUi, inventory }) {
     : originalSlots.register(definition, component);
   slots.inject = (name, factory) => originalSlots.inject(name, factory);
   const forked = new Proxy(ctx, { get(target, property) { return property === "slots" ? slots : Reflect.get(target, property); } });
-  workspaceUi.apply(forked);
+  return workspaceUi.apply(forked);
 }
-

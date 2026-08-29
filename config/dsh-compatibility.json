@@ -11,7 +11,9 @@
   },
   "executionOwner": {
     "package": "wsr-execution",
-    "version": "0.1.3",
+    "version": "0.1.4",
+    "release": "0.1.4-rc.1",
+    "assetSha256": "4407239534795f528b3ca597583a682636dd539516f567434a128d5437345e4d",
     "revision": "0feb3333afd88e00444f80a7a0d135d2f93582db",
     "projection": "execution.delivery-control-plane@1.0.0"
   }

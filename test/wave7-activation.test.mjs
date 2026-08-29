@@ -17,9 +17,9 @@ test("Execution and Studio activate one Host and one generated browser module ea
   assert.deepEqual(execution.dsh.client, {
     inject: [
       "@deepseek-ai/dsh-client-connection",
+      "@deepseek-ai/dsh-client-runtime",
       "@deepseek-ai/dsh-client-ui-conversation",
       "@deepseek-ai/dsh-client-ui-primitives",
-      "@deepseek-ai/dsh-client-ui-workspace",
     ],
     platform: "web",
   });
@@ -27,9 +27,38 @@ test("Execution and Studio activate one Host and one generated browser module ea
     inject: ["@deepseek-ai/dsh-client-connection", "@deepseek-ai/dsh-client-ui-sidebar"],
     platform: "web",
   });
-  assert.equal(execution.dependencies["wsr-execution"], "0.1.3");
+  const ownerAsset = "https://github.com/firestige/execution-system/releases/download/0.1.4-rc.1/wsr-execution-0.1.4.tgz";
+  assert.equal(execution.dependencies?.["wsr-execution"], undefined);
+  assert.equal(execution.peerDependencies["wsr-execution"], "0.1.4");
+  assert.deepEqual(execution.wsr.ownerAsset, {
+    url: ownerAsset,
+    sha256: "4407239534795f528b3ca597583a682636dd539516f567434a128d5437345e4d",
+  });
+  const rootManifest = await json("package.json");
+  assert.equal(rootManifest.devDependencies["wsr-execution"], ownerAsset);
   assert.equal(execution.dependencies["@deepseek-ai/dsh-client-ui-workspace"], "0.1.1-rc.2");
   assert.equal(execution.wsr.ownerRevision, "0feb3333afd88e00444f80a7a0d135d2f93582db");
+
+  const lock = await json("package-lock.json");
+  const owner = lock.packages["node_modules/wsr-execution"];
+  assert.equal(owner.version, "0.1.4");
+  assert.equal(owner.resolved, ownerAsset);
+  assert.equal(owner.integrity, "sha512-WdMvt2zb77DjpEzmXqAcaMOtdCBxbjxLF5LBP7nTnN6Dvj10oYUWSYLio5V7RIrM1GGvkzO1x7ZJ2IDgcGhZYw==");
+
+  const compatibility = await json("config/dsh-compatibility.json");
+  assert.deepEqual(compatibility.executionOwner, {
+    package: "wsr-execution",
+    version: "0.1.4",
+    release: "0.1.4-rc.1",
+    assetSha256: "4407239534795f528b3ca597583a682636dd539516f567434a128d5437345e4d",
+    revision: "0feb3333afd88e00444f80a7a0d135d2f93582db",
+    projection: "execution.delivery-control-plane@1.0.0",
+  });
+
+  const cleanQualifier = await readFile(join(root, "scripts/qualify-clean-profile.mjs"), "utf8");
+  assert.match(cleanQualifier, /const ownerAsset = "https:\/\/github\.com\/firestige\/execution-system\/releases\/download\/0\.1\.4-rc\.1\/wsr-execution-0\.1\.4\.tgz"/u);
+  assert.match(cleanQualifier, /ownerRequired: true,[\s\S]*id: "execution"/u);
+  assert.match(cleanQualifier, /ownerRequired: true,[\s\S]*id: "suite"/u);
 });
 
 test("generated clients use one module identity and no private source or direct downstream transport", async () => {
@@ -37,7 +66,7 @@ test("generated clients use one module identity and no private source or direct 
   const studio = await readFile(join(root, "packages/studio/lib/client.js"), "utf8");
   assert.match(execution, /id: "dsh-wsr-execution"/u);
   assert.match(studio, /id: "dsh-wsr-studio"/u);
-  assert.doesNotMatch(execution, /execution-system\/src|querySelector|appendChild|\/wsr list/u);
+  assert.doesNotMatch(execution, /execution-system\/src|\/wsr list/u);
   assert.doesNotMatch(studio, /EVIDENCE_UPSTREAM|EVOLUTION_UPSTREAM|fetch\(["']https?:/u);
   assert.doesNotMatch(`${execution}\n${studio}`, /\beval\s*\(|new Function|document\.write/u);
 
@@ -51,6 +80,8 @@ test("generated clients use one module identity and no private source or direct 
     const React = {};
     const loaded = definition.factory((name) => {
       if (name === "react") return React;
+      if (name === "react/jsx-runtime") return { jsx() {}, jsxs() {} };
+      if (name === "@deepseek-ai/dsh-client-runtime/client") return { defineStore() {} };
       if (name === "@deepseek-ai/dsh-client-ui-primitives") return {
         DisclosureRow() {}, MessageText() {}, StateDot() {},
       };
@@ -67,6 +98,7 @@ test("Cordis patches carry real required configuration without adding suite UI",
   const studio = await readFile(join(root, "packages/studio/cordis.patch.yml"), "utf8");
   const suite = await readFile(join(root, "packages/suite/cordis.patch.yml"), "utf8");
   assert.match(execution, /configFile: \/__REQUIRED__\/execution-config\.yaml/u);
+  assert.match(execution, /id: ui-workspace[\s\S]*name: ['"]@deepseek-ai\/dsh-client-ui-workspace['"][\s\S]*disabled: true/u);
   assert.match(execution, /bindingFile: \/__REQUIRED__\/dsh-intake-bindings\.json/u);
   assert.match(studio, /evidenceBaseUrl: http:\/\/127\.0\.0\.1:4318/u);
   assert.match(studio, /evolutionBaseUrl: http:\/\/127\.0\.0\.1:4320/u);

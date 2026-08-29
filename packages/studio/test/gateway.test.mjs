@@ -200,3 +200,31 @@ test("registration uses a loopback-only DSH connection channel and disposes with
   await registered();
   assert.equal(observed[1], "disposed");
 });
+
+test("registration maps Studio domain failures onto the DSH transport error contract", async () => {
+  let registeredHandler;
+  const ctx = {
+    connection: {
+      rpc: {
+        handle(_channel, handler) {
+          registeredHandler = handler;
+          return () => undefined;
+        },
+      },
+    },
+  };
+  registerStudioGateway(ctx, {
+    ...bases,
+    fetcher: async () => { throw new Error("offline"); },
+  });
+
+  const result = await registeredHandler("tasks/list", { limit: 1 });
+  assert.deepEqual(result, {
+    ok: false,
+    error: {
+      code: "internal",
+      message: "Studio gateway (downstream-unavailable): Studio downstream is unavailable",
+      details: {},
+    },
+  });
+});

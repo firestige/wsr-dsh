@@ -8,6 +8,7 @@ import { assertCompositionDump, commandFailureDetail, localSuiteOverrideYaml, lo
 import { packWorkspaces } from "./lib/package-artifacts.mjs";
 
 const root = new URL("../", import.meta.url).pathname;
+const ownerAsset = "https://github.com/firestige/execution-system/releases/download/0.1.4-rc.1/wsr-execution-0.1.4.tgz";
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: "utf8", ...options });
@@ -17,12 +18,13 @@ function run(command, args, options = {}) {
   return result.stdout;
 }
 
-async function profileCase({ archives, expectedIds, rewriteSuite = false, temporary, id }) {
+async function profileCase({ archives, expectedIds, ownerRequired = false, rewriteSuite = false, temporary, id }) {
   const home = resolve(temporary, `home-${id}`);
   const env = { ...process.env, DSH_HOME: home };
   const manifestPath = resolve(home, "profiles/web/package.json");
+  const roots = ownerRequired ? [ownerAsset, ...archives] : archives;
   if (rewriteSuite) {
-    run("dsh", ["plugin", "--profile", "web", "add", ...archives.slice(0, 2), "--ignore-scripts"], { env });
+    run("dsh", ["plugin", "--profile", "web", "add", ownerAsset, ...archives.slice(0, 2), "--ignore-scripts"], { env });
     const workspacePolicyPath = resolve(home, "profiles/web/pnpm-workspace.yaml");
     const workspacePolicy = await readFile(workspacePolicyPath, "utf8");
     if (/^overrides:/mu.test(workspacePolicy)) throw new Error("CLEAN_PROFILE_OVERRIDE_COLLISION");
@@ -30,7 +32,7 @@ async function profileCase({ archives, expectedIds, rewriteSuite = false, tempor
     await writeFile(workspacePolicyPath, `${workspacePolicy.trimEnd()}\n${overrides}`);
     run("dsh", ["plugin", "--profile", "web", "add", archives[2], "--ignore-scripts"], { env });
   } else {
-    run("dsh", ["plugin", "--profile", "web", "add", ...archives, "--ignore-scripts"], { env });
+    run("dsh", ["plugin", "--profile", "web", "add", ...roots, "--ignore-scripts"], { env });
   }
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   if (rewriteSuite) {
@@ -54,11 +56,18 @@ try {
     path,
   ]));
   const reports = [];
-  reports.push(await profileCase({ archives: [byName.execution], expectedIds: ["wsr-execution"], temporary, id: "execution" }));
+  reports.push(await profileCase({
+    archives: [byName.execution],
+    expectedIds: ["wsr-execution"],
+    ownerRequired: true,
+    temporary,
+    id: "execution",
+  }));
   reports.push(await profileCase({ archives: [byName.studio], expectedIds: ["wsr-studio"], temporary, id: "studio" }));
   reports.push(await profileCase({
     archives: [byName.execution, byName.studio, byName.suite],
     expectedIds: ["wsr-execution", "wsr-studio"],
+    ownerRequired: true,
     rewriteSuite: true,
     temporary,
     id: "suite",

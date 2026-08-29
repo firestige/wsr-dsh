@@ -9,7 +9,7 @@ import { applyDeliverySidebar } from "./delivery-inventory/sidebar.js";
 
 export const name = "wsr-execution-client";
 export const inject = Object.freeze([
-  "connection", "conversationEvents", "sessions", "slots",
+  "connection", "conversationEvents", "sessions", "slots", "workspaces", "locale",
 ]);
 
 export function apply(ctx) {

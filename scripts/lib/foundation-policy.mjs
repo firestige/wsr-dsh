@@ -156,7 +156,8 @@ function patchRows(patch) {
 }
 
 function validatePatch(name, patch) {
-  const rows = patchRows(patch);
+  const workspaceForkOverride = /^- id: ui-workspace\s*$\n\s+name: ['"]@deepseek-ai\/dsh-client-ui-workspace['"]\s*$\n\s+disabled: true\s*$/mu.test(patch);
+  const rows = patchRows(patch).filter((row) => !(workspaceForkOverride && row.id === "ui-workspace"));
   const expected = name === "dsh-wsr-execution"
     ? [{ id: "wsr-execution", name: "dsh-wsr-execution" }]
     : name === "dsh-wsr-studio"
@@ -167,6 +168,9 @@ function validatePatch(name, patch) {
         ];
   if (JSON.stringify(rows) !== JSON.stringify(expected)) {
     throw new BoundaryViolation("ACTIVATION_GRAPH", `${name} patch is ${JSON.stringify(rows)}`);
+  }
+  if ((name === "dsh-wsr-execution") !== workspaceForkOverride) {
+    throw new BoundaryViolation("WORKSPACE_UI_FORK_ACTIVATION", name);
   }
 }
 

@@ -10,7 +10,7 @@ import {
 } from "../host/delivery-control-plane.js";
 
 export const name = "workflow-execution";
-export const inject = ["commands", "tools", "attachments", "agents", "workspaceRegistry"];
+export const inject = ["commands", "tools", "attachments", "agents", "workspaceRegistry", "connection"];
 
 function profile(candidate) {
   if (candidate === null || typeof candidate !== "object" || Array.isArray(candidate)

@@ -63,11 +63,12 @@ test("Harness registration adds one Studio entry and an overlay without replacin
     useState(initial) { return [typeof initial === "function" ? initial() : initial, () => undefined]; },
     useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot(); },
   };
-  createStudioClientPlugin({ React }).apply(ctx);
+  const runtime = createStudioClientPlugin({ React }).apply(ctx);
   assert.deepEqual(injected, ["sidebar.footer.action", "shell.overlay"]);
+  assert.deepEqual(registrations.map(({ options }) => [options.name, options.id]), [["sidebar.footer.action", "wsr-studio"]]);
+  runtime.store.open({ focus() {} });
   assert.deepEqual(registrations.map(({ options }) => [options.name, options.id]), [
-    ["sidebar.footer.action", "wsr-studio"],
-    ["shell.overlay", "wsr-studio"],
+    ["sidebar.footer.action", "wsr-studio"], ["shell.overlay", "wsr-studio"],
   ]);
   assert.ok(registrations.every(({ options }) => !["conversation", "sidebar.workspaces"].includes(options.name)));
 });
@@ -91,7 +92,10 @@ test("the real slot components expose single/compare Task selection and reposito
     connection: { rpc: { call: async () => ({ ok: true, value: {} }) } },
     slots: {
       inject(_name, factory) { factory(); },
-      register(options, component) { components.set(options.name, component); return () => undefined; },
+      register(options, component) {
+        components.set(options.name, component);
+        return () => components.delete(options.name);
+      },
     },
   };
   const React = {
@@ -101,6 +105,7 @@ test("the real slot components expose single/compare Task selection and reposito
     useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot(); },
   };
   const runtime = createStudioClientPlugin({ React, initialContext: { taskId: "task-a", repository: "repo-a" } }).apply(ctx);
+  assert.equal(typeof runtime, "function");
   runtime.store.open({ focus() {} });
   const rendered = components.get("shell.overlay")();
   const text = textOf(rendered);
@@ -112,6 +117,11 @@ test("the real slot components expose single/compare Task selection and reposito
   assert.ok(inputs.some(({ props }) => props.type === "radio" && props.value === "single"));
   assert.ok(inputs.some(({ props }) => props.type === "radio" && props.value === "compare"));
   assert.doesNotMatch(text, /Builder|improvement/i);
+  const dialog = elementsOf(rendered).find((element) => element.props?.role === "dialog");
+  assert.equal(typeof dialog.props.onKeyDown, "function");
+  dialog.props.onKeyDown({ key: "Escape" });
+  assert.equal(runtime.store.getSnapshot(), false);
+  assert.equal(components.has("shell.overlay"), false);
 });
 
 test("the browser source has no direct downstream transport, credential, or mutation escape hatch", async () => {

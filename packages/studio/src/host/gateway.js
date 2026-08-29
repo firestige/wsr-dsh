@@ -221,9 +221,21 @@ export function createStudioGatewayHandler(options) {
 }
 
 export function registerStudioGateway(ctx, options) {
+  const handle = createStudioGatewayHandler(options);
   return ctx.connection.rpc.handle(
     "/wsr-studio",
-    createStudioGatewayHandler(options),
+    async (...args) => {
+      const result = await handle(...args);
+      if (result.ok) return result;
+      return {
+        ok: false,
+        error: {
+          code: "internal",
+          message: `Studio gateway (${result.error.code}): ${result.error.message}`,
+          details: {},
+        },
+      };
+    },
     { authority: "loopback" },
   );
 }

@@ -24,13 +24,35 @@ export function createStudioGatewayPort(ctx) {
 function createOpenStore() {
   let open = false;
   let trigger;
+  let registerOverlay;
+  let disposeOverlay;
   const listeners = new Set();
   const publish = () => { for (const listener of listeners) listener(); };
+  const mount = () => {
+    if (open && disposeOverlay === undefined && registerOverlay !== undefined) disposeOverlay = registerOverlay();
+  };
   return {
     getSnapshot: () => open,
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
-    open(element) { trigger = element; open = true; publish(); },
-    close() { open = false; publish(); trigger?.focus?.(); },
+    attach(register) {
+      registerOverlay = register;
+      mount();
+      return () => {
+        registerOverlay = undefined;
+        const dispose = disposeOverlay;
+        disposeOverlay = undefined;
+        dispose?.();
+      };
+    },
+    open(element) { trigger = element; open = true; mount(); publish(); },
+    close() {
+      open = false;
+      const dispose = disposeOverlay;
+      disposeOverlay = undefined;
+      dispose?.();
+      publish();
+      trigger?.focus?.();
+    },
   };
 }
 
@@ -67,15 +89,14 @@ function StudioAction(React, store) {
 
 function StudioOverlay(React, store, controller) {
   return function StudioOverlayView() {
-    const open = React.useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
     const snapshot = React.useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
+    const close = () => store.close();
     React.useEffect(() => {
-      if (!open || typeof document === "undefined") return undefined;
-      const listener = (event) => { if (event.key === "Escape") store.close(); };
+      if (typeof document === "undefined") return undefined;
+      const listener = (event) => { if (event.key === "Escape") close(); };
       document.addEventListener("keydown", listener);
       return () => document.removeEventListener("keydown", listener);
-    }, [open]);
-    if (!open) return null;
+    }, []);
     const presentation = projectStudioPresentation(snapshot);
     const taskItems = snapshot.taskList.items ?? [];
     const current = snapshot.selection?.mode === "single" ? snapshot.selection.taskIds : [];
@@ -106,11 +127,12 @@ function StudioOverlay(React, store, controller) {
     return React.createElement("section", {
       role: "dialog", "aria-modal": "true", "aria-labelledby": "wsr-studio-title",
       "data-wsr-studio": "evaluate", style: frameStyle,
+      onKeyDown: (event) => { if (event.key === "Escape") close(); },
     },
     React.createElement("header", null,
       React.createElement("p", null, "Workflow Self-Recursive"),
       React.createElement("h1", { id: "wsr-studio-title" }, "WSR Studio"),
-      React.createElement("button", { type: "button", style: controlStyle, "aria-label": "Close WSR Studio", onClick: () => store.close() }, "Close")),
+      React.createElement("button", { type: "button", style: controlStyle, "aria-label": "Close WSR Studio", onClick: close }, "Close")),
     React.createElement("nav", { "aria-label": "Studio" }, React.createElement("span", { "aria-current": "page" }, "Evaluate")),
     React.createElement("main", { tabIndex: -1 },
       snapshot.phase === "loading" || snapshot.refreshing
@@ -196,10 +218,10 @@ export function createStudioClientPlugin({ React, initialContext, storage } = {}
       ctx.slots.inject("sidebar.footer.action", () => ctx.slots.register({
         name: "sidebar.footer.action", id: "wsr-studio", order: 60, label: "WSR Studio",
       }, StudioAction(React, store)));
-      ctx.slots.inject("shell.overlay", () => ctx.slots.register({
+      ctx.slots.inject("shell.overlay", () => store.attach(() => ctx.slots.register({
         name: "shell.overlay", id: "wsr-studio", order: 60,
-      }, StudioOverlay(React, store, controller)));
-      return { controller, store };
+      }, StudioOverlay(React, store, controller))));
+      return Object.assign(() => undefined, { controller, store });
     },
   };
 }
