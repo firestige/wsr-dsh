@@ -231,8 +231,8 @@ test("renders process through DisclosureRow and final output as a persistent ass
   assert.deepEqual(calls.map(({ layer }) => layer), ["action", "action", "final"]);
 });
 
-test("the Harness binding imports the public primitive root and no private DSH source", async () => {
-  const source = await readFile(resolve(import.meta.dirname, "../src/action-presentation/harness-client.js"), "utf8");
+test("the unified Harness binding imports the public primitive root and no private DSH source", async () => {
+  const source = await readFile(resolve(import.meta.dirname, "../src/client/browser-entry.js"), "utf8");
   assert.match(source, /import React from ["']react["']/u);
   assert.match(source, /import \{ DisclosureRow, MessageText, StateDot \} from ["']@deepseek-ai\/dsh-client-ui-primitives["']/u);
   assert.doesNotMatch(source, /\/src\/|tool\.call\.toolview/u);

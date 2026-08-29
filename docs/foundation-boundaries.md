@@ -14,7 +14,12 @@ Domain owner repositories must not depend on any `dsh-wsr*` package. Their manif
 
 ## Deferred Workspace UI fork
 
-The accepted strategy is a fixed-version fork of `@deepseek-ai/dsh-client-ui-workspace@0.1.1-rc.2` for the later Delivery resource integration. The compatibility record preserves that decision, but this foundation neither copies nor activates the fork. Wave 7 must qualify its source attribution and exact DSH compatibility before activation.
+The active Wave 7 strategy is a fixed-version composition fork of
+`@deepseek-ai/dsh-client-ui-workspace@0.1.1-rc.2`. WSR owns the one
+`sidebar.workspaces` slot and renders the upstream Workspace component as a
+React child beside Delivery; it neither vendors Harness source nor reparents
+DOM. Exact npm integrity, source hashes, and MIT attribution ship with the
+Execution bundle.
 
 ## Release state
 

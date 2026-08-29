@@ -1,6 +1,4 @@
-export const name = "wsr-execution";
-export const inject = [];
-
-export function apply() {
-  // Foundation-only activation. Wave 7 owns all Execution user surfaces.
-}
+export * from "./host/delivery-control-plane.js";
+export * from "./intake/binding-repository.js";
+export * from "./intake/command.js";
+export * from "./intake/plugin.js";

@@ -14,7 +14,7 @@
     "packages/suite"
   ],
   "scripts": {
-    "build": "node scripts/verify-foundation.mjs",
+    "build": "node scripts/build-client-bundles.mjs && node scripts/verify-foundation.mjs",
     "test": "node --test",
     "test:foundation": "node --test test/foundation.test.mjs",
     "boundaries:check": "node scripts/check-boundaries.mjs",
@@ -24,5 +24,8 @@
     "qualify:clean-profile": "node scripts/qualify-clean-profile.mjs",
     "release:candidate": "node scripts/build-release-candidate.mjs"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "esbuild": "0.25.9"
+  }
 }

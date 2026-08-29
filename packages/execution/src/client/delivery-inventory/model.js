@@ -1,6 +1,8 @@
-const SCHEMA_VERSION = "execution.delivery-inventory@1.0.0";
-const PHASES = new Set(["loading", "ready", "reconnecting", "error"]);
-const AVAILABILITY = new Set(["bound", "detached", "recoverable"]);
+const CONTROL_PLANE_SCHEMA = "execution.delivery-control-plane@1.0.0";
+const LIFECYCLES = new Set([
+  "BOUND", "START_UNCERTAIN", "RUNNING_CORRELATED", "START_FAILED",
+  "RESULT_UNRESOLVED", "TERMINAL_HANDLING", "TERMINAL",
+]);
 const WORKSPACE_KEY = "wsr.sidebar.workspace.expanded.v1";
 const DELIVERY_KEY = "wsr.sidebar.delivery.expanded.v1";
 
@@ -12,63 +14,67 @@ function validString(value) {
   return typeof value === "string" && value.length > 0 && value.length <= 512;
 }
 
-function rowsFrom(items, selectedSessionId) {
-  if (!Array.isArray(items)) return undefined;
-  const identities = new Set();
-  const rows = [];
-  for (const item of items) {
-    if (item === null || typeof item !== "object" || Array.isArray(item)
-      || !validString(item.deliveryId) || !validString(item.label)
-      || !validString(item.statusLabel) || !validString(item.sortKey)
-      || !AVAILABILITY.has(item.availability)
-      || !(item.sessionId === null || validString(item.sessionId))
-      || (item.availability === "bound" && item.sessionId === null)
-      || (item.availability !== "bound" && item.sessionId !== null)
-      || identities.has(item.deliveryId)) return undefined;
-    identities.add(item.deliveryId);
-    rows.push(Object.freeze({
-      deliveryId: item.deliveryId,
-      label: item.label,
-      statusLabel: item.statusLabel,
-      sessionId: item.sessionId,
-      availability: item.availability,
-      selected: item.sessionId !== null && item.sessionId === selectedSessionId,
-      sortKey: item.sortKey,
-    }));
-  }
-  rows.sort((left, right) => left.sortKey.localeCompare(right.sortKey) || left.deliveryId.localeCompare(right.deliveryId));
-  return Object.freeze(rows.map(({ sortKey: _sortKey, ...row }) => Object.freeze(row)));
+function lifecycleLabel(delivery) {
+  if (delivery.lifecycle === "TERMINAL") return delivery.terminal?.outcome ?? "Terminal";
+  return delivery.lifecycle.toLowerCase().replaceAll("_", " ").replace(/^./u, (value) => value.toUpperCase());
 }
 
-export function projectDeliveryInventory(snapshot, { selectedSessionId } = {}) {
-  if (snapshot === null || typeof snapshot !== "object" || Array.isArray(snapshot)
-    || snapshot.schemaVersion !== SCHEMA_VERSION || !PHASES.has(snapshot.phase)
-    || !Number.isSafeInteger(snapshot.revision) || snapshot.revision < 0) return errorView();
-  const rows = rowsFrom(snapshot.items, selectedSessionId);
-  if (rows === undefined) return errorView();
-  if (snapshot.phase === "loading") return Object.freeze({ kind: "loading", role: "status", label: "Loading Deliveries", rows });
-  if (snapshot.phase === "reconnecting") return Object.freeze({ kind: "reconnecting", role: "status", label: "Reconnecting to Delivery inventory", rows });
-  if (snapshot.phase === "error") {
-    const label = validString(snapshot.error?.message) ? snapshot.error.message : "Delivery inventory unavailable";
-    return errorView(label);
+function rowsFrom(deliveries, selectedSessionId) {
+  if (!Array.isArray(deliveries)) return undefined;
+  const identities = new Set();
+  const rows = [];
+  for (const delivery of deliveries) {
+    const sessionCorrelation = delivery?.navigation?.sessionCorrelation ?? null;
+    if (delivery === null || typeof delivery !== "object" || Array.isArray(delivery)
+      || !validString(delivery.deliveryId) || identities.has(delivery.deliveryId)
+      || !LIFECYCLES.has(delivery.lifecycle)
+      || typeof delivery.detached !== "boolean" || typeof delivery.recoverable !== "boolean"
+      || !validString(delivery.task?.identity)
+      || !(delivery.task.displayName === null || validString(delivery.task.displayName))
+      || !(sessionCorrelation === null || validString(sessionCorrelation))) return undefined;
+    identities.add(delivery.deliveryId);
+    rows.push(Object.freeze({
+      deliveryId: delivery.deliveryId,
+      label: delivery.task.displayName ?? delivery.task.identity,
+      statusLabel: lifecycleLabel(delivery),
+      sessionId: sessionCorrelation,
+      availability: sessionCorrelation !== null ? "bound" : delivery.recoverable ? "recoverable" : "detached",
+      selected: sessionCorrelation !== null && sessionCorrelation === selectedSessionId,
+    }));
   }
+  rows.sort((left, right) => left.deliveryId.localeCompare(right.deliveryId));
+  return Object.freeze(rows);
+}
+
+/** Project only the formal Execution DeliveryControlPlaneSnapshot. */
+export function projectDeliveryInventory(state, { selectedSessionId } = {}) {
+  if (state?.kind === "loading") return Object.freeze({ kind: "loading", role: "status", label: "Loading Deliveries", rows: Object.freeze([]) });
+  if (state?.kind === "error") return errorView(validString(state.message) ? state.message : undefined);
+  if (!new Set(["ready", "reconnecting"]).has(state?.kind)) return errorView();
+  const snapshot = state.snapshot;
+  if (snapshot === null || typeof snapshot !== "object" || Array.isArray(snapshot)
+    || snapshot.schemaVersion !== CONTROL_PLANE_SCHEMA
+    || !Number.isSafeInteger(snapshot.generation) || snapshot.generation < 1) return errorView();
+  const rows = rowsFrom(snapshot.deliveries, selectedSessionId);
+  if (rows === undefined) return errorView();
+  if (state.kind === "reconnecting") return Object.freeze({ kind: "reconnecting", role: "status", label: "Reconnecting to Delivery inventory", rows });
   if (rows.length === 0) return Object.freeze({ kind: "empty", role: "status", label: "No Deliveries", rows });
   return Object.freeze({ kind: "ready", role: "list", label: "Deliveries", rows });
 }
 
-export function createDeliveryInventoryController(projection) {
-  if (projection === null || typeof projection !== "object"
-    || typeof projection.getSnapshot !== "function" || typeof projection.subscribe !== "function") {
+export function createDeliveryInventoryController(inventory) {
+  if (inventory === null || typeof inventory !== "object"
+    || typeof inventory.getSnapshot !== "function" || typeof inventory.subscribe !== "function") {
     throw new TypeError("Execution inventory projection must be read-only and subscribable");
   }
   const controller = {
     getSnapshot() {
-      try { return projectDeliveryInventory(projection.getSnapshot()); }
+      try { return projectDeliveryInventory(inventory.getSnapshot()); }
       catch { return errorView(); }
     },
     subscribe(listener) {
       if (typeof listener !== "function") throw new TypeError("inventory listener must be a function");
-      const unsubscribe = projection.subscribe(() => listener(controller.getSnapshot()));
+      const unsubscribe = inventory.subscribe(() => listener(controller.getSnapshot()));
       if (typeof unsubscribe !== "function") throw new TypeError("inventory subscription must return an unsubscribe function");
       return unsubscribe;
     },

@@ -1,3 +1,6 @@
 - insert:
     - id: wsr-execution
       name: 'dsh-wsr-execution'
+      config:
+        configFile: /__REQUIRED__/execution-config.yaml
+        bindingFile: /__REQUIRED__/dsh-intake-bindings.json

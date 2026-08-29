@@ -18,7 +18,7 @@
   },
   "wsr": {
     "role": "exact-composition",
-    "foundationOnly": true
+    "foundationOnly": false
   },
   "dependencies": {
     "dsh-wsr-execution": "0.0.0-development",
