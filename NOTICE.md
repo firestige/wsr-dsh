@@ -19,5 +19,5 @@ The Execution domain owner is installed from the immutable
 `4407239534795f528b3ca597583a682636dd539516f567434a128d5437345e4d`),
 corresponding to owner revision
 `0feb3333afd88e00444f80a7a0d135d2f93582db`. Its source and license remain
-owned and distributed by `firestige/execution-system`; no domain source is
+owned and distributed by `firestige/wsr-execution`; no domain source is
 copied into this adapter repository.

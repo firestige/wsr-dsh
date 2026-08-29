@@ -2,9 +2,7 @@
 
 This repository is the release authority for the WSR Execution, WSR Studio, and combined WSR suite integrations for DeepSeek Harness.
 
-The repository is under Iteration 6 qualification and is not yet
-production-ready. Execution and Studio feature bundles are active in source;
-publication and stable promotion remain disabled until #122 passes.
+Release `0.1.0` is the first qualified Execution, Studio, and suite package set.
 
 Workspace packages:
 
@@ -12,7 +10,7 @@ Workspace packages:
 - `dsh-wsr-studio` — display name `WSR Studio`
 - `dsh-wsr` — exact combination suite with no additional UI identity
 
-All three packages share version `0.0.0-development`. The suite binds the other
+All three packages share version `0.1.0`. The suite binds the other
 two by that exact version. DeepSeek Harness compatibility is frozen to
 `0.1.1-rc.2`; the Execution projection contract is pinned to owner merge
 `0feb3333afd88e00444f80a7a0d135d2f93582db`.
@@ -44,9 +42,13 @@ domain-owner repositories that depend back on a `dsh-wsr*` package.
 
 `npm run pack:verify` creates temporary archives and checks their actual tar inventories, including license and source notices. `npm run qualify:clean-profile` uses temporary DSH homes, the pinned local DSH CLI, and the immutable Execution owner asset; it performs no publication. `npm run qualify:real-harness` additionally boots the real Host and Chrome against a clean profile. DSH `0.1.1-rc.2` emits no CSP header, so the automated bundle gate separately rejects `eval`, `new Function`, and inline-script injection; qualification does not claim a CSP header supplied by DSH.
 
-The manual Release Promote workflow first builds an unpublished candidate and
-verifies its checksums, then intentionally fails. There is no npm publish or
-stable promotion path before #122.
+The Release Candidate workflow runs clean-profile, lifecycle, real-Harness,
+downstream-outage, and remote-artifact gates before creating an immutable
+prerelease. Release Promote verifies the same bytes and qualification record,
+publishes the component packages before the exact suite through npm OIDC, and
+uses the scoped release App for the final GitHub release. See [release and
+installation lifecycle](docs/release-lifecycle.md), [changelog](CHANGELOG.md),
+and [security policy](SECURITY.md).
 
 See [foundation boundaries](docs/foundation-boundaries.md) for repository ownership and the deferred Workspace UI fork decision.
 

@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-import { mkdir, rm, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { createHash } from "node:crypto";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { basename, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
 import { createProvenanceStatement, validateReleaseRequest, validateRepository } from "./lib/foundation-policy.mjs";
 import { packWorkspaces } from "./lib/package-artifacts.mjs";
+import { assertCandidateTag } from "./lib/release-policy.mjs";
 
 const root = new URL("../", import.meta.url).pathname;
 const output = resolve(process.argv[2] ?? resolve(root, "artifacts/candidate"));
@@ -15,30 +17,55 @@ function git(...args) {
   return result.stdout.trim();
 }
 
+async function digest(path) {
+  return `sha256:${createHash("sha256").update(await readFile(path)).digest("hex")}`;
+}
+
 try {
   const repository = await validateRepository(root);
   const commit = git("rev-parse", "HEAD");
   const clean = git("status", "--porcelain").length === 0;
-  validateReleaseRequest({
-    channel: process.env.WSR_RELEASE_CHANNEL,
-    clean,
-    commit,
-    version: repository.version,
-  });
+  const candidateTag = process.env.WSR_CANDIDATE_TAG;
+  validateReleaseRequest({ channel: process.env.WSR_RELEASE_CHANNEL, clean, commit, version: repository.version });
+  assertCandidateTag(candidateTag, repository.version);
   await rm(output, { recursive: true, force: true });
   await mkdir(output, { recursive: true });
   const archives = await packWorkspaces({ root, output });
+  const order = ["dsh-wsr-execution", "dsh-wsr-studio", "dsh-wsr"];
+  const packages = [];
+  for (const file of archives) {
+    const name = basename(file).startsWith("dsh-wsr-execution-") ? "dsh-wsr-execution"
+      : basename(file).startsWith("dsh-wsr-studio-") ? "dsh-wsr-studio" : "dsh-wsr";
+    packages.push({ package: name, version: repository.version, file: basename(file), sha256: await digest(file) });
+  }
+  packages.sort((left, right) => order.indexOf(left.package) - order.indexOf(right.package));
   const provenance = await createProvenanceStatement({ artifacts: archives, commit, version: repository.version });
   await writeFile(resolve(output, "provenance.json"), `${JSON.stringify(provenance, null, 2)}\n`, { flag: "wx" });
+  const frozen = JSON.parse(await readFile(resolve(root, "config/dsh-compatibility.json"), "utf8"));
   const compatibility = {
-    schemaVersion: "wsr.dsh.release-compatibility@1.0.0",
-    version: repository.version,
-    dsh: repository.dshVersion,
-    packages: repository.packages.map(({ name }) => name),
-    promotion: "disabled-until-issue-122",
+    schemaVersion: "wsr.dsh.release-compatibility@1.0.0", packageVersion: repository.version,
+    dsh: repository.dshVersion, node: "24.12.0", npm: "11.6.2",
+    executionOwner: frozen.executionOwner, packages: packages.map(({ package: name }) => name),
   };
-  await writeFile(resolve(output, "compatibility.json"), `${JSON.stringify(compatibility, null, 2)}\n`, { flag: "wx" });
-  process.stdout.write(`candidate skeleton written to ${output}\n`);
+  await writeFile(resolve(output, "compatibility-matrix.json"), `${JSON.stringify(compatibility, null, 2)}\n`, { flag: "wx" });
+  const sbom = {
+    spdxVersion: "SPDX-2.3", dataLicense: "CC0-1.0", SPDXID: "SPDXRef-DOCUMENT", name: `wsr-dsh-${repository.version}`,
+    documentNamespace: `https://github.com/firestige/wsr-dsh/releases/${candidateTag}/sbom`,
+    creationInfo: { created: new Date().toISOString(), creators: ["Tool: wsr-dsh-release"] },
+    packages: packages.map(({ package: name, version }) => ({ name, SPDXID: `SPDXRef-Package-${name}`, versionInfo: version, downloadLocation: "NOASSERTION", filesAnalyzed: false, licenseConcluded: "Apache-2.0", licenseDeclared: "Apache-2.0", copyrightText: "NOASSERTION" })),
+  };
+  await writeFile(resolve(output, "sbom.spdx.json"), `${JSON.stringify(sbom, null, 2)}\n`, { flag: "wx" });
+  const metadata = {
+    schemaVersion: "wsr.dsh.release-metadata@1.0.0", repository: "firestige/wsr-dsh", commit,
+    candidateTag, packageVersion: repository.version, packages,
+    supportFiles: ["provenance.json", "compatibility-matrix.json", "sbom.spdx.json"],
+  };
+  await writeFile(resolve(output, "release-metadata.json"), `${JSON.stringify(metadata, null, 2)}\n`, { flag: "wx" });
+  const checksummed = [...packages.map(({ file }) => file), ...metadata.supportFiles, "release-metadata.json"];
+  const checksums = [];
+  for (const file of checksummed.sort()) checksums.push(`${(await digest(resolve(output, file))).slice(7)}  ${file}`);
+  await writeFile(resolve(output, "SHA256SUMS"), `${checksums.join("\n")}\n`, { flag: "wx" });
+  process.stdout.write(`qualified candidate inputs written to ${output}\n`);
 } catch (error) {
   process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
   process.exitCode = 1;

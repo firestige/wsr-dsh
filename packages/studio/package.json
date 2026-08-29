@@ -1,6 +1,6 @@
 {
   "name": "dsh-wsr-studio",
-  "version": "0.0.0-development",
+  "version": "0.1.0",
   "description": "DeepSeek Harness WSR Studio Evaluate UI with a strict loopback-only read gateway.",
   "type": "module",
   "main": "./src/index.js",

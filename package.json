@@ -1,6 +1,6 @@
 {
   "name": "wsr-dsh-monorepo",
-  "version": "0.0.0-development",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "packageManager": "npm@11.6.2",
@@ -22,15 +22,20 @@
     "pack:verify": "node scripts/verify-packages.mjs",
     "provenance:verify": "node scripts/verify-provenance.mjs",
     "qualify:clean-profile": "node scripts/qualify-clean-profile.mjs",
+    "qualify:lifecycle": "node scripts/qualify-lifecycle.mjs",
+    "qualify:provider-routing": "node scripts/qualify-provider-routing.mjs",
     "qualify:real-harness": "node scripts/qualify-real-harness.mjs",
     "studio:dev": "node scripts/serve-studio-dev-harness.mjs",
-    "release:candidate": "node scripts/build-release-candidate.mjs"
+    "release:candidate": "node scripts/build-release-candidate.mjs",
+    "release:qualify": "node scripts/write-release-qualification.mjs",
+    "release:verify": "node scripts/verify-release-set.mjs",
+    "release:publish": "node scripts/publish-npm-set.mjs"
   },
   "license": "Apache-2.0",
   "devDependencies": {
     "esbuild": "0.25.9",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "wsr-execution": "https://github.com/firestige/execution-system/releases/download/0.1.4-rc.1/wsr-execution-0.1.4.tgz"
+    "wsr-execution": "https://github.com/firestige/wsr-execution/releases/download/0.1.4-rc.1/wsr-execution-0.1.4.tgz"
   }
 }

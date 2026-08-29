@@ -117,7 +117,6 @@ export function validatePackInventory({ name, files }) {
 }
 
 export function validateReleaseRequest({ channel, clean, commit, version }) {
-  if (channel === "stable") throw new BoundaryViolation("STABLE_PROMOTION_DISABLED", "#122 has not qualified stable publication");
   if (channel !== "candidate") throw new BoundaryViolation("RELEASE_CHANNEL", String(channel));
   if (!clean) throw new BoundaryViolation("DIRTY_RELEASE", "candidate artifacts require a clean commit");
   if (!/^[0-9a-f]{40}$/u.test(commit)) throw new BoundaryViolation("PROVENANCE_COMMIT", String(commit));

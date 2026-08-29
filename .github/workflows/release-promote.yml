@@ -2,38 +2,50 @@ name: Release Promote
 
 on:
   workflow_dispatch:
+    inputs:
+      candidate_tag:
+        description: Qualified prerelease tag, for example 0.1.0-rc.1
+        required: true
+        type: string
 
 permissions: {}
 
 jobs:
-  qualify-candidate-skeleton:
-    name: Qualify unpublished candidate skeleton
+  promote-qualified-set:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24.12.0
+          registry-url: https://registry.npmjs.org
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - run: npm test
-      - run: npm run build
-      - run: npm run pack:verify
-      - run: npm run release:candidate
+      - name: Download exact candidate release assets
         env:
-          WSR_RELEASE_CHANNEL: candidate
-      - run: npm run provenance:verify
-
-  not-ready:
-    name: Publishing is not enabled yet
-    needs: qualify-candidate-skeleton
-    runs-on: ubuntu-latest
-    permissions: {}
-    steps:
-      - name: Fail closed until the qualified promotion adapter lands
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_TAG: ${{ inputs.candidate_tag }}
+        run: gh release download "$CANDIDATE_TAG" --repo firestige/wsr-dsh --dir "$RUNNER_TEMP/candidate"
+      - name: Verify qualification and immutable artifact bytes
+        run: npm run release:verify -- "$RUNNER_TEMP/candidate"
+      - name: Publish components before the exact suite through npm OIDC
+        run: node scripts/publish-npm-set.mjs "$RUNNER_TEMP/candidate"
+      - id: release-app
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.WSR_RELEASE_APP_ID }}
+          private-key: ${{ secrets.WSR_RELEASE_APP_PRIVATE_KEY }}
+          owner: firestige
+          repositories: wsr-dsh
+      - name: Create final GitHub release from the qualified bytes
+        env:
+          GH_TOKEN: ${{ steps.release-app.outputs.token }}
+          CANDIDATE_TAG: ${{ inputs.candidate_tag }}
         shell: bash
         run: |
-          echo "The wsr-dsh release authority is not production-ready."
-          exit 1
+          VERSION="$(node -p 'JSON.parse(require("fs").readFileSync(process.argv[1])).packageVersion' "$RUNNER_TEMP/candidate/release-metadata.json")"
+          COMMIT="$(node -p 'JSON.parse(require("fs").readFileSync(process.argv[1])).commit' "$RUNNER_TEMP/candidate/release-metadata.json")"
+          gh release create "$VERSION" "$RUNNER_TEMP/candidate"/* --repo firestige/wsr-dsh --target "$COMMIT" --verify-tag=false --title "$VERSION" --notes "Promoted from qualified candidate $CANDIDATE_TAG."
