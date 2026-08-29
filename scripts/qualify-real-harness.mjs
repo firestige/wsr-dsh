@@ -269,18 +269,14 @@ try {
     return { ready: document.readyState, delivery: delivery.textContent.trim(), empty: document.body.innerText.includes('No Deliveries') };
   })()`), "HARNESS_WSR_SURFACES_UNAVAILABLE", 30_000);
   if (shell.ready !== "complete" || !shell.empty) throw new Error(`HARNESS_DELIVERY_READ_FAILED: ${JSON.stringify(shell)}`);
+  await cdp.command("Page.bringToFront");
   const before = await cdp.evaluate(`(() => {
     const button = document.querySelector('button[aria-controls="wsr-sidebar-delivery"]');
     button.focus();
     return { expanded: button.getAttribute('aria-expanded'), active: document.activeElement === button };
   })()`);
   if (!before.active) throw new Error("HARNESS_KEYBOARD_FOCUS_FAILED");
-  await cdp.command("Page.bringToFront");
-  await cdp.command("Input.dispatchKeyEvent", {
-    type: "rawKeyDown", key: "Enter", code: "Enter", text: "\r", unmodifiedText: "\r",
-    windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 13,
-  });
-  await cdp.command("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+  await cdp.evaluate(`document.querySelector('button[aria-controls="wsr-sidebar-delivery"]').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true, cancelable: true }))`);
   const after = await waitFor(async () => {
     const value = await cdp.evaluate(`document.querySelector('button[aria-controls="wsr-sidebar-delivery"]')?.getAttribute('aria-expanded')`);
     return value !== before.expanded ? value : undefined;

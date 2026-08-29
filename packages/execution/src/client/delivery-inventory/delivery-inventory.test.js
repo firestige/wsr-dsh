@@ -102,10 +102,11 @@ test("large owner inventory remains deterministic and detached rows never naviga
 
 test("Harness composition owns the single slot and renders Workspace as a child without DOM reparenting", async () => {
   const registrations = [];
+  const stateUpdates = [];
   const React = {
     createElement(type, props, ...children) { return { type, props: props ?? {}, children }; },
     useMemo(factory) { return factory(); },
-    useState(initial) { return [typeof initial === "function" ? initial() : initial, () => undefined]; },
+    useState(initial) { return [typeof initial === "function" ? initial() : initial, (value) => stateUpdates.push(value)]; },
     useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot(); },
   };
   function WorkspaceBrowser() { return null; }
@@ -126,6 +127,11 @@ test("Harness composition owns the single slot and renders Workspace as a child 
   assert.equal(tree.children[0].props["aria-label"], "Workspace");
   assert.equal(tree.children[1].props["aria-label"], "Delivery");
   assert.equal(tree.children[0].children[1].children[0].type, WorkspaceBrowser);
+  const deliveryHeader = tree.children[1].children[0];
+  let prevented = false;
+  deliveryHeader.props.onKeyDown({ key: "Enter", preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.deepEqual(stateUpdates, [false]);
 
   const source = await readFile(new URL("./sidebar.js", import.meta.url), "utf8");
   assert.doesNotMatch(source, /querySelector|appendChild|insertBefore|\/wsr list|\.command\(/u);

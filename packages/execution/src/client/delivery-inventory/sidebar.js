@@ -43,6 +43,11 @@ export function createSidebarResources(React, WorkspaceBrowser, inventory) {
     const header = (id, label, expanded, kind) => React.createElement("button", {
       type: "button", className: "wsr-sidebar-resource-header",
       "aria-controls": id, "aria-expanded": expanded, onClick: () => toggle(kind),
+      onKeyDown: (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        toggle(kind);
+      },
     }, React.createElement("span", { "aria-hidden": "true" }, expanded ? "▾" : "▸"), label);
     return React.createElement("div", { className: "wsr-sidebar-resources", "data-wsr-sidebar-resources": "true" },
       React.createElement("section", { className: "wsr-sidebar-resource", "aria-label": "Workspace" },
