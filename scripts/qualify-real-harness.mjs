@@ -265,8 +265,9 @@ try {
     const resource = document.querySelector('[data-wsr-sidebar-resources="true"]');
     const delivery = document.querySelector('button[aria-controls="wsr-sidebar-delivery"]');
     const studio = [...document.querySelectorAll('button')].find((node) => /^(WSR )?Studio$/.test(node.textContent.trim()));
-    if (!resource || !delivery || !studio) return undefined;
-    return { ready: document.readyState, delivery: delivery.textContent.trim(), empty: document.body.innerText.includes('No Deliveries') };
+    const empty = document.body.innerText.includes('No Deliveries');
+    if (!resource || !delivery || !studio || !empty || document.readyState !== 'complete') return undefined;
+    return { ready: document.readyState, delivery: delivery.textContent.trim(), empty };
   })()`), "HARNESS_WSR_SURFACES_UNAVAILABLE", 30_000);
   if (shell.ready !== "complete" || !shell.empty) throw new Error(`HARNESS_DELIVERY_READ_FAILED: ${JSON.stringify(shell)}`);
   await cdp.command("Page.bringToFront");
