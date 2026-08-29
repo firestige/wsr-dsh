@@ -22,8 +22,12 @@ jobs:
           node-version: 24.12.0
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Install the frozen DSH qualification CLI
-        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund @deepseek-ai/dsh@0.1.1-rc.2
+      - name: Install the frozen DSH qualification CLI outside the workspace graph
+        run: |
+          npm install --global --prefix "$RUNNER_TEMP/dsh-cli" --ignore-scripts --no-audit --no-fund @deepseek-ai/dsh@0.1.1-rc.2 pnpm@11.23.0
+          echo "$RUNNER_TEMP/dsh-cli/bin" >> "$GITHUB_PATH"
+      - name: Verify the frozen DSH qualification CLI
+        run: test "$(dsh --version)" = 0.1.1-rc.2
       - run: npm test
       - run: npm run build
       - run: npm run pack:verify
