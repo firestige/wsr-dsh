@@ -3124,7 +3124,12 @@ function createSidebarResources(React2, WorkspaceBrowser, inventory) {
       className: "wsr-sidebar-resource-header",
       "aria-controls": id,
       "aria-expanded": expanded,
-      onClick: () => toggle(kind)
+      onClick: () => toggle(kind),
+      onKeyDown: (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        toggle(kind);
+      }
     }, React2.createElement("span", { "aria-hidden": "true" }, expanded ? "\u25BE" : "\u25B8"), label);
     return React2.createElement(
       "div",
