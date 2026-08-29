@@ -344,6 +344,38 @@ function createEvaluateController({ gateway, storage, initialContext } = {}) {
       }
       publish({ drilldown: { ...snapshot.drilldown, phase: "ready", facts: answer.value.items ?? [], error: void 0 } });
     },
+    async loadMetricFacts(metricCoordinate, scope = "result") {
+      if (!["result", "related", "read-set"].includes(scope) || snapshot.result === void 0) return;
+      const sides = sideResults(snapshot.result);
+      const metric = sides.flatMap(({ value }) => value.metric_results ?? []).find((candidate) => `${candidate.metric_id}@${candidate.metric_version}` === metricCoordinate);
+      if (metric === void 0) {
+        publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: incompatibleResponse } });
+        return;
+      }
+      const deliveryIds = [...new Set(sides.flatMap(({ value }) => value.receipt?.task_population ?? []).flatMap((task) => task.memberships ?? []).map((membership) => membership.delivery_id).filter((id) => boundedText(id, 256)))].sort();
+      const resultRefs = new Set((metric.slices ?? []).flatMap((slice) => slice.provenance_refs ?? []));
+      const readSetRefs = new Set(sides.flatMap(({ value }) => value.receipt?.input_refs ?? []).filter((reference) => reference.kind === "FACT").flatMap((reference) => [reference.identity, reference.provenance_ref]));
+      const wanted = scope === "read-set" ? readSetRefs : resultRefs;
+      publish({ drilldown: { ...snapshot.drilldown, phase: "loading", error: void 0 } });
+      const facts = [];
+      for (const delivery_id of deliveryIds) {
+        const answer = await gateway.call("facts/read", { delivery_id, limit: 200 });
+        if (!answer.ok) {
+          publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: answer.error } });
+          return;
+        }
+        if (!Array.isArray(answer.value?.items)) {
+          publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: incompatibleResponse } });
+          return;
+        }
+        facts.push(...answer.value.items);
+      }
+      const matches = (fact) => [fact?.id, fact?.provenance?.accepted_digest].some((identity) => wanted.has(identity));
+      const selected = scope === "related" ? facts.filter((fact) => !matches(fact)) : facts.filter(matches);
+      const returned = new Set(facts.flatMap((fact) => [fact?.id, fact?.provenance?.accepted_digest]));
+      const references = [...wanted].sort().map((identity) => ({ identity, loadedAsFact: returned.has(identity) }));
+      publish({ drilldown: { ...snapshot.drilldown, phase: "ready", facts: selected, references, error: void 0 } });
+    },
     async loadTrace(filters) {
       publish({ drilldown: { ...snapshot.drilldown, phase: "loading", error: void 0 } });
       const answer = await gateway.call("traces/read", filters);
@@ -455,17 +487,6 @@ var frameStyle = {
 };
 var controlStyle = { minHeight: "44px", minWidth: "44px" };
 var listStyle = { maxHeight: "min(42vh, 480px)", overflow: "auto", overflowWrap: "anywhere" };
-function metricRows(result) {
-  if (result?.mode === "SINGLE") return result.result?.metric_results ?? [];
-  if (result?.mode === "COMPARE") {
-    const left = result.left?.tag === "SIDE_RESULT" ? result.left.metric_results : [];
-    const right = result.right?.tag === "SIDE_RESULT" ? result.right.metric_results : [];
-    const rows = /* @__PURE__ */ new Map();
-    for (const item of [...left, ...right]) rows.set(`${item.metric_id}@${item.metric_version}`, item);
-    return [...rows.values()];
-  }
-  return [];
-}
 function StudioAction(React2, Button, store, controller) {
   return function StudioActionView({ wide = true, useSessions }) {
     const session = typeof useSessions === "function" ? useSessions((state) => state.byId?.[state.current]) : void 0;
@@ -485,6 +506,7 @@ function StudioOverlay(React2, Primitives2, store, controller) {
   const Button = Primitives2.Button ?? "button";
   const Input = Primitives2.Input ?? "input";
   const DisclosureRow = Primitives2.DisclosureRow;
+  const JsonTree = Primitives2.JsonTree;
   return function StudioOverlayView() {
     const snapshot = React2.useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
     const close = () => store.close();
@@ -498,13 +520,16 @@ function StudioOverlay(React2, Primitives2, store, controller) {
     }, []);
     React2.useEffect(() => {
       if (snapshot.drilldown.phase !== "idle") return;
-      if (snapshot.route.page === "facts") void controller.loadFacts({ limit: 50 });
+      if (snapshot.route.page === "facts" && snapshot.result !== void 0) {
+        void controller.loadMetricFacts(snapshot.route.metric, snapshot.route.scope);
+      }
       if (snapshot.route.page === "trace") void controller.loadTrace({
         trace_id: snapshot.route.traceId,
         limit: 200
       });
-    }, [snapshot.route.page]);
+    }, [snapshot.route.page, snapshot.result]);
     const presentation = projectStudioPresentation(snapshot);
+    const json = (data, label) => JsonTree === void 0 ? React2.createElement("pre", { "aria-label": label }, JSON.stringify(data, null, 2)) : React2.createElement(JsonTree, { data, label, copyable: true, expandTopLevel: true });
     const taskItems = snapshot.taskList.items ?? [];
     const current = snapshot.selection?.mode === "single" ? snapshot.selection.taskIds : [];
     const before = snapshot.selection?.mode === "compare" ? snapshot.selection.leftTaskIds : [];
@@ -567,16 +592,18 @@ function StudioOverlay(React2, Primitives2, store, controller) {
           React2.createElement(
             "label",
             null,
-            "Repository",
+            "Repository context",
             React2.createElement(Input, {
               type: "text",
               "aria-label": "Repository",
+              "aria-describedby": "wsr-repository-scope",
               defaultValue: snapshot.repository ?? "",
               onBlur: (event) => {
                 if (event.target.value.trim() !== "") controller.setRepository(event.target.value);
               }
             })
           ),
+          React2.createElement("p", { id: "wsr-repository-scope" }, "Task discovery is installation-wide in Evidence query 1.0.0; repository context does not filter authoritative Tasks."),
           React2.createElement(
             "fieldset",
             null,
@@ -625,16 +652,20 @@ function StudioOverlay(React2, Primitives2, store, controller) {
           { "aria-label": snapshot.result.mode === "COMPARE" ? "Compared Metric Results" : "Metric Results" },
           snapshot.phase === "partial" ? React2.createElement("p", { role: "status" }, "Partial comparison: the available side remains visible.") : null,
           React2.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.openReceipt() }, "View receipt"),
-          ...metricRows(snapshot.result).map((metric) => {
-            const coordinate = `${metric.metric_id}@${metric.metric_version}`;
+          ...presentation.metrics.map((metric) => {
+            const coordinate = metric.coordinate;
             const content = React2.createElement(
               "article",
               { key: coordinate },
               React2.createElement("h3", null, coordinate),
-              React2.createElement("p", null, `${metric.slices?.length ?? 0} result slice(s)`),
+              ...metric.sides.map(({ side: side2, slices }) => React2.createElement(
+                "section",
+                { key: side2, "aria-label": `${side2} Metric Result` },
+                React2.createElement("h4", null, snapshot.result.mode === "COMPARE" ? `${side2} side` : "Metric Result value"),
+                json(slices, `${coordinate} ${side2} slices`)
+              )),
               React2.createElement(Button, { type: "button", style: controlStyle, onClick: () => {
                 controller.openFacts(coordinate);
-                void controller.loadFacts({ limit: 50 });
               } }, "Fact drill-down")
             );
             return DisclosureRow === void 0 ? content : React2.createElement(DisclosureRow, {
@@ -660,7 +691,8 @@ function StudioOverlay(React2, Primitives2, store, controller) {
             { key: side2 },
             React2.createElement("h3", null, side2),
             React2.createElement("p", null, `Population: ${receipt?.population_state ?? "unknown"}`),
-            React2.createElement("p", null, `Evidence bindings: ${receipt?.evidence_bindings?.length ?? 0}`)
+            React2.createElement("p", null, `Evidence bindings: ${receipt?.evidence_bindings?.length ?? 0}`),
+            json(receipt, `${side2} evaluation receipt`)
           ))
         ) : null,
         snapshot.route.page === "facts" ? React2.createElement(
@@ -669,6 +701,7 @@ function StudioOverlay(React2, Primitives2, store, controller) {
           React2.createElement("h2", null, "Facts"),
           React2.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Metric Results"),
           presentation.drilldownError === void 0 ? null : React2.createElement("p", { role: "alert" }, presentation.drilldownError.message),
+          ...(snapshot.drilldown.references ?? []).filter((reference) => !reference.loadedAsFact).map((reference) => React2.createElement("p", { key: reference.identity }, `Recorded lineage not hydrated as a Fact: ${reference.identity}`)),
           ...presentation.facts.map((fact) => React2.createElement(
             "article",
             { key: fact.id },

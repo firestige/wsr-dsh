@@ -205,10 +205,35 @@ test("receipt, Metric Result, compare delta, Fact and Trace remain distinct pres
   });
   assert.equal(projected.mode, "compare");
   assert.equal(projected.metrics[0].coordinate, "delivery-cycle-time-ms@2.0.0");
+  assert.deepEqual(projected.metrics[0].sides.map(({ side }) => side), ["left", "right"]);
+  assert.equal(projected.metrics[0].sides[0].slices[0].value.value, "12");
   assert.equal(projected.deltas[0].direction, "DECREASE");
   assert.deepEqual(projected.receipts.map((receipt) => receipt.side), ["left", "right"]);
   assert.equal(projected.facts[0].id, "fact-1");
   assert.equal(projected.trace[0].id, "node-1");
+});
+
+test("Metric Fact drill-down follows formal receipt delivery membership and exact result lineage", async () => {
+  const calls = [];
+  const computed = singleResult();
+  computed.result.receipt.task_population = [{ task_id: "task-a", memberships: [{ delivery_id: "delivery-a" }] }];
+  computed.result.receipt.input_refs = [{ kind: "FACT", identity: "fact-read", provenance_ref: "digest-read" }];
+  computed.result.metric_results[0].slices[0].provenance_refs = ["digest-result"];
+  const controller = createEvaluateController({ gateway: { async call(endpoint, payload) {
+    calls.push([endpoint, payload]);
+    if (endpoint === "evaluations/compute") return { ok: true, value: computed };
+    return { ok: true, value: { items: [
+      { id: "fact-result", provenance: { accepted_digest: "digest-result" } },
+      { id: "fact-read", provenance: { accepted_digest: "digest-read" } },
+      { id: "fact-unrelated", provenance: { accepted_digest: "digest-other" } },
+    ], next_cursor: null } };
+  } } });
+  controller.setSelection({ mode: "single", taskIds: ["task-a"] });
+  await controller.evaluate();
+  await controller.loadMetricFacts("delivery-cycle-time-ms@2.0.0", "result");
+  assert.deepEqual(calls.at(-1), ["facts/read", { delivery_id: "delivery-a", limit: 200 }]);
+  assert.deepEqual(controller.getSnapshot().drilldown.facts.map(({ id }) => id), ["fact-result"]);
+  assert.equal(controller.getSnapshot().drilldown.references[0].identity, "digest-result");
 });
 
 test("Fact and Trace drill-down use only read endpoints and failures retain the evaluation", async () => {

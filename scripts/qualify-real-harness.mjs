@@ -171,7 +171,7 @@ try {
         { task_id: "task-a", display_name: "Alpha Task" }, { task_id: "task-b", display_name: "Beta Task" },
       ], next_cursor: null,
     }); return; }
-    if (request.url?.startsWith("/v1/evidence/facts")) { json(200, { items: [{ id: "fact-1", kind: "EVENT_CONTRIBUTION", source: { trace_id: traceId, span_id: "b".repeat(16) } }] }); return; }
+    if (request.url?.startsWith("/v1/evidence/facts")) { json(200, { items: [{ id: "fact-1", kind: "EVENT_CONTRIBUTION", provenance: { accepted_digest: "digest-fact-1" }, source: { trace_id: traceId, span_id: "b".repeat(16) } }] }); return; }
     if (request.url?.startsWith("/v1/evidence/traces")) { json(200, { items: [{ id: "trace-node-1", kind: "NODE", trace_id: traceId }] }); return; }
     if (request.url === "/api/evolution/v1/evaluations:compute") {
       let body = "";
@@ -180,8 +180,9 @@ try {
         if (body === "{}") { json(400, { error: { code: "INVALID_REQUEST", retryable: false } }); return; }
         const input = JSON.parse(body);
         const side = (selection) => ({ tag: "SIDE_RESULT", receipt: {
-          selection, population_state: "COMPLETE", evidence_bindings: [{ fact_id: "fact-1" }], input_refs: [],
-        }, metric_results: [{ metric_id: "delivery-cycle-time-ms", metric_version: "2.0.0", slices: [{ slice_key: {}, state: "AVAILABLE", value: { kind: "DURATION_MS", value: "12", unit: "ms" } }] }] });
+          selection, population_state: "COMPLETE", evidence_bindings: [{ route: "/v1/evidence/facts", canonical_filter: { delivery_id: "delivery-a" } }],
+          task_population: selection.task_ids.map((task_id) => ({ task_id, memberships: [{ delivery_id: "delivery-a" }] })), input_refs: [],
+        }, metric_results: [{ metric_id: "delivery-cycle-time-ms", metric_version: "2.0.0", slices: [{ slice_key: {}, state: "AVAILABLE", value: { kind: "DURATION_MS", value: "12", unit: "ms" }, provenance_refs: ["digest-fact-1"] }] }] });
         json(200, input.mode === "SINGLE" ? { api_version: 1, mode: "SINGLE", result: side(input.selection) } : {
           api_version: 1, mode: "COMPARE", status: "FULL_COMPARE", left: side(input.left), right: side(input.right), deltas: [],
         });
@@ -306,8 +307,10 @@ try {
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Load Tasks').click(); })()`);
   await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Alpha Task')`), "HARNESS_STUDIO_TASKS_FAILED");
   await cdp.evaluate(`(() => { const row = [...document.querySelectorAll('li')].find((node) => node.textContent.includes('Alpha Task')); const input = row?.querySelector('input[type="checkbox"]'); if (!input) throw new Error('qualification task checkbox missing'); input.click(); })()`);
+  await cdp.evaluate(`document.querySelector('input[type="radio"][value="compare"]').click()`);
+  await cdp.evaluate(`(() => { const fieldset = [...document.querySelectorAll('fieldset')].find((node) => node.querySelector('legend')?.textContent === 'After'); const label = [...fieldset.querySelectorAll('label')].find((node) => node.textContent.includes('Beta Task')); label.querySelector('input').click(); })()`);
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Evaluate selection').click(); })()`);
-  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('delivery-cycle-time-ms@2.0.0')`), "HARNESS_STUDIO_METRIC_FAILED");
+  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('delivery-cycle-time-ms@2.0.0') && document.body.innerText.includes('left side') && document.body.innerText.includes('right side')`), "HARNESS_STUDIO_COMPARE_METRIC_FAILED");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'View receipt').click(); })()`);
   await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Evidence bindings: 1')`), "HARNESS_STUDIO_RECEIPT_FAILED");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Back to Metric Results').click(); })()`);
@@ -353,7 +356,7 @@ try {
       activation: ["wsr-execution", "wsr-studio"],
     },
     browser: { deliveryInventory: "empty-ready", keyboardDisclosure: `${before.expanded}->${after}`, studio, escapeClose: "native",
-      evaluate: "metric-receipt-fact-trace", deepLink, refreshRecovery: restored, degraded, narrow, trace, errors: 0 },
+      evaluate: "compare-metric-receipt-fact-trace", deepLink, refreshRecovery: restored, degraded, narrow, trace, errors: 0 },
   }, null, 2)}\n`);
 } catch (error) {
   process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`);
