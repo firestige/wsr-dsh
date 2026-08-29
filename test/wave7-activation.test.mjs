@@ -100,7 +100,6 @@ test("Cordis patches carry real required configuration without adding suite UI",
   assert.match(execution, /configFile: \/__REQUIRED__\/execution-config\.yaml/u);
   assert.match(execution, /id: ui-workspace[\s\S]*name: ['"]@deepseek-ai\/dsh-client-ui-workspace['"][\s\S]*disabled: true/u);
   assert.match(execution, /bindingFile: \/__REQUIRED__\/dsh-intake-bindings\.json/u);
-  assert.match(studio, /evidenceBaseUrl: http:\/\/127\.0\.0\.1:4318/u);
-  assert.match(studio, /evolutionBaseUrl: http:\/\/127\.0\.0\.1:4320/u);
+  assert.match(studio, /hostConfigFile: \/__REQUIRED__\/wsr-loopback-host\.json/u);
   assert.doesNotMatch(suite, /wsr-suite|sidebar|client/u);
 });

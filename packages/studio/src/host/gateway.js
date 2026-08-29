@@ -178,8 +178,12 @@ async function boundedJson(response, maximumBytes) {
 }
 
 export function createStudioGatewayHandler(options) {
-  const evidenceBase = loopbackBase(options.evidenceBaseUrl);
-  const evolutionBase = loopbackBase(options.evolutionBaseUrl);
+  const integration = options.integration;
+  if (integration !== undefined && (typeof integration?.status !== "function" || integration.config === undefined)) {
+    throw new Error("STUDIO_GATEWAY_INTEGRATION_INVALID");
+  }
+  const evidenceBase = loopbackBase(integration?.config.services.evidence.baseUrl ?? options.evidenceBaseUrl);
+  const evolutionBase = loopbackBase(integration?.config.services.evolution.baseUrl ?? options.evolutionBaseUrl);
   const fetcher = options.fetcher ?? globalThis.fetch;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maximumBytes = options.maximumResponseBytes ?? DEFAULT_MAXIMUM_RESPONSE_BYTES;
@@ -187,6 +191,10 @@ export function createStudioGatewayHandler(options) {
   if (!Number.isInteger(maximumBytes) || maximumBytes < 1 || maximumBytes > DEFAULT_MAXIMUM_RESPONSE_BYTES) throw new Error("STUDIO_GATEWAY_INVALID_RESPONSE_BOUND");
 
   return async function handle(endpoint, payload, signal) {
+    if (endpoint === "services/status") {
+      if (!record(payload) || Object.keys(payload).length !== 0 || integration === undefined) return invalid();
+      return { ok: true, value: await integration.status() };
+    }
     const selected = requestFor(endpoint, payload);
     if (selected?.request === undefined) return invalid();
     const timer = AbortSignal.timeout(timeoutMs);
