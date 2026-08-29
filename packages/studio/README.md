@@ -17,7 +17,9 @@ Then set `hostConfigFile: /path/to/wsr-loopback-host.json` in the plugin config.
 Evidence and Evolution retain API, validation, persistence, and calculation
 authority. The published service bundle's `./wsr-compose host-config` command
 materializes the same `wsr.loopback-host@1.0.0` fixture, including the Evidence
-base reused by Execution Observation. Service outage, restart, timeout, partial
+base reused by Execution Observation and the operation-scoped
+`evidence.query@0.1.0` facts/traces plus `evidence.query@1.0.0` Task revisions.
+Service outage, restart, timeout, partial
 stack, malformed health, and incompatible health appear only as typed Studio
 degradation; they never change Execution Delivery lifecycle. Migration
 provenance is recorded in `src/client/UPSTREAM.md`.

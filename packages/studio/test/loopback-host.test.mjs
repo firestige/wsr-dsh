@@ -39,14 +39,13 @@ function evolutionCapability() {
 
 test("loopback Host config binds the endpoint owners and compatible contracts", () => {
   const normalized = normalizeLoopbackHostConfig(config);
-  assert.deepEqual(normalized.services.evidence.contract, {
-    name: "evidence.query",
-    revision: "0.1.0",
-  });
-  assert.deepEqual(normalized.services.evolution.contract, {
-    name: "evolution.compute",
-    revision: "1",
-  });
+  assert.deepEqual(normalized.services.evidence.contracts, [
+    { name: "evidence.query", revision: "0.1.0", operations: ["facts/read", "traces/read"] },
+    { name: "evidence.query", revision: "1.0.0", operations: ["tasks/list"] },
+  ]);
+  assert.deepEqual(normalized.services.evolution.contracts, [
+    { name: "evolution.compute", revision: "1", operations: ["evaluations/compute"] },
+  ]);
   assert.equal(normalized.observation.baseUrl, normalized.services.evidence.baseUrl);
 });
 
@@ -69,7 +68,7 @@ test("malformed, credentialed, remote, and incompatible endpoint config fails be
     ["remote", { ...config, services: { ...config.services, evidence: { ...config.services.evidence, baseUrl: "http://0.0.0.0:4318" } } }],
     ["localhost", { ...config, services: { ...config.services, evidence: { ...config.services.evidence, baseUrl: "http://localhost:4318" } } }],
     ["credential", { ...config, services: { ...config.services, evidence: { ...config.services.evidence, baseUrl: "http://user:secret@127.0.0.1:4318" } } }],
-    ["contract", { ...config, services: { ...config.services, evidence: { ...config.services.evidence, contract: { name: "evidence.query", revision: "2.0.0" } } } }],
+    ["contract", { ...config, services: { ...config.services, evidence: { ...config.services.evidence, contracts: [{ name: "evidence.query", revision: "2.0.0", operations: ["facts/read"] }] } } }],
     ["observation", { ...config, observation: { baseUrl: "http://127.0.0.1:9999" } }],
   ];
   for (const [name, value] of cases) {

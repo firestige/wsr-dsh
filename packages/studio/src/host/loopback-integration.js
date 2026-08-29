@@ -16,12 +16,17 @@ const EXPECTED = Object.freeze({
   evidence: Object.freeze({
     healthPath: "/healthz",
     healthKind: "json-status-ok",
-    contract: Object.freeze({ name: "evidence.query", revision: "0.1.0" }),
+    contracts: Object.freeze([
+      Object.freeze({ name: "evidence.query", revision: "0.1.0", operations: Object.freeze(["facts/read", "traces/read"]) }),
+      Object.freeze({ name: "evidence.query", revision: "1.0.0", operations: Object.freeze(["tasks/list"]) }),
+    ]),
   }),
   evolution: Object.freeze({
     healthPath: "/healthz",
     healthKind: "plain-ok",
-    contract: Object.freeze({ name: "evolution.compute", revision: "1" }),
+    contracts: Object.freeze([
+      Object.freeze({ name: "evolution.compute", revision: "1", operations: Object.freeze(["evaluations/compute"]) }),
+    ]),
   }),
 });
 
@@ -53,20 +58,19 @@ function baseUrl(value) {
 }
 
 function service(name, value) {
-  if (!exactKeys(value, ["baseUrl", "healthPath", "healthKind", "contract"])) {
+  if (!exactKeys(value, ["baseUrl", "healthPath", "healthKind", "contracts"])) {
     configurationError("SERVICE_SHAPE_INVALID");
   }
   const expected = EXPECTED[name];
   if (
     value.healthPath !== expected.healthPath || value.healthKind !== expected.healthKind ||
-    !exactKeys(value.contract, ["name", "revision"]) ||
-    value.contract.name !== expected.contract.name || value.contract.revision !== expected.contract.revision
+    JSON.stringify(value.contracts) !== JSON.stringify(expected.contracts)
   ) configurationError("CONTRACT_INCOMPATIBLE");
   return Object.freeze({
     baseUrl: baseUrl(value.baseUrl),
     healthPath: expected.healthPath,
     healthKind: expected.healthKind,
-    contract: expected.contract,
+    contracts: expected.contracts,
   });
 }
 
