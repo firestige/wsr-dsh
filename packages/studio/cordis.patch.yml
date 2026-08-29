@@ -2,5 +2,4 @@
     - id: wsr-studio
       name: 'dsh-wsr-studio'
       config:
-        evidenceBaseUrl: http://127.0.0.1:4318
-        evolutionBaseUrl: http://127.0.0.1:4320
+        hostConfigFile: /__REQUIRED__/wsr-loopback-host.json

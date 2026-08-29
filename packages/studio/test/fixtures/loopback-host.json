@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "wsr.loopback-host@1.0.0",
+  "services": {
+    "evidence": {
+      "baseUrl": "http://127.0.0.1:4318",
+      "healthPath": "/healthz",
+      "healthKind": "json-status-ok",
+      "contract": {"name": "evidence.query", "revision": "0.1.0"}
+    },
+    "evolution": {
+      "baseUrl": "http://127.0.0.1:8000",
+      "healthPath": "/healthz",
+      "healthKind": "plain-ok",
+      "contract": {"name": "evolution.compute", "revision": "1"}
+    }
+  },
+  "observation": {"baseUrl": "http://127.0.0.1:4318"}
+}
