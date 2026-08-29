@@ -118,7 +118,7 @@ test("provenance binds sorted artifact digests to one repository revision", asyn
   }
 });
 
-test("pack inventory requires license, notice, patch and only the declared skeleton source", () => {
+test("pack inventory requires license, notice, generated client and only declared adapter sources", () => {
   assert.doesNotThrow(() => validatePackInventory({
     name: "dsh-wsr-execution",
     files: [
@@ -126,7 +126,9 @@ test("pack inventory requires license, notice, patch and only the declared skele
       "package/NOTICE.md",
       "package/README.md",
       "package/cordis.patch.yml",
+      "package/lib/client.js",
       "package/package.json",
+      "package/src/client/browser-entry.js",
       "package/src/index.js",
     ],
   }));

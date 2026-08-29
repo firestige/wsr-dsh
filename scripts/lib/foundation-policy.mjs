@@ -99,13 +99,19 @@ export function validatePackInventory({ name, files }) {
     "package/cordis.patch.yml",
     "package/package.json",
   ];
-  const expected = name === "dsh-wsr-execution" || name === "dsh-wsr-studio"
-    ? [...common, "package/src/index.js"]
-    : name === "dsh-wsr"
-      ? common
-      : undefined;
   const actual = [...new Set(files)].sort();
-  if (expected === undefined || JSON.stringify(actual) !== JSON.stringify(expected.sort())) {
+  const required = name === "dsh-wsr-execution" || name === "dsh-wsr-studio"
+    ? [...common, "package/lib/client.js", "package/src/index.js"]
+    : name === "dsh-wsr" ? common : undefined;
+  const allowed = name === "dsh-wsr-execution"
+    ? /^(?:package\/(?:LICENSE|NOTICE\.md|README\.md|cordis\.patch\.yml|package\.json|lib\/client\.js|skills\/workflow-execution\/SKILL\.md|src\/(?:action-presentation|client|host|intake)\/[^/].*|src\/index\.js))$/u
+    : name === "dsh-wsr-studio"
+      ? /^(?:package\/(?:LICENSE|NOTICE\.md|README\.md|cordis\.patch\.yml|package\.json|lib\/client\.js|src\/(?:client|host)\/[^/].*|src\/index\.js))$/u
+      : name === "dsh-wsr" ? /^(?:package\/(?:LICENSE|NOTICE\.md|README\.md|cordis\.patch\.yml|package\.json))$/u : undefined;
+  const invalid = required === undefined || allowed === undefined
+    || required.some((entry) => !actual.includes(entry))
+    || actual.some((entry) => !allowed.test(entry) || /(?:^|\/)test(?:s)?\/|\.test\.[cm]?[jt]sx?$/u.test(entry));
+  if (invalid) {
     throw new BoundaryViolation("PACK_INVENTORY", `${name}: ${actual.join(", ")}`);
   }
 }
@@ -127,15 +133,20 @@ function validatePackage(manifest, expected, version, dshVersion) {
   if (manifest.dsh?.bundle?.patch !== "./cordis.patch.yml") throw new BoundaryViolation("BUNDLE_PATCH_MISSING", expected.name);
   if (manifest.dsh?.compatibility?.dsh !== dshVersion) throw new BoundaryViolation("DSH_VERSION_DRIFT", expected.name);
   if (manifest.peerDependencies?.["@deepseek-ai/dsh"] !== dshVersion) throw new BoundaryViolation("DSH_VERSION_DRIFT", expected.name);
-  if (manifest.wsr?.role !== expected.role || manifest.wsr?.foundationOnly !== true) {
+  if (manifest.wsr?.role !== expected.role || manifest.wsr?.foundationOnly !== false) {
     throw new BoundaryViolation("FOUNDATION_SCOPE", expected.name);
   }
   if (expected.displayName === undefined) {
     if (manifest.wsr?.displayName !== undefined || manifest.main !== undefined || manifest.exports !== undefined || manifest.dsh?.client !== undefined) {
       throw new BoundaryViolation("ACTIVATION_LEAKAGE", `${expected.name} must be composition-only`);
     }
-  } else if (manifest.wsr?.displayName !== expected.displayName) {
-    throw new BoundaryViolation("DISPLAY_IDENTITY", `${expected.name} is ${manifest.wsr?.displayName ?? "missing"}`);
+  } else {
+    if (manifest.wsr?.displayName !== expected.displayName) {
+      throw new BoundaryViolation("DISPLAY_IDENTITY", `${expected.name} is ${manifest.wsr?.displayName ?? "missing"}`);
+    }
+    if (manifest.exports?.["./client"] !== "./lib/client.js" || manifest.dsh?.client?.platform !== "web") {
+      throw new BoundaryViolation("CLIENT_ACTIVATION_MISSING", expected.name);
+    }
   }
 }
 
@@ -145,7 +156,8 @@ function patchRows(patch) {
 }
 
 function validatePatch(name, patch) {
-  const rows = patchRows(patch);
+  const workspaceForkOverride = /^- id: ui-workspace\s*$\n\s+name: ['"]@deepseek-ai\/dsh-client-ui-workspace['"]\s*$\n\s+disabled: true\s*$/mu.test(patch);
+  const rows = patchRows(patch).filter((row) => !(workspaceForkOverride && row.id === "ui-workspace"));
   const expected = name === "dsh-wsr-execution"
     ? [{ id: "wsr-execution", name: "dsh-wsr-execution" }]
     : name === "dsh-wsr-studio"
@@ -156,6 +168,9 @@ function validatePatch(name, patch) {
         ];
   if (JSON.stringify(rows) !== JSON.stringify(expected)) {
     throw new BoundaryViolation("ACTIVATION_GRAPH", `${name} patch is ${JSON.stringify(rows)}`);
+  }
+  if ((name === "dsh-wsr-execution") !== workspaceForkOverride) {
+    throw new BoundaryViolation("WORKSPACE_UI_FORK_ACTIVATION", name);
   }
 }
 
@@ -173,8 +188,10 @@ export async function validateRepository(root) {
   }
   if (compatibility.workspaceUiFork?.strategy !== "fixed-version-fork"
     || compatibility.workspaceUiFork?.sourceVersion !== dshVersion
-    || compatibility.workspaceUiFork?.activation !== "deferred-to-wave7") {
-    throw new BoundaryViolation("WORKSPACE_UI_FORK_DRIFT", "the deferred fixed-version fork decision changed");
+    || compatibility.workspaceUiFork?.activation !== "active-in-wave7"
+    || compatibility.executionOwner?.revision !== "0feb3333afd88e00444f80a7a0d135d2f93582db"
+    || compatibility.executionOwner?.projection !== "execution.delivery-control-plane@1.0.0") {
+    throw new BoundaryViolation("WORKSPACE_UI_FORK_DRIFT", "the active fixed-version fork or owner projection coordinate changed");
   }
 
   const packages = [];

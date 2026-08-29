@@ -1,6 +1,13 @@
-export const name = "wsr-studio";
-export const inject = [];
+import { registerStudioGateway } from "./host/gateway.js";
 
-export function apply() {
-  // Foundation-only activation. Wave 7 owns the Studio UI and Host gateway.
+export const name = "wsr-studio";
+export const inject = ["connection"];
+
+export function apply(ctx, config) {
+  return registerStudioGateway(ctx, {
+    evidenceBaseUrl: config?.evidenceBaseUrl,
+    evolutionBaseUrl: config?.evolutionBaseUrl,
+  });
 }
+
+export * from "./host/gateway.js";
