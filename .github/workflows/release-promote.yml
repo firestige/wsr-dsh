@@ -6,8 +6,29 @@ on:
 permissions: {}
 
 jobs:
+  qualify-candidate-skeleton:
+    name: Qualify unpublished candidate skeleton
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.12.0
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+      - run: npm run pack:verify
+      - run: npm run release:candidate
+        env:
+          WSR_RELEASE_CHANNEL: candidate
+      - run: npm run provenance:verify
+
   not-ready:
     name: Publishing is not enabled yet
+    needs: qualify-candidate-skeleton
     runs-on: ubuntu-latest
     permissions: {}
     steps:

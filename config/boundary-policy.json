@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "wsr.dsh.boundary-policy@1.0.0",
+  "workspacePackages": [
+    "packages/execution",
+    "packages/studio",
+    "packages/suite"
+  ],
+  "domainOwnerRoles": [
+    "domain-owner",
+    "execution-owner",
+    "evidence-owner",
+    "evolution-owner",
+    "contracts-owner",
+    "workflow-package-owner"
+  ],
+  "forbiddenDomainSegments": [
+    "core",
+    "domain",
+    "runner",
+    "workflow-domain"
+  ],
+  "forbiddenSourceCoordinates": [
+    "execution-system/src/",
+    "evidence-system/src/",
+    "evolution-system/src/",
+    "system-contracts/src/",
+    "workflow-package/src/",
+    "wsr-ui/packages/bi/src/"
+  ]
+}

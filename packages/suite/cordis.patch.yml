@@ -1,0 +1,6 @@
+- insert:
+    - id: wsr-execution
+      name: 'dsh-wsr-execution'
+- insert:
+    - id: wsr-studio
+      name: 'dsh-wsr-studio'
