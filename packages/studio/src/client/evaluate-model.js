@@ -229,8 +229,6 @@ export function createEvaluateController({ gateway, storage, initialContext } = 
     phase: "idle",
     route,
     selection: route.selection,
-    repository: initialContext?.repository,
-    workspaceId: initialContext?.workspaceId,
     taskList: { phase: "idle", items: [] },
     drilldown: { phase: "idle", facts: [], trace: [] },
     result: undefined,
@@ -238,9 +236,6 @@ export function createEvaluateController({ gateway, storage, initialContext } = 
     refreshing: false,
   };
   const listeners = new Set();
-  let repositoryChosen = initialContext?.repository !== undefined;
-  let workspaceChosen = initialContext?.workspaceId !== undefined;
-  let selectionChosen = route.selection !== undefined;
   const publish = (change) => {
     snapshot = { ...snapshot, ...change };
     for (const listener of listeners) listener();
@@ -253,34 +248,10 @@ export function createEvaluateController({ gateway, storage, initialContext } = 
   const controller = {
     getSnapshot: () => snapshot,
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
-    seedContext(context) {
-      if (context === undefined) return;
-      const change = {};
-      if (!repositoryChosen && boundedText(context.repository, 512)) {
-        change.repository = context.repository;
-        repositoryChosen = true;
-      }
-      if (!workspaceChosen && boundedText(context.workspaceId, 256)) {
-        change.workspaceId = context.workspaceId;
-        workspaceChosen = true;
-      }
-      if (!selectionChosen && typeof context.taskId === "string" && TASK_ID.test(context.taskId)) {
-        const selection = { mode: "single", taskIds: [context.taskId] };
-        Object.assign(change, { selection, route: { page: "results", selection } });
-        selectionChosen = true;
-      }
-      if (Object.keys(change).length > 0) publish(change);
-    },
     setSelection(selection) {
       bodyFor(selection);
-      selectionChosen = true;
       publish({ selection, route: { page: "results", selection }, phase: "idle", error: undefined });
       storage?.setItem(STORAGE_KEY, serializeStudioLocation({ page: "results", selection }));
-    },
-    setRepository(repository) {
-      if (!boundedText(repository, 512)) throw new Error("INVALID_REPOSITORY");
-      repositoryChosen = true;
-      publish({ repository });
     },
     async loadTasks(cursor) {
       publish({ taskList: { ...snapshot.taskList, phase: "loading", error: undefined } });

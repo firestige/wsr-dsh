@@ -241,8 +241,6 @@ function createEvaluateController({ gateway, storage, initialContext } = {}) {
     phase: "idle",
     route,
     selection: route.selection,
-    repository: initialContext?.repository,
-    workspaceId: initialContext?.workspaceId,
     taskList: { phase: "idle", items: [] },
     drilldown: { phase: "idle", facts: [], trace: [] },
     result: void 0,
@@ -250,9 +248,6 @@ function createEvaluateController({ gateway, storage, initialContext } = {}) {
     refreshing: false
   };
   const listeners = /* @__PURE__ */ new Set();
-  let repositoryChosen = initialContext?.repository !== void 0;
-  let workspaceChosen = initialContext?.workspaceId !== void 0;
-  let selectionChosen = route.selection !== void 0;
   const publish = (change) => {
     snapshot = { ...snapshot, ...change };
     for (const listener of listeners) listener();
@@ -268,34 +263,10 @@ function createEvaluateController({ gateway, storage, initialContext } = {}) {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    seedContext(context) {
-      if (context === void 0) return;
-      const change = {};
-      if (!repositoryChosen && boundedText(context.repository, 512)) {
-        change.repository = context.repository;
-        repositoryChosen = true;
-      }
-      if (!workspaceChosen && boundedText(context.workspaceId, 256)) {
-        change.workspaceId = context.workspaceId;
-        workspaceChosen = true;
-      }
-      if (!selectionChosen && typeof context.taskId === "string" && TASK_ID.test(context.taskId)) {
-        const selection = { mode: "single", taskIds: [context.taskId] };
-        Object.assign(change, { selection, route: { page: "results", selection } });
-        selectionChosen = true;
-      }
-      if (Object.keys(change).length > 0) publish(change);
-    },
     setSelection(selection) {
       bodyFor(selection);
-      selectionChosen = true;
       publish({ selection, route: { page: "results", selection }, phase: "idle", error: void 0 });
       storage?.setItem(STORAGE_KEY, serializeStudioLocation({ page: "results", selection }));
-    },
-    setRepository(repository) {
-      if (!boundedText(repository, 512)) throw new Error("INVALID_REPOSITORY");
-      repositoryChosen = true;
-      publish({ repository });
     },
     async loadTasks(cursor) {
       publish({ taskList: { ...snapshot.taskList, phase: "loading", error: void 0 } });
@@ -487,24 +458,19 @@ var frameStyle = {
 };
 var controlStyle = { minHeight: "44px", minWidth: "44px" };
 var listStyle = { maxHeight: "min(42vh, 480px)", overflow: "auto", overflowWrap: "anywhere" };
-function StudioAction(React2, Button, store, controller) {
-  return function StudioActionView({ wide = true, useSessions }) {
-    const session = typeof useSessions === "function" ? useSessions((state) => state.byId?.[state.current]) : void 0;
+function StudioAction(React2, Button, store) {
+  return function StudioActionView({ wide = true }) {
     return React2.createElement(Button, {
       type: "button",
       style: controlStyle,
       "aria-controls": "wsr-studio-view",
       "aria-current": store.getSnapshot() ? "page" : void 0,
-      onClick: (event) => {
-        controller.seedContext({ repository: session?.cwd, workspaceId: session?.workspaceId });
-        store.open(event.currentTarget);
-      }
+      onClick: (event) => store.open(event.currentTarget)
     }, wide ? "WSR Studio" : "Studio");
   };
 }
 function StudioOverlay(React2, Primitives2, store, controller) {
   const Button = Primitives2.Button ?? "button";
-  const Input = Primitives2.Input ?? "input";
   const DisclosureRow = Primitives2.DisclosureRow;
   const JsonTree = Primitives2.JsonTree;
   return function StudioOverlayView() {
@@ -590,21 +556,6 @@ function StudioOverlay(React2, Primitives2, store, controller) {
           { "aria-labelledby": "wsr-task-selection" },
           React2.createElement("h2", { id: "wsr-task-selection" }, "Task selection"),
           React2.createElement(
-            "label",
-            null,
-            "Repository context",
-            React2.createElement(Input, {
-              type: "text",
-              "aria-label": "Repository",
-              "aria-describedby": "wsr-repository-scope",
-              defaultValue: snapshot.repository ?? "",
-              onBlur: (event) => {
-                if (event.target.value.trim() !== "") controller.setRepository(event.target.value);
-              }
-            })
-          ),
-          React2.createElement("p", { id: "wsr-repository-scope" }, "Task discovery is installation-wide in Evidence query 1.0.0; repository context does not filter authoritative Tasks."),
-          React2.createElement(
             "fieldset",
             null,
             React2.createElement("legend", null, "Evaluation mode"),
@@ -643,7 +594,7 @@ function StudioOverlay(React2, Primitives2, store, controller) {
               task.display_name ?? task.task_id
             )
           ))),
-          snapshot.taskList.phase === "ready" && taskItems.length === 0 ? React2.createElement("p", { role: "status" }, "No Tasks found for this repository.") : null,
+          snapshot.taskList.phase === "ready" && taskItems.length === 0 ? React2.createElement("p", { role: "status" }, "No Tasks are available in Evidence.") : null,
           snapshot.taskList.page?.next_cursor ? React2.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.loadTasks(snapshot.taskList.page.next_cursor) }, "Load more Tasks") : null,
           React2.createElement(Button, { type: "button", style: controlStyle, disabled: snapshot.selection === void 0, onClick: () => controller.evaluate() }, "Evaluate selection")
         ),
@@ -742,7 +693,7 @@ function createStudioClientPlugin({ React: React2, Primitives: Primitives2 = {},
         id: "wsr-studio",
         order: 60,
         label: "WSR Studio"
-      }, StudioAction(React2, Primitives2.Button ?? "button", store, controller)));
+      }, StudioAction(React2, Primitives2.Button ?? "button", store)));
       ctx.slots.inject("shell.overlay", () => store.attach(() => ctx.slots.register({
         name: "shell.overlay",
         id: "wsr-studio",
