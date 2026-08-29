@@ -70,18 +70,6 @@ const frameStyle = {
 const controlStyle = { minHeight: "44px", minWidth: "44px" };
 const listStyle = { maxHeight: "min(42vh, 480px)", overflow: "auto", overflowWrap: "anywhere" };
 
-function metricRows(result) {
-  if (result?.mode === "SINGLE") return result.result?.metric_results ?? [];
-  if (result?.mode === "COMPARE") {
-    const left = result.left?.tag === "SIDE_RESULT" ? result.left.metric_results : [];
-    const right = result.right?.tag === "SIDE_RESULT" ? result.right.metric_results : [];
-    const rows = new Map();
-    for (const item of [...left, ...right]) rows.set(`${item.metric_id}@${item.metric_version}`, item);
-    return [...rows.values()];
-  }
-  return [];
-}
-
 function StudioAction(React, Button, store, controller) {
   return function StudioActionView({ wide = true, useSessions }) {
     const session = typeof useSessions === "function" ? useSessions((state) => state.byId?.[state.current]) : undefined;
@@ -102,6 +90,7 @@ function StudioOverlay(React, Primitives, store, controller) {
   const Button = Primitives.Button ?? "button";
   const Input = Primitives.Input ?? "input";
   const DisclosureRow = Primitives.DisclosureRow;
+  const JsonTree = Primitives.JsonTree;
   return function StudioOverlayView() {
     const snapshot = React.useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
     const close = () => store.close();
@@ -113,13 +102,18 @@ function StudioOverlay(React, Primitives, store, controller) {
     }, []);
     React.useEffect(() => {
       if (snapshot.drilldown.phase !== "idle") return;
-      if (snapshot.route.page === "facts") void controller.loadFacts({ limit: 50 });
+      if (snapshot.route.page === "facts" && snapshot.result !== undefined) {
+        void controller.loadMetricFacts(snapshot.route.metric, snapshot.route.scope);
+      }
       if (snapshot.route.page === "trace") void controller.loadTrace({
         trace_id: snapshot.route.traceId,
         limit: 200,
       });
-    }, [snapshot.route.page]);
+    }, [snapshot.route.page, snapshot.result]);
     const presentation = projectStudioPresentation(snapshot);
+    const json = (data, label) => JsonTree === undefined
+      ? React.createElement("pre", { "aria-label": label }, JSON.stringify(data, null, 2))
+      : React.createElement(JsonTree, { data, label, copyable: true, expandTopLevel: true });
     const taskItems = snapshot.taskList.items ?? [];
     const current = snapshot.selection?.mode === "single" ? snapshot.selection.taskIds : [];
     const before = snapshot.selection?.mode === "compare" ? snapshot.selection.leftTaskIds : [];
@@ -167,11 +161,12 @@ function StudioOverlay(React, Primitives, store, controller) {
           React.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.refresh() }, "Retry")),
       React.createElement("section", { "aria-labelledby": "wsr-task-selection" },
         React.createElement("h2", { id: "wsr-task-selection" }, "Task selection"),
-        React.createElement("label", null, "Repository",
+        React.createElement("label", null, "Repository context",
           React.createElement(Input, {
-            type: "text", "aria-label": "Repository", defaultValue: snapshot.repository ?? "",
+            type: "text", "aria-label": "Repository", "aria-describedby": "wsr-repository-scope", defaultValue: snapshot.repository ?? "",
             onBlur: (event) => { if (event.target.value.trim() !== "") controller.setRepository(event.target.value); },
           })),
+        React.createElement("p", { id: "wsr-repository-scope" }, "Task discovery is installation-wide in Evidence query 1.0.0; repository context does not filter authoritative Tasks."),
         React.createElement("fieldset", null,
           React.createElement("legend", null, "Evaluation mode"),
           React.createElement("label", null,
@@ -202,14 +197,15 @@ function StudioOverlay(React, Primitives, store, controller) {
         : React.createElement("section", { "aria-label": snapshot.result.mode === "COMPARE" ? "Compared Metric Results" : "Metric Results" },
           snapshot.phase === "partial" ? React.createElement("p", { role: "status" }, "Partial comparison: the available side remains visible.") : null,
           React.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.openReceipt() }, "View receipt"),
-          ...metricRows(snapshot.result).map((metric) => {
-            const coordinate = `${metric.metric_id}@${metric.metric_version}`;
+          ...presentation.metrics.map((metric) => {
+            const coordinate = metric.coordinate;
             const content = React.createElement("article", { key: coordinate },
               React.createElement("h3", null, coordinate),
-              React.createElement("p", null, `${metric.slices?.length ?? 0} result slice(s)`),
+              ...metric.sides.map(({ side, slices }) => React.createElement("section", { key: side, "aria-label": `${side} Metric Result` },
+                React.createElement("h4", null, snapshot.result.mode === "COMPARE" ? `${side} side` : "Metric Result value"),
+                json(slices, `${coordinate} ${side} slices`))),
               React.createElement(Button, { type: "button", style: controlStyle, onClick: () => {
                 controller.openFacts(coordinate);
-                void controller.loadFacts({ limit: 50 });
               } }, "Fact drill-down"));
             return DisclosureRow === undefined ? content : React.createElement(DisclosureRow, {
               key: coordinate, title: coordinate, open: true, expandable: false,
@@ -224,12 +220,15 @@ function StudioOverlay(React, Primitives, store, controller) {
           ...presentation.receipts.map(({ side, receipt }) => React.createElement("article", { key: side },
             React.createElement("h3", null, side),
             React.createElement("p", null, `Population: ${receipt?.population_state ?? "unknown"}`),
-            React.createElement("p", null, `Evidence bindings: ${receipt?.evidence_bindings?.length ?? 0}`)))) : null,
+            React.createElement("p", null, `Evidence bindings: ${receipt?.evidence_bindings?.length ?? 0}`),
+            json(receipt, `${side} evaluation receipt`)))) : null,
       snapshot.route.page === "facts"
         ? React.createElement("section", { "aria-label": "Fact drill-down" },
           React.createElement("h2", null, "Facts"),
           React.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Metric Results"),
           presentation.drilldownError === undefined ? null : React.createElement("p", { role: "alert" }, presentation.drilldownError.message),
+          ...(snapshot.drilldown.references ?? []).filter((reference) => !reference.loadedAsFact)
+            .map((reference) => React.createElement("p", { key: reference.identity }, `Recorded lineage not hydrated as a Fact: ${reference.identity}`)),
           ...presentation.facts.map((fact) => React.createElement("article", { key: fact.id },
             `${fact.kind ?? "Fact"} · ${fact.id}`,
             typeof fact.source?.trace_id === "string" ? React.createElement(Button, { type: "button", onClick: () => {

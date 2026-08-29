@@ -108,7 +108,7 @@ test("the real slot components expose a non-modal top-level view and seed reposi
     useState(initial) { return [typeof initial === "function" ? initial() : initial, () => undefined]; },
     useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot(); },
   };
-  const Primitives = { Button: "dsh-button", Input: "dsh-input", DisclosureRow: "dsh-disclosure", Pill: "dsh-pill", StateDot: "dsh-state-dot" };
+  const Primitives = { Button: "dsh-button", Input: "dsh-input", DisclosureRow: "dsh-disclosure", JsonTree: "dsh-json-tree", Pill: "dsh-pill", StateDot: "dsh-state-dot" };
   const runtime = createStudioClientPlugin({ React, Primitives, initialContext: { taskId: "task-a" } }).apply(ctx);
   assert.equal(typeof runtime, "function");
   const action = components.get("sidebar.footer.action")({

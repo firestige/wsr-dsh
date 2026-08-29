@@ -327,6 +327,43 @@ export function createEvaluateController({ gateway, storage, initialContext } = 
       }
       publish({ drilldown: { ...snapshot.drilldown, phase: "ready", facts: answer.value.items ?? [], error: undefined } });
     },
+    async loadMetricFacts(metricCoordinate, scope = "result") {
+      if (!["result", "related", "read-set"].includes(scope) || snapshot.result === undefined) return;
+      const sides = sideResults(snapshot.result);
+      const metric = sides.flatMap(({ value }) => value.metric_results ?? [])
+        .find((candidate) => `${candidate.metric_id}@${candidate.metric_version}` === metricCoordinate);
+      if (metric === undefined) {
+        publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: incompatibleResponse } });
+        return;
+      }
+      const deliveryIds = [...new Set(sides.flatMap(({ value }) => value.receipt?.task_population ?? [])
+        .flatMap((task) => task.memberships ?? []).map((membership) => membership.delivery_id)
+        .filter((id) => boundedText(id, 256)))].sort();
+      const resultRefs = new Set((metric.slices ?? []).flatMap((slice) => slice.provenance_refs ?? []));
+      const readSetRefs = new Set(sides.flatMap(({ value }) => value.receipt?.input_refs ?? [])
+        .filter((reference) => reference.kind === "FACT")
+        .flatMap((reference) => [reference.identity, reference.provenance_ref]));
+      const wanted = scope === "read-set" ? readSetRefs : resultRefs;
+      publish({ drilldown: { ...snapshot.drilldown, phase: "loading", error: undefined } });
+      const facts = [];
+      for (const delivery_id of deliveryIds) {
+        const answer = await gateway.call("facts/read", { delivery_id, limit: 200 });
+        if (!answer.ok) {
+          publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: answer.error } });
+          return;
+        }
+        if (!Array.isArray(answer.value?.items)) {
+          publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: incompatibleResponse } });
+          return;
+        }
+        facts.push(...answer.value.items);
+      }
+      const matches = (fact) => [fact?.id, fact?.provenance?.accepted_digest].some((identity) => wanted.has(identity));
+      const selected = scope === "related" ? facts.filter((fact) => !matches(fact)) : facts.filter(matches);
+      const returned = new Set(facts.flatMap((fact) => [fact?.id, fact?.provenance?.accepted_digest]));
+      const references = [...wanted].sort().map((identity) => ({ identity, loadedAsFact: returned.has(identity) }));
+      publish({ drilldown: { ...snapshot.drilldown, phase: "ready", facts: selected, references, error: undefined } });
+    },
     async loadTrace(filters) {
       publish({ drilldown: { ...snapshot.drilldown, phase: "loading", error: undefined } });
       const answer = await gateway.call("traces/read", filters);
