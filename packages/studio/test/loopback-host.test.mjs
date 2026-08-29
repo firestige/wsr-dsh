@@ -26,6 +26,17 @@ function capabilities(name) {
   return response(JSON.stringify({ paths }), "application/json");
 }
 
+function evolutionCapability() {
+  return response(JSON.stringify({
+    error: {
+      code: "INVALID_REQUEST",
+      retryable: false,
+      detail: "request does not match evolution compute API v1",
+      details: [],
+    },
+  }), "application/json", 400);
+}
+
 test("loopback Host config binds the endpoint owners and compatible contracts", () => {
   const normalized = normalizeLoopbackHostConfig(config);
   assert.deepEqual(normalized.services.evidence.contract, {
@@ -91,6 +102,7 @@ test("a nominally healthy service missing the pinned read capability is incompat
   const integration = createLoopbackHostIntegration(config, {
     fetcher: async (input) => {
       const url = String(input);
+      if (url.endsWith("/api/evolution/v1/evaluations:compute")) return evolutionCapability();
       if (url.endsWith("/openapi.json")) {
         const paths = url.includes(":4318/")
           ? { "/v1/evidence/facts": {}, "/v1/evidence/traces": {} }
@@ -107,11 +119,41 @@ test("a nominally healthy service missing the pinned read capability is incompat
   assert.equal(status.services.evolution.code, "ready");
 });
 
+test("Evolution capability uses its fail-closed invalid-request seam without requiring OpenAPI", async () => {
+  const integration = createLoopbackHostIntegration(config, {
+    fetcher: async (input, init) => {
+      const url = String(input);
+      if (url.includes(":4318/openapi.json")) return capabilities("evidence");
+      if (url.includes(":4318/healthz")) {
+        return response(JSON.stringify({ status: "ok" }), "application/json");
+      }
+      if (url.endsWith("/healthz")) return response("ok", "text/plain");
+      if (url.endsWith("/api/evolution/v1/evaluations:compute")) {
+        assert.equal(init.method, "POST");
+        assert.equal(init.body, "{}");
+        return response(JSON.stringify({
+          error: {
+            code: "INVALID_REQUEST",
+            retryable: false,
+            detail: "request does not match evolution compute API v1",
+            details: [],
+          },
+        }), "application/json", 400);
+      }
+      return response(JSON.stringify({ detail: "Not Found" }), "application/json", 404);
+    },
+  });
+  assert.equal((await integration.status()).services.evolution.code, "ready");
+});
+
 test("restart, malformed health, connection refusal, and timeout remain bounded typed state", async () => {
   let evolutionAttempts = 0;
   const integration = createLoopbackHostIntegration(config, {
     timeoutMs: 5,
     fetcher: async (input, init) => {
+      if (String(input).endsWith("/api/evolution/v1/evaluations:compute")) {
+        return evolutionCapability();
+      }
       if (String(input).endsWith("/openapi.json")) {
         return capabilities(String(input).includes(":4318/") ? "evidence" : "evolution");
       }

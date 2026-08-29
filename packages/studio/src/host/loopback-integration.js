@@ -153,6 +153,29 @@ async function boundedCapabilities(response, name) {
   }
 }
 
+async function boundedEvolutionCapability(response) {
+  if (response.status !== 400) return typed("downstream-incompatible");
+  if (!/^application\/json(?:\s*;|$)/iu.test(response.headers.get("content-type") ?? "")) {
+    return typed("downstream-malformed");
+  }
+  const declared = response.headers.get("content-length");
+  if (declared !== null && /^\d+$/u.test(declared) && Number(declared) > MAXIMUM_HEALTH_BYTES) {
+    return typed("downstream-malformed");
+  }
+  const body = await response.text();
+  if (new TextEncoder().encode(body).byteLength > MAXIMUM_HEALTH_BYTES) {
+    return typed("downstream-malformed");
+  }
+  try {
+    const value = JSON.parse(body);
+    return record(value?.error) && value.error.code === "INVALID_REQUEST" && value.error.retryable === false
+      ? typed("ready")
+      : typed("downstream-incompatible");
+  } catch {
+    return typed("downstream-malformed");
+  }
+}
+
 export function createLoopbackHostIntegration(value, options = {}) {
   const config = normalizeLoopbackHostConfig(value);
   const fetcher = options.fetcher ?? globalThis.fetch;
@@ -174,14 +197,22 @@ export function createLoopbackHostIntegration(value, options = {}) {
       });
       const health = await boundedHealth(response, serviceConfig);
       if (health.code !== "ready") return health;
-      const capabilities = await fetcher(`${serviceConfig.baseUrl}/openapi.json`, {
-        method: "GET",
-        headers: { Accept: "application/json" },
+      const isEvolution = name === "evolution";
+      const capabilities = await fetcher(`${serviceConfig.baseUrl}${isEvolution
+        ? "/api/evolution/v1/evaluations:compute"
+        : "/openapi.json"}`, {
+        method: isEvolution ? "POST" : "GET",
+        headers: isEvolution
+          ? { Accept: "application/json", "Content-Type": "application/json" }
+          : { Accept: "application/json" },
+        ...(isEvolution ? { body: "{}" } : {}),
         credentials: "omit",
         redirect: "error",
         signal: timeout,
       });
-      return await boundedCapabilities(capabilities, name);
+      return isEvolution
+        ? await boundedEvolutionCapability(capabilities)
+        : await boundedCapabilities(capabilities, name);
     } catch {
       return typed(timeout.aborted ? "downstream-timeout" : "downstream-unavailable");
     }
