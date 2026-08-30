@@ -11,7 +11,7 @@ import { packWorkspaces } from "./lib/package-artifacts.mjs";
 
 const root = resolve(new URL("../", import.meta.url).pathname);
 const chromeBinary = process.env.WSR_CHROME_BINARY ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.1.4-rc.1/wsr-execution-0.1.4.tgz";
+const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.1.4/wsr-execution-0.1.4.tgz";
 
 function run(command, args, options = {}) {
   const answer = spawnSync(command, args, { encoding: "utf8", ...options });

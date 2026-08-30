@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       candidate_tag:
-        description: Qualified prerelease tag, for example 0.1.0-rc.1
+        description: Qualified prerelease tag, for example 0.1.1-rc.1
         required: true
         type: string
 

@@ -8,7 +8,7 @@ import { assertCompositionDump, commandFailureDetail, localSuiteOverrideYaml, lo
 import { packWorkspaces } from "./lib/package-artifacts.mjs";
 
 const root = resolve(new URL("../", import.meta.url).pathname);
-const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.1.4-rc.1/wsr-execution-0.1.4.tgz";
+const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.1.4/wsr-execution-0.1.4.tgz";
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: "utf8", ...options });
@@ -81,7 +81,7 @@ try {
   const home = join(temporary, "home-suite");
   const env = { ...process.env, DSH_HOME: home };
   run("dsh", ["plugin", "--profile", "web", "add", ownerAsset, current.execution, current.studio, "--ignore-scripts"], { env });
-  await setSuitePolicy(home, { execution: current.execution, studio: current.studio }, "0.1.0");
+  await setSuitePolicy(home, { execution: current.execution, studio: current.studio }, "0.1.1");
   run("dsh", ["plugin", "--profile", "web", "add", current.suite, "--ignore-scripts"], { env });
   await setLayers(home, suiteOnlyLayers);
   dump(env, ["wsr-execution", "wsr-studio"]);
