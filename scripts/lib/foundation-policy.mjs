@@ -168,7 +168,7 @@ function validatePatch(name, patch) {
   if (JSON.stringify(rows) !== JSON.stringify(expected)) {
     throw new BoundaryViolation("ACTIVATION_GRAPH", `${name} patch is ${JSON.stringify(rows)}`);
   }
-  if ((name === "dsh-wsr-execution") !== workspaceForkOverride) {
+  if (["dsh-wsr-execution", "dsh-wsr"].includes(name) !== workspaceForkOverride) {
     throw new BoundaryViolation("WORKSPACE_UI_FORK_ACTIVATION", name);
   }
 }

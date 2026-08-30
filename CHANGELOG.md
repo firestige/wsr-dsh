@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1 — 2026-08-30
+
+- Ensure the suite disables the upstream Workspace UI before activating the fixed-version WSR Workspace shell, matching the independently installed Execution bundle.
+- Keep `dsh-wsr-execution@0.2.0` and `dsh-wsr-studio@0.1.1` unchanged.
+
 ## 0.2.0 — 2026-08-30
 
 - Upgrade `dsh-wsr-execution` to the stable `wsr-execution@0.2.0` product path.

@@ -8,6 +8,7 @@ import { join, resolve } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 
 import { packWorkspaces } from "./lib/package-artifacts.mjs";
+import { localSuiteOverrideYaml, localSuiteOverrides, suiteOnlyLayers } from "./lib/clean-profile-policy.mjs";
 
 const root = resolve(new URL("../", import.meta.url).pathname);
 const chromeBinary = process.env.WSR_CHROME_BINARY ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -105,7 +106,8 @@ try {
   const archives = await packWorkspaces({ root, output: packages });
   const executionArchive = archives.find((path) => path.includes("dsh-wsr-execution-"));
   const studioArchive = archives.find((path) => path.includes("dsh-wsr-studio-"));
-  if (executionArchive === undefined || studioArchive === undefined) throw new Error("HARNESS_ARCHIVE_MISSING");
+  const suiteArchive = archives.find((path) => /dsh-wsr-0\.2\.1\.tgz$/u.test(path));
+  if (executionArchive === undefined || studioArchive === undefined || suiteArchive === undefined) throw new Error("HARNESS_ARCHIVE_MISSING");
 
   const home = join(temporary, "home");
   const repository = join(temporary, "repository");
@@ -227,6 +229,14 @@ try {
   // immutable stable owner asset as an explicit profile root; the adapter
   // records its exact URL and digest as release evidence.
   run("dsh", ["plugin", "--profile", "web", "add", ownerAsset, executionArchive, studioArchive, "--ignore-scripts"], { env });
+  const workspacePolicyPath = join(home, "profiles/web/pnpm-workspace.yaml");
+  const workspacePolicy = await readFile(workspacePolicyPath, "utf8");
+  await writeFile(workspacePolicyPath, `${workspacePolicy.trimEnd()}\n${localSuiteOverrideYaml(localSuiteOverrides({ execution: executionArchive, studio: studioArchive }))}`);
+  run("dsh", ["plugin", "--profile", "web", "add", suiteArchive, "--ignore-scripts"], { env });
+  const profileManifestPath = join(home, "profiles/web/package.json");
+  const profileManifest = JSON.parse(await readFile(profileManifestPath, "utf8"));
+  profileManifest.dsh.profile.bundles = suiteOnlyLayers(profileManifest.dsh.profile.bundles);
+  await writeFile(profileManifestPath, `${JSON.stringify(profileManifest, null, 2)}\n`);
   const dump = run("dsh", ["web", "--patch", overlay, "--dump-config"], { env });
   for (const id of ["wsr-execution", "wsr-studio"]) {
     const count = [...dump.matchAll(new RegExp(`\\bid:\\s*['\"]?${id}['\"]?\\s*$`, "gmu"))].length;

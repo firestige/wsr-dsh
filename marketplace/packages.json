@@ -22,7 +22,7 @@
     {
       "name": "dsh-wsr",
       "displayName": "WSR suite",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "summary": "Install the qualified compatible WSR Execution and Studio pair.",
       "icon": "./icon.svg",
       "license": "Apache-2.0",
