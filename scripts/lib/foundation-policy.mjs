@@ -5,7 +5,7 @@ import { basename, dirname, isAbsolute, relative, resolve, sep } from "node:path
 const EXPECTED_PACKAGES = Object.freeze([
   Object.freeze({ path: "packages/execution", name: "dsh-wsr-execution", displayName: "WSR", role: "execution-adapter" }),
   Object.freeze({ path: "packages/studio", name: "dsh-wsr-studio", displayName: "WSR Studio", role: "studio-adapter" }),
-  Object.freeze({ path: "packages/suite", name: "dsh-wsr", role: "exact-composition" }),
+  Object.freeze({ path: "packages/suite", name: "dsh-wsr", role: "compatible-composition" }),
 ]);
 const SOURCE_EXTENSION = /\.(?:[cm]?js|tsx?)$/u;
 const IMPORT_SPECIFIER = /(?:\bimport\s*(?:[^'"()]*?\s+from\s*)?|\bexport\s+[^'"()]*?\s+from\s*|\bimport\s*\(|\brequire\s*\()\s*['"]([^'"]+)['"]/gu;
@@ -125,9 +125,9 @@ export function validateReleaseRequest({ channel, clean, commit, version }) {
   }
 }
 
-function validatePackage(manifest, expected, version, dshVersion) {
+function validatePackage(manifest, expected, dshVersion) {
   if (manifest.name !== expected.name) throw new BoundaryViolation("PACKAGE_IDENTITY", `${expected.path} is ${manifest.name}`);
-  if (manifest.version !== version) throw new BoundaryViolation("VERSION_DRIFT", `${manifest.name} is ${manifest.version}, expected ${version}`);
+  if (typeof manifest.version !== "string" || !/^\d+\.\d+\.\d+$/u.test(manifest.version)) throw new BoundaryViolation("VERSION_INVALID", `${manifest.name} is ${manifest.version}`);
   if (manifest.license !== "Apache-2.0") throw new BoundaryViolation("LICENSE_MISSING", `${manifest.name} is not Apache-2.0`);
   if (manifest.dsh?.bundle?.patch !== "./cordis.patch.yml") throw new BoundaryViolation("BUNDLE_PATCH_MISSING", expected.name);
   if (manifest.dsh?.compatibility?.dsh !== dshVersion) throw new BoundaryViolation("DSH_VERSION_DRIFT", expected.name);
@@ -188,7 +188,8 @@ export async function validateRepository(root) {
   if (compatibility.workspaceUiFork?.strategy !== "fixed-version-fork"
     || compatibility.workspaceUiFork?.sourceVersion !== dshVersion
     || compatibility.workspaceUiFork?.activation !== "active-in-wave7"
-    || compatibility.executionOwner?.revision !== "d4fa9607e5e3153b969e186866ddd7697a119c81"
+    || !/^[0-9a-f]{40}$/u.test(compatibility.executionOwner?.revision ?? "")
+    || !/^[0-9a-f]{64}$/u.test(compatibility.executionOwner?.assetSha256 ?? "")
     || compatibility.executionOwner?.projection !== "execution.delivery-control-plane@1.0.0") {
     throw new BoundaryViolation("WORKSPACE_UI_FORK_DRIFT", "the active fixed-version fork or owner projection coordinate changed");
   }
@@ -197,7 +198,7 @@ export async function validateRepository(root) {
   for (const expected of EXPECTED_PACKAGES) {
     const packageRoot = resolve(repositoryRoot, expected.path);
     const manifest = await json(resolve(packageRoot, "package.json"));
-    validatePackage(manifest, expected, version, dshVersion);
+    validatePackage(manifest, expected, dshVersion);
     validatePatch(manifest.name, await readFile(resolve(packageRoot, "cordis.patch.yml"), "utf8"));
     for (const path of await filesUnder(packageRoot)) {
       if (!SOURCE_EXTENSION.test(path)) continue;
@@ -208,8 +209,17 @@ export async function validateRepository(root) {
 
   const suite = packages[2].manifest;
   exactKeys(suite.dependencies, ["dsh-wsr-execution", "dsh-wsr-studio"], "SUITE_DEPENDENCY_GRAPH", suite.name);
-  for (const [name, dependencyVersion] of Object.entries(suite.dependencies)) {
-    if (dependencyVersion !== version) throw new BoundaryViolation("SUITE_VERSION_DRIFT", `${name} is ${dependencyVersion}`);
+  for (const pkg of packages.slice(0, 2)) {
+    const dependencyVersion = suite.dependencies[pkg.name];
+    if (dependencyVersion !== `^${pkg.manifest.version}`) throw new BoundaryViolation("SUITE_VERSION_DRIFT", `${pkg.name} is ${dependencyVersion}`);
+  }
+  const execution = packages[0].manifest;
+  const owner = compatibility.executionOwner;
+  if (execution.wsr?.ownerRevision !== owner.revision
+    || execution.wsr?.ownerAsset?.sha256 !== owner.assetSha256
+    || execution.peerDependencies?.["wsr-execution"] !== `^${owner.version}`
+    || execution.wsr?.ownerAsset?.url !== `https://github.com/firestige/wsr-execution/releases/download/${owner.release}/wsr-execution-${owner.version}.tgz`) {
+    throw new BoundaryViolation("EXECUTION_OWNER_EVIDENCE_DRIFT", execution.name);
   }
   for (const pkg of packages.slice(0, 2)) {
     for (const field of ["dependencies", "devDependencies", "optionalDependencies"]) {
@@ -225,6 +235,7 @@ export async function validateRepository(root) {
     dshVersion,
     displayNames: Object.freeze(Object.fromEntries(EXPECTED_PACKAGES.filter(({ displayName }) => displayName !== undefined).map(({ name, displayName }) => [name, displayName]))),
     packages: Object.freeze(packages),
+    packageVersions: Object.freeze(Object.fromEntries(packages.map(({ name, manifest }) => [name, manifest.version]))),
     version,
   });
 }

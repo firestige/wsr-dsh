@@ -17,7 +17,7 @@ import { assertCompositionDump, commandFailureDetail, localSuiteOverrideYaml, lo
 
 const root = resolve(import.meta.dirname, "..");
 
-test("the repository is one exact-version workspace with the three fixed bundle identities", async () => {
+test("the repository admits independently versioned compatible bundles", async () => {
   const report = await validateRepository(root);
 
   assert.deepEqual(report.packages.map(({ name }) => name), [
@@ -25,7 +25,12 @@ test("the repository is one exact-version workspace with the three fixed bundle 
     "dsh-wsr-studio",
     "dsh-wsr",
   ]);
-  assert.equal(report.version, "0.1.1");
+  assert.equal(report.version, "0.2.0");
+  assert.deepEqual(report.packageVersions, {
+    "dsh-wsr-execution": "0.2.0",
+    "dsh-wsr-studio": "0.1.1",
+    "dsh-wsr": "0.2.0",
+  });
   assert.equal(report.dshVersion, "0.1.1-rc.2");
   assert.deepEqual(report.displayNames, {
     "dsh-wsr-execution": "WSR",
@@ -33,13 +38,13 @@ test("the repository is one exact-version workspace with the three fixed bundle 
   });
 });
 
-test("the suite composes exact Execution and Studio versions without an activation or UI identity", async () => {
+test("the suite composes compatible Execution and Studio versions without an activation or UI identity", async () => {
   const suite = JSON.parse(await readFile(join(root, "packages/suite/package.json"), "utf8"));
   const patch = await readFile(join(root, "packages/suite/cordis.patch.yml"), "utf8");
 
   assert.deepEqual(suite.dependencies, {
-    "dsh-wsr-execution": "0.1.1",
-    "dsh-wsr-studio": "0.1.1",
+    "dsh-wsr-execution": "^0.2.0",
+    "dsh-wsr-studio": "^0.1.1",
   });
   assert.equal(suite.wsr.displayName, undefined);
   assert.equal(suite.main, undefined);
@@ -198,19 +203,19 @@ test("clean-profile command failures preserve package-manager stdout and stderr"
   assert.equal(commandFailureDetail({ stdout: "resolution failed\n", stderr: "dsh failed\n" }), "resolution failed\ndsh failed");
 });
 
-test("local suite qualification resolves exact dependencies only from supplied archives", () => {
+test("local suite qualification resolves independently versioned dependencies only from supplied archives", () => {
   assert.deepEqual(localSuiteOverrides({
     execution: "/tmp/dsh-wsr-execution.tgz",
     studio: "/tmp/dsh-wsr-studio.tgz",
-  }), {
-    "dsh-wsr-execution@0.1.1": "file:/tmp/dsh-wsr-execution.tgz",
+  }, { execution: "0.2.0", studio: "0.1.1" }), {
+    "dsh-wsr-execution@0.2.0": "file:/tmp/dsh-wsr-execution.tgz",
     "dsh-wsr-studio@0.1.1": "file:/tmp/dsh-wsr-studio.tgz",
   });
 });
 
 test("pnpm 11 local qualification overrides are rendered into workspace policy", () => {
   assert.equal(localSuiteOverrideYaml({
-    "dsh-wsr-execution@0.1.1": "file:/tmp/execution.tgz",
+    "dsh-wsr-execution@0.2.0": "file:/tmp/execution.tgz",
     "dsh-wsr-studio@0.1.1": "file:/tmp/studio.tgz",
-  }), 'overrides:\n  "dsh-wsr-execution@0.1.1": "file:/tmp/execution.tgz"\n  "dsh-wsr-studio@0.1.1": "file:/tmp/studio.tgz"\n');
+  }), 'overrides:\n  "dsh-wsr-execution@0.2.0": "file:/tmp/execution.tgz"\n  "dsh-wsr-studio@0.1.1": "file:/tmp/studio.tgz"\n');
 });

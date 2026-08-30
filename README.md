@@ -2,23 +2,22 @@
 
 This repository is the release authority for the WSR Execution, WSR Studio, and combined WSR suite integrations for DeepSeek Harness.
 
-Release `0.1.1` binds the first qualified Execution, Studio, and suite package set to the stable
-Execution `0.1.4` bytes.
+Release set `0.2.0` adds the Workflow DSL 2 multi-Provider Execution path while retaining the already-landed Studio `0.1.1` coordinate.
 
 Workspace packages:
 
 - `dsh-wsr-execution` — display name `WSR`
 - `dsh-wsr-studio` — display name `WSR Studio`
-- `dsh-wsr` — exact combination suite with no additional UI identity
+- `dsh-wsr` — compatible combination suite with no additional UI identity
 
-All three packages share version `0.1.1`. The suite binds the other
-two by that exact version. DeepSeek Harness compatibility is frozen to
-`0.1.1-rc.2`; the Execution projection contract is pinned to owner merge
-`d4fa9607e5e3153b969e186866ddd7697a119c81`.
-The owner package is qualified only from the immutable GitHub prerelease asset
-`wsr-execution-0.1.4.tgz` in stable release `0.1.4` (SHA-256
-`0b889b707b5fdc84d934e6c807ce101b4edaa356409253a1f48d6ffca7f53420`).
-There is no npm `wsr-execution@0.1.4` dependency: DSH profiles install that
+Packages follow semantic versioning independently. The suite accepts
+`dsh-wsr-execution@^0.2.0` and `dsh-wsr-studio@^0.1.1`. DeepSeek Harness
+compatibility remains fixed at `0.1.1-rc.2`; immutable release evidence records
+the exact Execution owner revision and asset digest used for qualification.
+The current owner package is qualified from stable asset
+`wsr-execution-0.2.0.tgz` in release `0.2.0` (SHA-256
+`4f7879edcd55018954aaf0cd226afb75428b04a90c588a654425d4a1afe52309`).
+There is no ambient npm resolution of `wsr-execution`: DSH profiles install that
 asset explicitly as a top-level root because DSH blocks exotic transitive
 dependencies.
 
@@ -46,7 +45,7 @@ domain-owner repositories that depend back on a `dsh-wsr*` package.
 The Release Candidate workflow runs clean-profile, lifecycle, real-Harness,
 downstream-outage, and remote-artifact gates before creating an immutable
 prerelease. Release Promote verifies the same bytes and qualification record,
-publishes the component packages before the exact suite through npm OIDC, and
+publishes changed component packages before the compatible suite through npm OIDC, and
 uses the scoped release App for the final GitHub release. See [release and
 installation lifecycle](docs/release-lifecycle.md), [changelog](CHANGELOG.md),
 and [security policy](SECURITY.md).

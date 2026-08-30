@@ -11,10 +11,10 @@
   },
   "executionOwner": {
     "package": "wsr-execution",
-    "version": "0.1.4",
-    "release": "0.1.4",
-    "assetSha256": "0b889b707b5fdc84d934e6c807ce101b4edaa356409253a1f48d6ffca7f53420",
-    "revision": "d4fa9607e5e3153b969e186866ddd7697a119c81",
+    "version": "0.2.0",
+    "release": "0.2.0",
+    "assetSha256": "4f7879edcd55018954aaf0cd226afb75428b04a90c588a654425d4a1afe52309",
+    "revision": "5d03924df88e1afda3b7ffb5ecf182482cc8d1d5",
     "projection": "execution.delivery-control-plane@1.0.0"
   }
 }

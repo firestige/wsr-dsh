@@ -36,7 +36,7 @@ try {
   for (const file of archives) {
     const name = basename(file).startsWith("dsh-wsr-execution-") ? "dsh-wsr-execution"
       : basename(file).startsWith("dsh-wsr-studio-") ? "dsh-wsr-studio" : "dsh-wsr";
-    packages.push({ package: name, version: repository.version, file: basename(file), sha256: await digest(file) });
+    packages.push({ package: name, version: repository.packageVersions[name], file: basename(file), sha256: await digest(file) });
   }
   packages.sort((left, right) => order.indexOf(left.package) - order.indexOf(right.package));
   const provenance = await createProvenanceStatement({ artifacts: archives, commit, version: repository.version });
@@ -45,7 +45,8 @@ try {
   const compatibility = {
     schemaVersion: "wsr.dsh.release-compatibility@1.0.0", packageVersion: repository.version,
     dsh: repository.dshVersion, node: "24.12.0", npm: "11.6.2",
-    executionOwner: frozen.executionOwner, packages: packages.map(({ package: name }) => name),
+    executionOwner: frozen.executionOwner, packageVersions: repository.packageVersions,
+    packages: packages.map(({ package: name }) => name),
   };
   await writeFile(resolve(output, "compatibility-matrix.json"), `${JSON.stringify(compatibility, null, 2)}\n`, { flag: "wx" });
   const sbom = {

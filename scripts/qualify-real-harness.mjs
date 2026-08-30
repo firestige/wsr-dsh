@@ -11,7 +11,7 @@ import { packWorkspaces } from "./lib/package-artifacts.mjs";
 
 const root = resolve(new URL("../", import.meta.url).pathname);
 const chromeBinary = process.env.WSR_CHROME_BINARY ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.1.4/wsr-execution-0.1.4.tgz";
+const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.2.0/wsr-execution-0.2.0.tgz";
 
 function run(command, args, options = {}) {
   const answer = spawnSync(command, args, { encoding: "utf8", ...options });
@@ -111,18 +111,23 @@ try {
   const repository = join(temporary, "repository");
   const state = join(temporary, "state");
   await Promise.all([mkdir(repository), mkdir(state)]);
+  await mkdir(join(repository, ".wsr"));
   run("git", ["init", "--quiet", repository]);
-  const credentials = join(temporary, "credentials.yaml");
-  await writeFile(credentials, "qualification-key: qualification-only\n", { mode: 0o600 });
+  await writeFile(join(repository, ".wsr", "role-provider-bindings.json"), `${JSON.stringify({
+    schemaVersion: "execution.repository-role-provider-bindings@1.0.0",
+    bindings: {
+      "role.greeter": { agentProvider: { identity: "provider.copilot", version: "1.0.78" }, model: { provider: "github-copilot", model: "gpt-5.3-codex" } },
+      "role.reviewer": { agentProvider: { identity: "provider.codex", version: "0.144.5" }, model: { provider: "openai", model: "gpt-5.6-sol" } },
+    },
+  }, null, 2)}\n`, { mode: 0o600 });
   const configFile = join(temporary, "execution.json");
   await writeFile(configFile, `${JSON.stringify({
-    schemaVersion: "execution.config@1.0.0",
+    schemaVersion: "execution.config@2.0.0",
     paths: {
       repositoryRoot: repository,
       workspaceRoot: repository,
       allowedWorktreeRoots: [repository],
       stateRoot: state,
-      credentialStorePath: credentials,
     },
     workflowSource: {
       kind: "github",
@@ -131,12 +136,9 @@ try {
       assetPattern: "workflow-package-{name}-{version}.tar.gz",
     },
     runner: {
-      implementationKey: "runner.v1",
+      implementationKey: "runner.v2",
       host: { engine: "langgraph" },
-      provider: {
-        key: "dsh", route: "qualification", modelId: "qualification",
-        baseUrl: "http://127.0.0.1:9/v1", credentialRef: "qualification-key", maxParallelToolCalls: 1,
-      },
+      maxParallelToolCalls: 2,
     },
     observation: {
       enabled: false, timeoutMs: 1000, maxBatchRecords: 8, maxBatchBytes: 65_536,
@@ -222,8 +224,8 @@ try {
 
   const env = { ...process.env, DSH_HOME: home, DSH_TELEMETRY_DISABLED: "1" };
   // DSH deliberately blocks exotic transitive dependencies. Install the
-  // immutable owner RC as an explicit profile root; the adapter has an exact
-  // 0.1.4 peer and records the asset URL/digest in its own metadata.
+  // immutable stable owner asset as an explicit profile root; the adapter
+  // records its exact URL and digest as release evidence.
   run("dsh", ["plugin", "--profile", "web", "add", ownerAsset, executionArchive, studioArchive, "--ignore-scripts"], { env });
   const dump = run("dsh", ["web", "--patch", overlay, "--dump-config"], { env });
   for (const id of ["wsr-execution", "wsr-studio"]) {
