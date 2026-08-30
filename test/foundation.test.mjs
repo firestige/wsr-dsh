@@ -25,9 +25,9 @@ test("the repository admits independently versioned compatible bundles", async (
     "dsh-wsr-studio",
     "dsh-wsr",
   ]);
-  assert.equal(report.version, "0.2.1");
+  assert.equal(report.version, "0.2.2");
   assert.deepEqual(report.packageVersions, {
-    "dsh-wsr-execution": "0.2.0",
+    "dsh-wsr-execution": "0.2.1",
     "dsh-wsr-studio": "0.1.1",
     "dsh-wsr": "0.2.1",
   });
@@ -208,15 +208,15 @@ test("local suite qualification resolves independently versioned dependencies on
   assert.deepEqual(localSuiteOverrides({
     execution: "/tmp/dsh-wsr-execution.tgz",
     studio: "/tmp/dsh-wsr-studio.tgz",
-  }, { execution: "0.2.0", studio: "0.1.1" }), {
-    "dsh-wsr-execution@0.2.0": "file:/tmp/dsh-wsr-execution.tgz",
+  }, { execution: "0.2.1", studio: "0.1.1" }), {
+    "dsh-wsr-execution@0.2.1": "file:/tmp/dsh-wsr-execution.tgz",
     "dsh-wsr-studio@0.1.1": "file:/tmp/dsh-wsr-studio.tgz",
   });
 });
 
 test("pnpm 11 local qualification overrides are rendered into workspace policy", () => {
   assert.equal(localSuiteOverrideYaml({
-    "dsh-wsr-execution@0.2.0": "file:/tmp/execution.tgz",
+    "dsh-wsr-execution@0.2.1": "file:/tmp/execution.tgz",
     "dsh-wsr-studio@0.1.1": "file:/tmp/studio.tgz",
-  }), 'overrides:\n  "dsh-wsr-execution@0.2.0": "file:/tmp/execution.tgz"\n  "dsh-wsr-studio@0.1.1": "file:/tmp/studio.tgz"\n');
+  }), 'overrides:\n  "dsh-wsr-execution@0.2.1": "file:/tmp/execution.tgz"\n  "dsh-wsr-studio@0.1.1": "file:/tmp/studio.tgz"\n');
 });

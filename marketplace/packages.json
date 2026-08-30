@@ -4,7 +4,7 @@
     {
       "name": "dsh-wsr-execution",
       "displayName": "WSR",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "summary": "Operate WSR Intake, Deliveries, Actions, and canonical results in DSH.",
       "icon": "./icon.svg",
       "license": "Apache-2.0",

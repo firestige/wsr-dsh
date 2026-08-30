@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       candidate_tag:
-        description: Qualified release-set prerelease tag, for example 0.2.1-rc.1
+        description: Qualified release-set prerelease tag, for example 0.2.2-rc.1
         required: true
         type: string
 

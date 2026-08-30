@@ -1,6 +1,6 @@
 # Release and installation lifecycle
 
-The repository uses one release-set version while each package keeps its own semantic version. A candidate tag such as `0.2.1-rc.1` is built from one clean commit, then qualified before stable publication. Promotion verifies the exact candidate bytes, skips an unchanged package only when its published bytes match, and publishes changed components before the suite through npm OIDC. The final GitHub release is created with the repository-scoped release App.
+The repository uses one release-set version while each package keeps its own semantic version. A candidate tag such as `0.2.2-rc.1` is built from one clean commit, then qualified before stable publication. Promotion verifies the exact candidate bytes, skips an unchanged package only when its published bytes match, and publishes changed components before the suite through npm OIDC. The final GitHub release is created with the repository-scoped release App.
 
 `dsh-wsr-execution` and `dsh-wsr-studio` can each be added, upgraded, rolled back, and removed independently. The suite pins both packages exactly and owns the single composition layer; it has no UI identity. When moving from separately installed components to the suite, remove the component bundle layers and retain one `dsh-wsr` layer. Repeated suite adds are reconciled to one suite layer. To return to Execution alone, remove the suite and Studio roots, retain/add the exact Execution root, and reconcile the profile to one `dsh-wsr-execution` layer.
 

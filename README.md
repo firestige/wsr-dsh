@@ -2,7 +2,7 @@
 
 This repository is the release authority for the WSR Execution, WSR Studio, and combined WSR suite integrations for DeepSeek Harness.
 
-Release set `0.2.0` adds the Workflow DSL 2 multi-Provider Execution path while retaining the already-landed Studio `0.1.1` coordinate.
+Release set `0.2.2` qualifies the compatible Execution patch while retaining the already-landed Studio `0.1.1` and suite `0.2.1` coordinates.
 
 Workspace packages:
 
@@ -15,8 +15,8 @@ Packages follow semantic versioning independently. The suite accepts
 compatibility remains fixed at `0.1.1-rc.2`; immutable release evidence records
 the exact Execution owner revision and asset digest used for qualification.
 The current owner package is qualified from stable asset
-`wsr-execution-0.2.0.tgz` in release `0.2.0` (SHA-256
-`4f7879edcd55018954aaf0cd226afb75428b04a90c588a654425d4a1afe52309`).
+`wsr-execution-0.2.1.tgz` in release `0.2.1` (SHA-256
+`9375714297ea0af221ad9634f08c1b205d985649ae51db2964d46e6a9e4accf4`).
 There is no ambient npm resolution of `wsr-execution`: DSH profiles install that
 asset explicitly as a top-level root because DSH blocks exotic transitive
 dependencies.
