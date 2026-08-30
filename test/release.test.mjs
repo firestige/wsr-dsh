@@ -9,18 +9,18 @@ import { assertCandidateTag, assertPromotionEligible } from "../scripts/lib/rele
 const root = path.resolve(import.meta.dirname, "..");
 const packages = Object.freeze(["dsh-wsr-execution", "dsh-wsr-studio", "dsh-wsr"]);
 
-test("release policy accepts only an exact qualified candidate for the stable package version", () => {
-  assert.doesNotThrow(() => assertCandidateTag("0.1.1-rc.1", "0.1.1"));
-  assert.throws(() => assertCandidateTag("latest", "0.1.1"), /PRERELEASE_TAG_REQUIRED/u);
+test("release policy accepts only an exact qualified candidate for the stable release-set version", () => {
+  assert.doesNotThrow(() => assertCandidateTag("0.2.0-rc.1", "0.2.0"));
+  assert.throws(() => assertCandidateTag("latest", "0.2.0"), /PRERELEASE_TAG_REQUIRED/u);
   assert.doesNotThrow(() => assertPromotionEligible({
-    finalTag: "0.1.1",
-    candidateTag: "0.1.1-rc.1",
+    finalTag: "0.2.0",
+    candidateTag: "0.2.0-rc.1",
     commit: "a".repeat(40),
     metadataSha256: `sha256:${"b".repeat(64)}`,
     qualification: {
       schemaVersion: "wsr.dsh.release-qualification@1.0.0",
-      packageVersion: "0.1.1",
-      candidateTag: "0.1.1-rc.1",
+      packageVersion: "0.2.0",
+      candidateTag: "0.2.0-rc.1",
       commit: "a".repeat(40),
       artifactMetadataSha256: `sha256:${"b".repeat(64)}`,
       gates: {
@@ -36,10 +36,11 @@ test("release policy accepts only an exact qualified candidate for the stable pa
 });
 
 test("npm publication is ordered components before suite and fails on immutable collisions", async () => {
+  const versions = { "dsh-wsr-execution": "0.2.0", "dsh-wsr-studio": "0.1.1", "dsh-wsr": "0.2.0" };
   const artifacts = packages.map((name) => ({
     package: name,
-    version: "0.1.1",
-    file: `${name}-0.1.1.tgz`,
+    version: versions[name],
+    file: `${name}-${versions[name]}.tgz`,
     sha256: `sha256:${name.padEnd(64, "0").slice(0, 64)}`,
   }));
   const plan = await planNpmPublication(artifacts, async () => null);
@@ -68,17 +69,17 @@ test("release workflows reuse candidate qualification, npm OIDC, and the scoped 
   assert.doesNotMatch(promote, /Publishing is not enabled yet|STABLE_PROMOTION_DISABLED/u);
 });
 
-test("all three manifests use one stable version and the suite pins both components exactly", async () => {
+test("only changed bundles bump and the suite declares compatible component ranges", async () => {
   const manifests = await Promise.all([
     "package.json",
     "packages/execution/package.json",
     "packages/studio/package.json",
     "packages/suite/package.json",
   ].map(async (file) => JSON.parse(await readFile(path.join(root, file), "utf8"))));
-  assert.deepEqual(manifests.map(({ version }) => version), ["0.1.1", "0.1.1", "0.1.1", "0.1.1"]);
+  assert.deepEqual(manifests.map(({ version }) => version), ["0.2.0", "0.2.0", "0.1.1", "0.2.0"]);
   assert.deepEqual(manifests[3].dependencies, {
-    "dsh-wsr-execution": "0.1.1",
-    "dsh-wsr-studio": "0.1.1",
+    "dsh-wsr-execution": "^0.2.0",
+    "dsh-wsr-studio": "^0.1.1",
   });
 });
 
@@ -86,8 +87,11 @@ test("marketplace support metadata covers every package and the shared security 
   const marketplace = JSON.parse(await readFile(path.join(root, "marketplace/packages.json"), "utf8"));
   assert.equal(marketplace.schemaVersion, "wsr.dsh.marketplace@1.0.0");
   assert.deepEqual(marketplace.packages.map(({ name }) => name), packages);
-  assert.ok(marketplace.packages.every(({ version, icon, license, security }) => version === "0.1.1"
-    && icon === "./icon.svg" && license === "Apache-2.0" && security === "../SECURITY.md"));
+  assert.deepEqual(Object.fromEntries(marketplace.packages.map(({ name, version }) => [name, version])), {
+    "dsh-wsr-execution": "0.2.0", "dsh-wsr-studio": "0.1.1", "dsh-wsr": "0.2.0",
+  });
+  assert.ok(marketplace.packages.every(({ icon, license, security }) => icon === "./icon.svg"
+    && license === "Apache-2.0" && security === "../SECURITY.md"));
   await Promise.all(["marketplace/icon.svg", "CHANGELOG.md", "SECURITY.md", "docs/release-lifecycle.md"]
     .map((file) => readFile(path.join(root, file), "utf8")));
 });

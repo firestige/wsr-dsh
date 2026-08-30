@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       candidate_tag:
-        description: Exact prerelease tag, for example 0.1.1-rc.1
+        description: Exact release-set prerelease tag, for example 0.2.0-rc.1
         required: true
         type: string
 
@@ -34,9 +34,9 @@ jobs:
       - name: Verify immutable remote owner artifact
         run: |
           curl --fail --location --silent --show-error \
-            https://github.com/firestige/wsr-execution/releases/download/0.1.4/wsr-execution-0.1.4.tgz \
-            --output "$RUNNER_TEMP/wsr-execution-0.1.4.tgz"
-          echo "0b889b707b5fdc84d934e6c807ce101b4edaa356409253a1f48d6ffca7f53420  $RUNNER_TEMP/wsr-execution-0.1.4.tgz" | sha256sum --check
+            https://github.com/firestige/wsr-execution/releases/download/0.2.0/wsr-execution-0.2.0.tgz \
+            --output "$RUNNER_TEMP/wsr-execution-0.2.0.tgz"
+          echo "4f7879edcd55018954aaf0cd226afb75428b04a90c588a654425d4a1afe52309  $RUNNER_TEMP/wsr-execution-0.2.0.tgz" | sha256sum --check
       - run: npm run qualify:clean-profile
       - run: npm run qualify:lifecycle
       - run: npm run qualify:provider-routing
