@@ -25,11 +25,11 @@ test("the repository admits independently versioned compatible bundles", async (
     "dsh-wsr-studio",
     "dsh-wsr",
   ]);
-  assert.equal(report.version, "0.2.0");
+  assert.equal(report.version, "0.2.1");
   assert.deepEqual(report.packageVersions, {
     "dsh-wsr-execution": "0.2.0",
     "dsh-wsr-studio": "0.1.1",
-    "dsh-wsr": "0.2.0",
+    "dsh-wsr": "0.2.1",
   });
   assert.equal(report.dshVersion, "0.1.1-rc.2");
   assert.deepEqual(report.displayNames, {
@@ -51,6 +51,7 @@ test("the suite composes compatible Execution and Studio versions without an act
   assert.equal(suite.exports, undefined);
   assert.match(patch, /id: wsr-execution/u);
   assert.match(patch, /id: wsr-studio/u);
+  assert.match(patch, /id: ui-workspace[\s\S]*disabled: true/u);
   assert.doesNotMatch(patch, /id: wsr-suite|name: ['"]?dsh-wsr['"]?$/mu);
 });
 

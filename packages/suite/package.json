@@ -1,6 +1,6 @@
 {
   "name": "dsh-wsr",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Composition bundle for compatible WSR and WSR Studio DSH packages.",
   "type": "module",
   "files": [
