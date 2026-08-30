@@ -10,17 +10,17 @@ const root = path.resolve(import.meta.dirname, "..");
 const packages = Object.freeze(["dsh-wsr-execution", "dsh-wsr-studio", "dsh-wsr"]);
 
 test("release policy accepts only an exact qualified candidate for the stable release-set version", () => {
-  assert.doesNotThrow(() => assertCandidateTag("0.2.1-rc.1", "0.2.1"));
-  assert.throws(() => assertCandidateTag("latest", "0.2.1"), /PRERELEASE_TAG_REQUIRED/u);
+  assert.doesNotThrow(() => assertCandidateTag("0.2.2-rc.1", "0.2.2"));
+  assert.throws(() => assertCandidateTag("latest", "0.2.2"), /PRERELEASE_TAG_REQUIRED/u);
   assert.doesNotThrow(() => assertPromotionEligible({
-    finalTag: "0.2.1",
-    candidateTag: "0.2.1-rc.1",
+    finalTag: "0.2.2",
+    candidateTag: "0.2.2-rc.1",
     commit: "a".repeat(40),
     metadataSha256: `sha256:${"b".repeat(64)}`,
     qualification: {
       schemaVersion: "wsr.dsh.release-qualification@1.0.0",
-      packageVersion: "0.2.1",
-      candidateTag: "0.2.1-rc.1",
+      packageVersion: "0.2.2",
+      candidateTag: "0.2.2-rc.1",
       commit: "a".repeat(40),
       artifactMetadataSha256: `sha256:${"b".repeat(64)}`,
       gates: {
@@ -36,7 +36,7 @@ test("release policy accepts only an exact qualified candidate for the stable re
 });
 
 test("npm publication is ordered components before suite and fails on immutable collisions", async () => {
-  const versions = { "dsh-wsr-execution": "0.2.0", "dsh-wsr-studio": "0.1.1", "dsh-wsr": "0.2.1" };
+  const versions = { "dsh-wsr-execution": "0.2.1", "dsh-wsr-studio": "0.1.1", "dsh-wsr": "0.2.1" };
   const artifacts = packages.map((name) => ({
     package: name,
     version: versions[name],
@@ -76,7 +76,7 @@ test("only changed bundles bump and the suite declares compatible component rang
     "packages/studio/package.json",
     "packages/suite/package.json",
   ].map(async (file) => JSON.parse(await readFile(path.join(root, file), "utf8"))));
-  assert.deepEqual(manifests.map(({ version }) => version), ["0.2.1", "0.2.0", "0.1.1", "0.2.1"]);
+  assert.deepEqual(manifests.map(({ version }) => version), ["0.2.2", "0.2.1", "0.1.1", "0.2.1"]);
   assert.deepEqual(manifests[3].dependencies, {
     "dsh-wsr-execution": "^0.2.0",
     "dsh-wsr-studio": "^0.1.1",
@@ -88,7 +88,7 @@ test("marketplace support metadata covers every package and the shared security 
   assert.equal(marketplace.schemaVersion, "wsr.dsh.marketplace@1.0.0");
   assert.deepEqual(marketplace.packages.map(({ name }) => name), packages);
   assert.deepEqual(Object.fromEntries(marketplace.packages.map(({ name, version }) => [name, version])), {
-    "dsh-wsr-execution": "0.2.0", "dsh-wsr-studio": "0.1.1", "dsh-wsr": "0.2.1",
+    "dsh-wsr-execution": "0.2.1", "dsh-wsr-studio": "0.1.1", "dsh-wsr": "0.2.1",
   });
   assert.ok(marketplace.packages.every(({ icon, license, security }) => icon === "./icon.svg"
     && license === "Apache-2.0" && security === "../SECURITY.md"));

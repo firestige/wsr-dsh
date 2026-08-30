@@ -31,36 +31,36 @@ test("Execution and Studio activate one Host and one generated browser module ea
     ],
     platform: "web",
   });
-  const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.2.0/wsr-execution-0.2.0.tgz";
+  const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.2.1/wsr-execution-0.2.1.tgz";
   assert.equal(execution.dependencies?.["wsr-execution"], undefined);
   assert.equal(execution.peerDependencies["wsr-execution"], "^0.2.0");
   assert.deepEqual(execution.wsr.ownerAsset, {
     url: ownerAsset,
-    sha256: "4f7879edcd55018954aaf0cd226afb75428b04a90c588a654425d4a1afe52309",
+    sha256: "9375714297ea0af221ad9634f08c1b205d985649ae51db2964d46e6a9e4accf4",
   });
   const rootManifest = await json("package.json");
   assert.equal(rootManifest.devDependencies["wsr-execution"], ownerAsset);
   assert.equal(execution.dependencies["@deepseek-ai/dsh-client-ui-workspace"], "0.1.1-rc.2");
-  assert.equal(execution.wsr.ownerRevision, "5d03924df88e1afda3b7ffb5ecf182482cc8d1d5");
+  assert.equal(execution.wsr.ownerRevision, "ffe7cc27f89f6555265f438a51f490355c68e7da");
 
   const lock = await json("package-lock.json");
   const owner = lock.packages["node_modules/wsr-execution"];
-  assert.equal(owner.version, "0.2.0");
+  assert.equal(owner.version, "0.2.1");
   assert.equal(owner.resolved, ownerAsset);
-  assert.equal(owner.integrity, "sha512-iqI6cWmA+fo5kM/62OY1c0Y5BaNoJBVATouh5rV0yJzQDq7ZtCM5XMmiWDXynADcNfuMvsEY/K2jfZaJ0f9H9Q==");
+  assert.equal(owner.integrity, "sha512-jCsoY1ryODAh8W3Gu6VVKRnAYv8eUd2lkd8fHDHTvHTsMhtqYeS4JYfl3d0HYO8kH6HrlkDfZuptT3fC7qtC/w==");
 
   const compatibility = await json("config/dsh-compatibility.json");
   assert.deepEqual(compatibility.executionOwner, {
     package: "wsr-execution",
-    version: "0.2.0",
-    release: "0.2.0",
-    assetSha256: "4f7879edcd55018954aaf0cd226afb75428b04a90c588a654425d4a1afe52309",
-    revision: "5d03924df88e1afda3b7ffb5ecf182482cc8d1d5",
+    version: "0.2.1",
+    release: "0.2.1",
+    assetSha256: "9375714297ea0af221ad9634f08c1b205d985649ae51db2964d46e6a9e4accf4",
+    revision: "ffe7cc27f89f6555265f438a51f490355c68e7da",
     projection: "execution.delivery-control-plane@1.0.0",
   });
 
   const cleanQualifier = await readFile(join(root, "scripts/qualify-clean-profile.mjs"), "utf8");
-  assert.match(cleanQualifier, /const ownerAsset = "https:\/\/github\.com\/firestige\/wsr-execution\/releases\/download\/0\.2\.0\/wsr-execution-0\.2\.0\.tgz"/u);
+  assert.match(cleanQualifier, /const ownerAsset = "https:\/\/github\.com\/firestige\/wsr-execution\/releases\/download\/0\.2\.1\/wsr-execution-0\.2\.1\.tgz"/u);
   assert.match(cleanQualifier, /ownerRequired: true,[\s\S]*id: "execution"/u);
   assert.match(cleanQualifier, /ownerRequired: true,[\s\S]*id: "suite"/u);
 });

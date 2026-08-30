@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.2 — 2026-08-30
+
+- Qualify `dsh-wsr-execution@0.2.1` against stable `wsr-execution@0.2.1`, including the Codex structured-output schema compatibility fix.
+- Keep `dsh-wsr-studio@0.1.1` and the compatible `dsh-wsr@0.2.1` suite unchanged.
+
 ## 0.2.1 — 2026-08-30
 
 - Ensure the suite disables the upstream Workspace UI before activating the fixed-version WSR Workspace shell, matching the independently installed Execution bundle.

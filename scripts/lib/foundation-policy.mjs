@@ -149,6 +149,21 @@ function validatePackage(manifest, expected, dshVersion) {
   }
 }
 
+function satisfiesCaret(range, version) {
+  const lowerMatch = /^\^(\d+)\.(\d+)\.(\d+)$/u.exec(range ?? "");
+  const versionMatch = /^(\d+)\.(\d+)\.(\d+)$/u.exec(version ?? "");
+  if (lowerMatch === null || versionMatch === null) return false;
+  const lower = lowerMatch.slice(1).map(Number);
+  const candidate = versionMatch.slice(1).map(Number);
+  const upper = lower[0] > 0
+    ? [lower[0] + 1, 0, 0]
+    : lower[1] > 0
+      ? [0, lower[1] + 1, 0]
+      : [0, 0, lower[2] + 1];
+  const compare = (left, right) => left[0] - right[0] || left[1] - right[1] || left[2] - right[2];
+  return compare(candidate, lower) >= 0 && compare(candidate, upper) < 0;
+}
+
 function patchRows(patch) {
   return [...patch.matchAll(/^\s*- id:\s*([^\s#]+)\s*$[\s\S]*?^\s+name:\s*['"]?([^'"\s#]+)['"]?\s*$/gmu)]
     .map((match) => Object.freeze({ id: match[1], name: match[2] }));
@@ -211,13 +226,13 @@ export async function validateRepository(root) {
   exactKeys(suite.dependencies, ["dsh-wsr-execution", "dsh-wsr-studio"], "SUITE_DEPENDENCY_GRAPH", suite.name);
   for (const pkg of packages.slice(0, 2)) {
     const dependencyVersion = suite.dependencies[pkg.name];
-    if (dependencyVersion !== `^${pkg.manifest.version}`) throw new BoundaryViolation("SUITE_VERSION_DRIFT", `${pkg.name} is ${dependencyVersion}`);
+    if (!satisfiesCaret(dependencyVersion, pkg.manifest.version)) throw new BoundaryViolation("SUITE_VERSION_DRIFT", `${pkg.name} is ${dependencyVersion}`);
   }
   const execution = packages[0].manifest;
   const owner = compatibility.executionOwner;
   if (execution.wsr?.ownerRevision !== owner.revision
     || execution.wsr?.ownerAsset?.sha256 !== owner.assetSha256
-    || execution.peerDependencies?.["wsr-execution"] !== `^${owner.version}`
+    || !satisfiesCaret(execution.peerDependencies?.["wsr-execution"], owner.version)
     || execution.wsr?.ownerAsset?.url !== `https://github.com/firestige/wsr-execution/releases/download/${owner.release}/wsr-execution-${owner.version}.tgz`) {
     throw new BoundaryViolation("EXECUTION_OWNER_EVIDENCE_DRIFT", execution.name);
   }
