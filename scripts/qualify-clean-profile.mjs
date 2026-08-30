@@ -8,7 +8,7 @@ import { assertCompositionDump, commandFailureDetail, localSuiteOverrideYaml, lo
 import { packWorkspaces } from "./lib/package-artifacts.mjs";
 
 const root = new URL("../", import.meta.url).pathname;
-const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.1.4-rc.1/wsr-execution-0.1.4.tgz";
+const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.1.4/wsr-execution-0.1.4.tgz";
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: "utf8", ...options });

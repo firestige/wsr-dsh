@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1 — 2026-08-30
+
+- Requalify Execution, Studio, and suite against the stable `wsr-execution@0.1.4` Release bytes and formal WSR repository coordinates.
+
 ## 0.1.0 — 2026-08-30
 
 - Publish independent `dsh-wsr-execution` and `dsh-wsr-studio` bundles.

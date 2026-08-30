@@ -188,7 +188,7 @@ export async function validateRepository(root) {
   if (compatibility.workspaceUiFork?.strategy !== "fixed-version-fork"
     || compatibility.workspaceUiFork?.sourceVersion !== dshVersion
     || compatibility.workspaceUiFork?.activation !== "active-in-wave7"
-    || compatibility.executionOwner?.revision !== "0feb3333afd88e00444f80a7a0d135d2f93582db"
+    || compatibility.executionOwner?.revision !== "d4fa9607e5e3153b969e186866ddd7697a119c81"
     || compatibility.executionOwner?.projection !== "execution.delivery-control-plane@1.0.0") {
     throw new BoundaryViolation("WORKSPACE_UI_FORK_DRIFT", "the active fixed-version fork or owner projection coordinate changed");
   }
