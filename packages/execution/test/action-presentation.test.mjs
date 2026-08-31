@@ -23,6 +23,34 @@ const valid = (kind, data = {}, correlation = "delivery-1:action-1") => ({
   data,
 });
 
+function elementsOf(node) {
+  if (node === null || node === undefined || typeof node !== "object") return [];
+  const children = Array.isArray(node.props?.children) ? node.props.children : [];
+  return [node, ...children.flatMap(elementsOf)];
+}
+
+function statefulReact() {
+  const state = [];
+  const refs = [];
+  let stateCursor = 0;
+  let refCursor = 0;
+  return {
+    beginRender() { stateCursor = 0; refCursor = 0; },
+    createElement(type, props, ...children) { return { type, props: { ...(props ?? {}), children } }; },
+    useEffect() {},
+    useRef(value) {
+      const index = refCursor++;
+      refs[index] ??= { current: value };
+      return refs[index];
+    },
+    useState(initial) {
+      const index = stateCursor++;
+      state[index] ??= typeof initial === "function" ? initial() : initial;
+      return [state[index], (value) => { state[index] = typeof value === "function" ? value(state[index]) : value; }];
+    },
+  };
+}
+
 test("locks the renderer to the DSH release that formally exports DisclosureRow", () => {
   assert.deepEqual(DSH_ACTION_PRESENTATION_COMPATIBILITY, {
     dsh: "0.1.1-rc.2",
@@ -37,7 +65,7 @@ test("projects durable Execution progress, tool, Action and final facts without 
   }))), {
     correlation: "delivery-1:action-1", layer: "progress", state: "recovering",
     title: "Workflow delivery", summary: "Recovering · delivery-1", body: undefined,
-    defaultOpen: true, focusPolicy: "none", role: "status", compatibility: "current",
+    defaultOpen: false, focusPolicy: "none", role: "status", compatibility: "current",
   });
 
   assert.deepEqual(projectExecutionPresentation(parseExecutionPresentation(valid("action-output", {
@@ -45,7 +73,7 @@ test("projects durable Execution progress, tool, Action and final facts without 
   }))), {
     correlation: "delivery-1:action-1", layer: "tool", state: "running",
     title: "Inspect repository", summary: "Running", body: "Reading files",
-    defaultOpen: true, focusPolicy: "none", role: "status", compatibility: "current",
+    defaultOpen: false, focusPolicy: "none", role: "status", compatibility: "current",
   });
 
   assert.deepEqual(projectExecutionPresentation(parseExecutionPresentation(valid("action-output", {
@@ -61,7 +89,7 @@ test("projects durable Execution progress, tool, Action and final facts without 
   }))), {
     correlation: "delivery-1:action-1", layer: "final", state: "completed",
     title: "Final result", summary: "Succeeded", body: "The delivery is ready.",
-    defaultOpen: true, focusPolicy: "none", role: "article", compatibility: "current",
+    defaultOpen: false, focusPolicy: "none", role: "article", compatibility: "current",
   });
 });
 
@@ -78,8 +106,20 @@ test("keeps Action input visible and focusable instead of hiding it behind a com
 test("keeps focused content open across completion and otherwise applies lifecycle defaults", () => {
   assert.equal(resolveDisclosureOpen({ current: true, previousState: "running", nextState: "completed", containsFocus: true }), true);
   assert.equal(resolveDisclosureOpen({ current: true, previousState: "running", nextState: "completed", containsFocus: false }), false);
-  assert.equal(resolveDisclosureOpen({ current: false, previousState: "completed", nextState: "failed", containsFocus: false }), true);
+  assert.equal(resolveDisclosureOpen({ current: false, previousState: "completed", nextState: "failed", containsFocus: false }), false);
   assert.equal(resolveDisclosureOpen({ current: false, previousState: "waiting", nextState: "waiting", containsFocus: false }), true);
+});
+
+test("keeps non-interactive presentation nodes collapsed until the user opens them", () => {
+  for (const event of [
+    valid("delivery-running", { deliveryId: "delivery-1", state: "RUNNING_CORRELATED" }),
+    valid("action-output", { state: "running", content: { text: "Working" } }),
+    valid("action-output", { state: "failed", content: { text: "Failed" } }),
+    valid("terminal-result", { outcome: "FAILED", finalOutput: "Failed" }),
+    valid("error", { code: "DELIVERY_FAILED", message: "Delivery failed" }),
+  ]) {
+    assert.equal(projectExecutionPresentation(parseExecutionPresentation(event)).defaultOpen, false);
+  }
 });
 
 test("supports the previous terminal summary explicitly while never duplicating Action output as a final answer", () => {
@@ -150,7 +190,7 @@ test("builds a replay-stable WSR conversation node from durable Harness command 
     data: {
       correlation: "delivery-1:action-1", layer: "action", state: "cancelled",
       title: "Workflow Action", summary: "Cancelled", body: "Stopped by user",
-      defaultOpen: true, focusPolicy: "none", role: "status", compatibility: "current",
+      defaultOpen: false, focusPolicy: "none", role: "status", compatibility: "current",
     },
   });
   assert.deepEqual(definition.buildViewNode({ ...context, state }), node);
@@ -224,12 +264,70 @@ test("renders friendly diagnostics and the complete bounded presentation JSON fr
   } });
 
   assert.equal(tree.type, DisclosureRow);
-  assert.equal(tree.props.open, true);
+  assert.equal(tree.props.open, false);
   assert.match(JSON.stringify(tree), /Add a Task instruction/u);
   const detail = tree.props.children[0].props.children.find((child) => child?.type === "details");
   assert.equal(detail.props.children[1].type, JsonTree);
   assert.deepEqual(detail.props.children[1].props.data, presentation);
   assert.equal(detail.props.children[1].props.copyable, true);
+});
+
+test("reconciles the original Delivery command row with its authoritative terminal outcome", () => {
+  let outcome = "SUCCEEDED";
+  const React = {
+    createElement(type, props, ...children) { return { type, props: { ...(props ?? {}), children } }; },
+    useEffect() {},
+    useRef(value) { return { current: value }; },
+    useState(value) { return [value, () => undefined]; },
+    useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot(); },
+  };
+  const inventory = {
+    subscribe() { return () => undefined; },
+    getSnapshot() {
+      return {
+        kind: "ready",
+        snapshot: {
+          schemaVersion: "execution.delivery-control-plane@1.0.0",
+          generation: 3,
+          deliveries: [{
+            deliveryId: "delivery-1",
+            lifecycle: "TERMINAL",
+            terminal: { outcome },
+          }],
+        },
+      };
+    },
+  };
+  const StateDot = (props) => ({ type: "StateDot", props });
+  const View = createWsrCommandView({
+    React,
+    DisclosureRow: (props) => ({ type: "DisclosureRow", props }),
+    MessageText: (props) => ({ type: "MessageText", props }),
+    StateDot,
+    JsonTree: (props) => ({ type: "JsonTree", props }),
+    inventory,
+  });
+
+  const node = {
+    commandId: "command-1",
+    name: "wsr",
+    outcome: { kind: "success", text: JSON.stringify(valid("delivery-running", {
+      deliveryId: "delivery-1",
+      state: "START_UNCERTAIN",
+    }, "presentation-start")) },
+  };
+  for (const expected of [
+    { outcome: "SUCCEEDED", dot: "done", label: "Succeeded" },
+    { outcome: "FAILED", dot: "error", label: "Failed" },
+    { outcome: "CANCELLED", dot: "error", label: "Cancelled" },
+  ]) {
+    outcome = expected.outcome;
+    const tree = View({ node });
+    assert.equal(tree.props.open, false);
+    assert.equal(tree.props.icon.type, StateDot);
+    assert.equal(tree.props.icon.props.state, expected.dot);
+    assert.match(JSON.stringify(tree.props.collapsedContent), new RegExp(`${expected.label} · delivery-1`, "u"));
+  }
 });
 
 test("never echoes rejected command bytes in technical details", () => {
@@ -266,7 +364,7 @@ test("renders process through DisclosureRow and final output as a persistent ass
     state: "failed", content: { text: "compiler failed" },
   }))) } });
   assert.equal(processTree.type, DisclosureRow);
-  assert.equal(processTree.props.open, true);
+  assert.equal(processTree.props.open, false);
   assert.equal(processTree.props.expandOnRowClick, true);
   assert.equal(processTree.props.previewChevron, false);
   assert.equal(processTree.props.children[0].props["data-wsr-layer"], "action");
@@ -290,9 +388,133 @@ test("renders process through DisclosureRow and final output as a persistent ass
   assert.deepEqual(calls.map(({ layer }) => layer), ["action", "action", "final"]);
 });
 
+test("renders one native-shaped copy toolbar for a stable final and omits final technical details", async () => {
+  const React = statefulReact();
+  const copied = [];
+  const MessageText = (props) => ({ type: "MessageText", props });
+  const Tooltip = (props) => ({ type: "Tooltip", props });
+  const IconCopyOutline16 = (props) => ({ type: "IconCopyOutline16", props });
+  const IconCheckOutline16 = (props) => ({ type: "IconCheckOutline16", props });
+  const View = createActionPresentationView({
+    React,
+    DisclosureRow: (props) => ({ type: "DisclosureRow", props }),
+    MessageText,
+    StateDot: (props) => ({ type: "StateDot", props }),
+    JsonTree: (props) => ({ type: "JsonTree", props }),
+    Tooltip,
+    IconCopyOutline16,
+    IconCheckOutline16,
+    async writeClipboard(value) { copied.push(value); return true; },
+  });
+  const node = { data: projectExecutionPresentation(parseExecutionPresentation(valid("terminal-result", {
+    outcome: "SUCCEEDED", finalOutput: "Visible final body",
+  }))) };
+  const render = () => { React.beginRender(); return View({ node, technicalDetails: valid("terminal-result", { outcome: "SUCCEEDED", finalOutput: "Visible final body" }) }); };
+
+  let tree = render();
+  const toolbars = elementsOf(tree).filter((entry) => entry.props?.["data-wsr-answer-actions"] === "true");
+  assert.equal(toolbars.length, 1);
+  assert.equal(elementsOf(tree).some((entry) => entry.type === "details"), false);
+  assert.equal(elementsOf(tree).filter((entry) => entry.type === MessageText).length, 1);
+  const buttons = elementsOf(toolbars[0]).filter((entry) => entry.type === "button");
+  assert.equal(buttons.length, 1);
+  assert.equal(buttons[0].props["aria-label"], "Copy");
+  assert.equal(elementsOf(buttons[0]).some((entry) => entry.type === IconCopyOutline16), true);
+  assert.equal(elementsOf(tree).some((entry) => entry.type === Tooltip && entry.props.side === "bottom"), true);
+
+  await buttons[0].props.onClick();
+  assert.deepEqual(copied, ["Visible final body"]);
+  tree = render();
+  const copiedButton = elementsOf(tree).find((entry) => entry.type === "button");
+  assert.equal(copiedButton.props["aria-label"], "Copied");
+  assert.equal(copiedButton.props["data-copy-state"], "copied");
+  assert.equal(elementsOf(copiedButton).some((entry) => entry.type === IconCheckOutline16), true);
+});
+
+test("keeps copy denial local and leaves the final body and toolbar usable", async () => {
+  const React = statefulReact();
+  const View = createActionPresentationView({
+    React,
+    DisclosureRow: (props) => ({ type: "DisclosureRow", props }),
+    MessageText: (props) => ({ type: "MessageText", props }),
+    StateDot: (props) => ({ type: "StateDot", props }),
+    Tooltip: (props) => ({ type: "Tooltip", props }),
+    IconCopyOutline16: (props) => ({ type: "IconCopyOutline16", props }),
+    IconCheckOutline16: (props) => ({ type: "IconCheckOutline16", props }),
+    async writeClipboard() { return false; },
+  });
+  const node = { data: projectExecutionPresentation(parseExecutionPresentation(valid("terminal-result", {
+    outcome: "SUCCEEDED", finalOutput: "Still visible",
+  }))) };
+  const render = () => { React.beginRender(); return View({ node }); };
+
+  let tree = render();
+  await elementsOf(tree).find((entry) => entry.type === "button").props.onClick();
+  tree = render();
+  assert.match(JSON.stringify(tree), /Still visible/u);
+  const button = elementsOf(tree).find((entry) => entry.type === "button");
+  assert.equal(button.props["aria-label"], "Copy failed");
+  assert.equal(button.props["data-copy-state"], "failed");
+});
+
+test("never mounts the final toolbar on Action, error, malformed or empty-final diagnostics", () => {
+  const React = {
+    createElement(type, props, ...children) { return { type, props: { ...(props ?? {}), children } }; },
+    useEffect() {}, useRef(value) { return { current: value }; }, useState(value) { return [value, () => undefined]; },
+  };
+  const options = {
+    React,
+    DisclosureRow: (props) => ({ type: "DisclosureRow", props }),
+    MessageText: (props) => ({ type: "MessageText", props }),
+    StateDot: (props) => ({ type: "StateDot", props }),
+    JsonTree: (props) => ({ type: "JsonTree", props }),
+    Tooltip: (props) => ({ type: "Tooltip", props }),
+    IconCopyOutline16: (props) => ({ type: "IconCopyOutline16", props }),
+    IconCheckOutline16: (props) => ({ type: "IconCheckOutline16", props }),
+    async writeClipboard() { return true; },
+  };
+  const View = createWsrCommandView(options);
+  for (const presentation of [
+    valid("action-output", { state: "completed", content: { text: "Action output" } }),
+    valid("error", { code: "FAILED", message: "Failure reason" }),
+    valid("terminal-result", { outcome: "FAILED", finalOutput: "Terminal failure reason" }),
+    { schemaVersion: "wsr.presentation@9.0.0", correlation: "future", kind: "terminal-result", data: { outcome: "SUCCEEDED", finalOutput: "not admitted" } },
+    valid("terminal-result", { outcome: "SUCCEEDED", finalOutput: "" }),
+  ]) {
+    const tree = View({ node: { commandId: "command-1", name: "wsr", outcome: { kind: "error", text: JSON.stringify(presentation) } } });
+    assert.equal(elementsOf(tree).some((entry) => entry.props?.["data-wsr-answer-actions"] === "true"), false);
+    assert.equal(elementsOf(tree).some((entry) => entry.type === "details"), true);
+  }
+});
+
+test("projects exactly one final toolbar on each replay render without persistent copy state", () => {
+  const React = {
+    createElement(type, props, ...children) { return { type, props: { ...(props ?? {}), children } }; },
+    useEffect() {}, useRef(value) { return { current: value }; }, useState(value) { return [value, () => undefined]; },
+  };
+  const View = createActionPresentationView({
+    React,
+    DisclosureRow: (props) => ({ type: "DisclosureRow", props }),
+    MessageText: (props) => ({ type: "MessageText", props }),
+    StateDot: (props) => ({ type: "StateDot", props }),
+    Tooltip: (props) => ({ type: "Tooltip", props }),
+    IconCopyOutline16: (props) => ({ type: "IconCopyOutline16", props }),
+    IconCheckOutline16: (props) => ({ type: "IconCheckOutline16", props }),
+    async writeClipboard() { return true; },
+  });
+  const node = { data: projectExecutionPresentation(parseExecutionPresentation(valid("terminal-result", {
+    outcome: "SUCCEEDED", finalOutput: "Replay-safe final",
+  }))) };
+
+  for (const tree of [View({ node }), View({ node })]) {
+    assert.equal(elementsOf(tree).filter((entry) => entry.props?.["data-wsr-answer-actions"] === "true").length, 1);
+    assert.equal(elementsOf(tree).find((entry) => entry.type === "button").props["data-copy-state"], "idle");
+  }
+});
+
 test("the unified Harness binding imports the public primitive root and no private DSH source", async () => {
   const source = await readFile(resolve(import.meta.dirname, "../src/client/browser-entry.js"), "utf8");
   assert.match(source, /import React from ["']react["']/u);
-  assert.match(source, /import \{ DisclosureRow, JsonTree, MessageText, StateDot \} from ["']@deepseek-ai\/dsh-client-ui-primitives["']/u);
+  assert.match(source, /import \{ DisclosureRow, IconCheckOutline16, IconCopyOutline16, JsonTree, MessageText, StateDot, Tooltip, writeClipboard \} from ["']@deepseek-ai\/dsh-client-ui-primitives["']/u);
   assert.doesNotMatch(source, /\/src\/|tool\.call\.toolview/u);
 });

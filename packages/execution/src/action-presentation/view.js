@@ -9,18 +9,46 @@ const DOT_STATE = Object.freeze({
   cancelled: "error",
 });
 
+const ACTIONS_STYLE_ID = "dsh-wsr-execution-final-actions";
+const ACTIONS_CSS = ".wsr-answer-actions{align-items:center;gap:10px;height:28px;margin-top:16px;margin-left:-6px;display:flex}.wsr-answer-action{width:28px;height:28px;color:var(--dsw-alias-label-tertiary);cursor:pointer;background:transparent;border:none;border-radius:28px;justify-content:center;align-items:center;padding:6px;display:inline-flex}.wsr-answer-action:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)}";
+
+export function installActionPresentationStyle() {
+  if (typeof document === "undefined" || document.getElementById(ACTIONS_STYLE_ID) !== null) return;
+  const tag = document.createElement("style");
+  tag.id = ACTIONS_STYLE_ID;
+  tag.dataset.plugin = "dsh-wsr-execution";
+  tag.textContent = ACTIONS_CSS;
+  document.head.append(tag);
+}
+
 /**
  * Build the WSR renderer from Harness-owned, public UI primitives. Dependency
  * injection keeps the projection testable without copying any DSH component.
  */
-export function createActionPresentationView({ React, DisclosureRow, MessageText, StateDot, JsonTree, observe = () => undefined }) {
+export function createActionPresentationView({
+  React,
+  DisclosureRow,
+  MessageText,
+  StateDot,
+  JsonTree,
+  Tooltip,
+  IconCopyOutline16,
+  IconCheckOutline16,
+  writeClipboard,
+  observe = () => undefined,
+}) {
   if (typeof DisclosureRow !== "function") throw new TypeError("DSH_DISCLOSURE_ROW_REQUIRED");
+  installActionPresentationStyle();
 
   return function WsrExecutionPresentationView({ node, technicalDetails }) {
     const presentation = node.data;
     const [open, setOpen] = React.useState(presentation.defaultOpen);
+    const [copyState, setCopyState] = React.useState("idle");
     const bodyRef = React.useRef(null);
     const previousState = React.useRef(presentation.state);
+    const copyPending = React.useRef(false);
+    const copyEpoch = React.useRef(0);
+    const copyTimer = React.useRef(null);
 
     React.useEffect(() => {
       setOpen((current) => resolveDisclosureOpen({
@@ -34,9 +62,38 @@ export function createActionPresentationView({ React, DisclosureRow, MessageText
       previousState.current = presentation.state;
     }, [presentation.state]);
 
+    React.useEffect(() => {
+      copyEpoch.current += 1;
+      copyPending.current = false;
+      if (copyTimer.current !== null) clearTimeout(copyTimer.current);
+      copyTimer.current = null;
+      setCopyState("idle");
+      return () => {
+        copyEpoch.current += 1;
+        copyPending.current = false;
+        if (copyTimer.current !== null) clearTimeout(copyTimer.current);
+      };
+    }, [presentation.body, presentation.correlation]);
+
     observe(presentation);
 
-    if (presentation.layer === "final") {
+    if (presentation.layer === "final" && presentation.state === "completed") {
+      const label = copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : "Copy";
+      const onCopy = async () => {
+        if (copyState === "copied" || copyPending.current) return;
+        const epoch = copyEpoch.current;
+        copyPending.current = true;
+        let accepted = false;
+        try { accepted = await writeClipboard(presentation.body); }
+        catch { accepted = false; }
+        if (epoch !== copyEpoch.current) return;
+        copyPending.current = false;
+        setCopyState(accepted ? "copied" : "failed");
+        copyTimer.current = globalThis.setTimeout(() => {
+          copyTimer.current = null;
+          setCopyState("idle");
+        }, 1_000);
+      };
       return React.createElement("article", {
         "data-wsr-presentation": "true",
         "data-wsr-layer": "final",
@@ -47,11 +104,16 @@ export function createActionPresentationView({ React, DisclosureRow, MessageText
         "aria-label": presentation.title,
       },
       React.createElement(MessageText, { text: presentation.body }),
-      technicalDetails === undefined ? null : React.createElement("details", null,
-        React.createElement("summary", null, "Technical details"),
-        JsonTree === undefined
-          ? React.createElement("pre", null, JSON.stringify(technicalDetails, null, 2))
-          : React.createElement(JsonTree, { data: technicalDetails, label: "WSR presentation", copyable: true, expandTopLevel: true })));
+      React.createElement("div", {
+        className: "wsr-answer-actions",
+        "data-wsr-answer-actions": "true",
+      }, React.createElement(Tooltip, { label, side: "bottom" }, React.createElement("button", {
+        type: "button",
+        className: "wsr-answer-action",
+        "aria-label": label,
+        "data-copy-state": copyState,
+        onClick: onCopy,
+      }, React.createElement(copyState === "copied" ? IconCheckOutline16 : IconCopyOutline16, null)))));
     }
 
     const waiting = presentation.state === "waiting";
@@ -95,31 +157,62 @@ export function createActionPresentationView({ React, DisclosureRow, MessageText
   };
 }
 
-function commandPresentation(node) {
+const TERMINAL_PRESENTATION = Object.freeze({
+  SUCCEEDED: Object.freeze({ state: "completed", label: "Succeeded" }),
+  FAILED: Object.freeze({ state: "failed", label: "Failed" }),
+  CANCELLED: Object.freeze({ state: "cancelled", label: "Cancelled" }),
+});
+
+function reconcileDeliveryPresentation(presentation, admitted, inventoryState) {
+  const deliveryId = admitted?.kind === "delivery-running" && typeof admitted.data.deliveryId === "string"
+    ? admitted.data.deliveryId
+    : undefined;
+  const deliveries = ["ready", "reconnecting"].includes(inventoryState?.kind)
+    && Array.isArray(inventoryState.snapshot?.deliveries)
+    ? inventoryState.snapshot.deliveries
+    : [];
+  const matches = deliveryId === undefined ? [] : deliveries.filter((delivery) => delivery?.deliveryId === deliveryId);
+  const terminal = matches.length === 1 && matches[0]?.lifecycle === "TERMINAL"
+    ? TERMINAL_PRESENTATION[matches[0]?.terminal?.outcome]
+    : undefined;
+  if (terminal === undefined) return presentation;
+  return Object.freeze({
+    ...presentation,
+    state: terminal.state,
+    summary: `${terminal.label} · ${deliveryId}`,
+    defaultOpen: false,
+  });
+}
+
+function commandPresentation(node, admitted, inventoryState) {
   if (node.outcome === null) return Object.freeze({
     correlation: String(node.commandId), layer: "progress", state: "running",
     title: "Workflow delivery", summary: "Running", body: undefined,
-    defaultOpen: true, focusPolicy: "none", role: "status", compatibility: "current",
+    defaultOpen: false, focusPolicy: "none", role: "status", compatibility: "current",
   });
-  const event = parseExecutionPresentation(node.outcome?.text);
+  const event = admitted ?? parseExecutionPresentation(node.outcome?.text);
   if (event.kind === "delivery-list") {
     const count = Array.isArray(event.data.items) ? event.data.items.length : 0;
     return Object.freeze({
       correlation: event.correlation, layer: "progress", state: "completed",
       title: "Delivery list", summary: `${count} ${count === 1 ? "delivery" : "deliveries"}`,
       body: count === 0 ? "No deliveries." : JSON.stringify(event.data.items, null, 2),
-      defaultOpen: count > 0, focusPolicy: "none", role: "status", compatibility: "current",
+      defaultOpen: false, focusPolicy: "none", role: "status", compatibility: "current",
     });
   }
-  return projectExecutionPresentation(event);
+  return reconcileDeliveryPresentation(projectExecutionPresentation(event), event, inventoryState);
 }
 
 /** Replace the generic command card so one-line durable JSON remains inspectable. */
 export function createWsrCommandView(options) {
   const View = createActionPresentationView(options);
+  const { React, inventory } = options;
   return function WsrCommandView({ node }) {
     const admitted = node.outcome === null ? undefined : parseExecutionPresentation(node.outcome?.text);
-    return View({ node: { data: commandPresentation(node) }, technicalDetails: admitted });
+    const inventoryState = inventory === undefined
+      ? undefined
+      : React.useSyncExternalStore(inventory.subscribe, inventory.getSnapshot, inventory.getSnapshot);
+    return View({ node: { data: commandPresentation(node, admitted, inventoryState) }, technicalDetails: admitted });
   };
 }
 

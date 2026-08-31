@@ -32,7 +32,13 @@ npm run build
 npm run pack:verify
 npm run qualify:clean-profile
 npm run qualify:real-harness
+WSR_QUALIFY_TERMINAL=1 npm run qualify:real-harness
 ```
+
+`WSR_QUALIFY_TERMINAL=1` adds deterministic completed/failed/cancelled owner
+facts and exact adapter-private historical associations to the temporary clean
+profile. The real Host and Chrome then verify terminal inventory, the current
+Session's latest terminal Delivery, and reload without invoking a Provider.
 
 `npm run build` generates the two CSP-compatible browser bundles and verifies
 workspace identity, compatibility, dependency direction, activation

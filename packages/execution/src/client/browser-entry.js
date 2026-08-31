@@ -1,5 +1,5 @@
 import React from "react";
-import { DisclosureRow, JsonTree, MessageText, StateDot } from "@deepseek-ai/dsh-client-ui-primitives";
+import { DisclosureRow, IconCheckOutline16, IconCopyOutline16, JsonTree, MessageText, StateDot, Tooltip, writeClipboard } from "@deepseek-ai/dsh-client-ui-primitives";
 import * as workspaceUi from "@deepseek-ai/dsh-client-ui-workspace";
 
 import { createWsrCommandView, registerActionPresentation } from "../action-presentation/view.js";
@@ -28,5 +28,16 @@ export function apply(ctx) {
       return source;
     },
   });
-  registerActionPresentation(ctx, createWsrCommandView({ React, DisclosureRow, JsonTree, MessageText, StateDot }));
+  registerActionPresentation(ctx, createWsrCommandView({
+    React,
+    DisclosureRow,
+    IconCheckOutline16,
+    IconCopyOutline16,
+    JsonTree,
+    MessageText,
+    StateDot,
+    Tooltip,
+    writeClipboard,
+    inventory: controlPlane.inventory,
+  }));
 }

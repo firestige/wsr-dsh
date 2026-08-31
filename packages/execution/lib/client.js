@@ -2640,7 +2640,7 @@ function projectExecutionPresentation(event) {
       title: "Final result",
       summary: data.outcome[0] + data.outcome.slice(1).toLowerCase(),
       body,
-      defaultOpen: true,
+      defaultOpen: false,
       focusPolicy: "none",
       role: "article",
       compatibility: typeof data.finalOutput === "string" ? "current" : "legacy-summary"
@@ -2669,7 +2669,7 @@ function projectExecutionPresentation(event) {
       title: typeof data.label === "string" ? data.label : "Workflow Action",
       summary: STATE_LABELS[state2],
       body: text(data.content) ?? "WSR content unavailable",
-      defaultOpen: state2 !== "completed",
+      defaultOpen: false,
       focusPolicy: "none",
       role: "status",
       compatibility: "current"
@@ -2683,7 +2683,7 @@ function projectExecutionPresentation(event) {
       title: "Workflow presentation",
       summary: typeof data.code === "string" ? data.code : "WSR_ERROR",
       body: typeof data.message === "string" ? data.message : "WSR presentation unavailable",
-      defaultOpen: true,
+      defaultOpen: false,
       focusPolicy: "none",
       role: "alert",
       compatibility: "current"
@@ -2698,7 +2698,7 @@ function projectExecutionPresentation(event) {
     title: "Workflow delivery",
     summary: `${STATE_LABELS[state]}${deliveryId === void 0 ? "" : ` \xB7 ${deliveryId}`}`,
     body: void 0,
-    defaultOpen: state !== "completed",
+    defaultOpen: false,
     focusPolicy: "none",
     role: "status",
     compatibility: "current"
@@ -2707,7 +2707,6 @@ function projectExecutionPresentation(event) {
 function resolveDisclosureOpen({ current, previousState, nextState, containsFocus }) {
   if (nextState === "waiting") return true;
   if (nextState === "completed" && previousState !== "completed") return containsFocus ? true : false;
-  if (["running", "recovering", "failed", "cancelled"].includes(nextState) && nextState !== previousState) return true;
   return current;
 }
 
@@ -2720,13 +2719,39 @@ var DOT_STATE = Object.freeze({
   failed: "error",
   cancelled: "error"
 });
-function createActionPresentationView({ React: React2, DisclosureRow: DisclosureRow2, MessageText: MessageText2, StateDot: StateDot2, JsonTree: JsonTree2, observe = () => void 0 }) {
+var ACTIONS_STYLE_ID = "dsh-wsr-execution-final-actions";
+var ACTIONS_CSS = ".wsr-answer-actions{align-items:center;gap:10px;height:28px;margin-top:16px;margin-left:-6px;display:flex}.wsr-answer-action{width:28px;height:28px;color:var(--dsw-alias-label-tertiary);cursor:pointer;background:transparent;border:none;border-radius:28px;justify-content:center;align-items:center;padding:6px;display:inline-flex}.wsr-answer-action:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)}";
+function installActionPresentationStyle() {
+  if (typeof document === "undefined" || document.getElementById(ACTIONS_STYLE_ID) !== null) return;
+  const tag = document.createElement("style");
+  tag.id = ACTIONS_STYLE_ID;
+  tag.dataset.plugin = "dsh-wsr-execution";
+  tag.textContent = ACTIONS_CSS;
+  document.head.append(tag);
+}
+function createActionPresentationView({
+  React: React2,
+  DisclosureRow: DisclosureRow2,
+  MessageText: MessageText2,
+  StateDot: StateDot2,
+  JsonTree: JsonTree2,
+  Tooltip: Tooltip2,
+  IconCopyOutline16: IconCopyOutline162,
+  IconCheckOutline16: IconCheckOutline162,
+  writeClipboard: writeClipboard2,
+  observe = () => void 0
+}) {
   if (typeof DisclosureRow2 !== "function") throw new TypeError("DSH_DISCLOSURE_ROW_REQUIRED");
+  installActionPresentationStyle();
   return function WsrExecutionPresentationView({ node, technicalDetails }) {
     const presentation = node.data;
     const [open, setOpen] = React2.useState(presentation.defaultOpen);
+    const [copyState, setCopyState] = React2.useState("idle");
     const bodyRef = React2.useRef(null);
     const previousState = React2.useRef(presentation.state);
+    const copyPending = React2.useRef(false);
+    const copyEpoch = React2.useRef(0);
+    const copyTimer = React2.useRef(null);
     React2.useEffect(() => {
       setOpen((current) => resolveDisclosureOpen({
         current,
@@ -2736,8 +2761,39 @@ function createActionPresentationView({ React: React2, DisclosureRow: Disclosure
       }));
       previousState.current = presentation.state;
     }, [presentation.state]);
+    React2.useEffect(() => {
+      copyEpoch.current += 1;
+      copyPending.current = false;
+      if (copyTimer.current !== null) clearTimeout(copyTimer.current);
+      copyTimer.current = null;
+      setCopyState("idle");
+      return () => {
+        copyEpoch.current += 1;
+        copyPending.current = false;
+        if (copyTimer.current !== null) clearTimeout(copyTimer.current);
+      };
+    }, [presentation.body, presentation.correlation]);
     observe(presentation);
-    if (presentation.layer === "final") {
+    if (presentation.layer === "final" && presentation.state === "completed") {
+      const label = copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : "Copy";
+      const onCopy = async () => {
+        if (copyState === "copied" || copyPending.current) return;
+        const epoch = copyEpoch.current;
+        copyPending.current = true;
+        let accepted = false;
+        try {
+          accepted = await writeClipboard2(presentation.body);
+        } catch {
+          accepted = false;
+        }
+        if (epoch !== copyEpoch.current) return;
+        copyPending.current = false;
+        setCopyState(accepted ? "copied" : "failed");
+        copyTimer.current = globalThis.setTimeout(() => {
+          copyTimer.current = null;
+          setCopyState("idle");
+        }, 1e3);
+      };
       return React2.createElement(
         "article",
         {
@@ -2750,12 +2806,16 @@ function createActionPresentationView({ React: React2, DisclosureRow: Disclosure
           "aria-label": presentation.title
         },
         React2.createElement(MessageText2, { text: presentation.body }),
-        technicalDetails === void 0 ? null : React2.createElement(
-          "details",
-          null,
-          React2.createElement("summary", null, "Technical details"),
-          JsonTree2 === void 0 ? React2.createElement("pre", null, JSON.stringify(technicalDetails, null, 2)) : React2.createElement(JsonTree2, { data: technicalDetails, label: "WSR presentation", copyable: true, expandTopLevel: true })
-        )
+        React2.createElement("div", {
+          className: "wsr-answer-actions",
+          "data-wsr-answer-actions": "true"
+        }, React2.createElement(Tooltip2, { label, side: "bottom" }, React2.createElement("button", {
+          type: "button",
+          className: "wsr-answer-action",
+          "aria-label": label,
+          "data-copy-state": copyState,
+          onClick: onCopy
+        }, React2.createElement(copyState === "copied" ? IconCheckOutline162 : IconCopyOutline162, null))))
       );
     }
     const waiting = presentation.state === "waiting";
@@ -2798,7 +2858,25 @@ function createActionPresentationView({ React: React2, DisclosureRow: Disclosure
     }, body);
   };
 }
-function commandPresentation(node) {
+var TERMINAL_PRESENTATION = Object.freeze({
+  SUCCEEDED: Object.freeze({ state: "completed", label: "Succeeded" }),
+  FAILED: Object.freeze({ state: "failed", label: "Failed" }),
+  CANCELLED: Object.freeze({ state: "cancelled", label: "Cancelled" })
+});
+function reconcileDeliveryPresentation(presentation, admitted, inventoryState) {
+  const deliveryId = admitted?.kind === "delivery-running" && typeof admitted.data.deliveryId === "string" ? admitted.data.deliveryId : void 0;
+  const deliveries = ["ready", "reconnecting"].includes(inventoryState?.kind) && Array.isArray(inventoryState.snapshot?.deliveries) ? inventoryState.snapshot.deliveries : [];
+  const matches = deliveryId === void 0 ? [] : deliveries.filter((delivery) => delivery?.deliveryId === deliveryId);
+  const terminal = matches.length === 1 && matches[0]?.lifecycle === "TERMINAL" ? TERMINAL_PRESENTATION[matches[0]?.terminal?.outcome] : void 0;
+  if (terminal === void 0) return presentation;
+  return Object.freeze({
+    ...presentation,
+    state: terminal.state,
+    summary: `${terminal.label} \xB7 ${deliveryId}`,
+    defaultOpen: false
+  });
+}
+function commandPresentation(node, admitted, inventoryState) {
   if (node.outcome === null) return Object.freeze({
     correlation: String(node.commandId),
     layer: "progress",
@@ -2806,12 +2884,12 @@ function commandPresentation(node) {
     title: "Workflow delivery",
     summary: "Running",
     body: void 0,
-    defaultOpen: true,
+    defaultOpen: false,
     focusPolicy: "none",
     role: "status",
     compatibility: "current"
   });
-  const event = parseExecutionPresentation(node.outcome?.text);
+  const event = admitted ?? parseExecutionPresentation(node.outcome?.text);
   if (event.kind === "delivery-list") {
     const count = Array.isArray(event.data.items) ? event.data.items.length : 0;
     return Object.freeze({
@@ -2821,19 +2899,21 @@ function commandPresentation(node) {
       title: "Delivery list",
       summary: `${count} ${count === 1 ? "delivery" : "deliveries"}`,
       body: count === 0 ? "No deliveries." : JSON.stringify(event.data.items, null, 2),
-      defaultOpen: count > 0,
+      defaultOpen: false,
       focusPolicy: "none",
       role: "status",
       compatibility: "current"
     });
   }
-  return projectExecutionPresentation(event);
+  return reconcileDeliveryPresentation(projectExecutionPresentation(event), event, inventoryState);
 }
 function createWsrCommandView(options) {
   const View = createActionPresentationView(options);
+  const { React: React2, inventory } = options;
   return function WsrCommandView({ node }) {
     const admitted = node.outcome === null ? void 0 : parseExecutionPresentation(node.outcome?.text);
-    return View({ node: { data: commandPresentation(node) }, technicalDetails: admitted });
+    const inventoryState = inventory === void 0 ? void 0 : React2.useSyncExternalStore(inventory.subscribe, inventory.getSnapshot, inventory.getSnapshot);
+    return View({ node: { data: commandPresentation(node, admitted, inventoryState) }, technicalDetails: admitted });
   };
 }
 function registerActionPresentation(ctx, View) {
@@ -2845,6 +2925,12 @@ function registerActionPresentation(ctx, View) {
 
 // packages/execution/src/client/delivery/control-plane-port.js
 var CHANNEL = "/wsr-execution";
+var ERROR_CODES = /* @__PURE__ */ new Set([
+  "DELIVERY_PROJECTION_CORRUPT",
+  "DELIVERY_PROJECTION_STALE_BINDING",
+  "DELIVERY_PROJECTION_RECOVERY_MISMATCH",
+  "DELIVERY_PROJECTION_UNAVAILABLE"
+]);
 function createStore(initial) {
   let snapshot = initial;
   const listeners = /* @__PURE__ */ new Set();
@@ -2869,7 +2955,9 @@ function createDeliveryControlPlaneClient(rpc) {
   const sessions = /* @__PURE__ */ new Map();
   const read = async (endpoint, payload) => {
     const result = await rpc.call(CHANNEL, endpoint, payload);
-    if (result?.ok !== true) throw new Error(message(result?.error));
+    if (result?.ok !== true) throw Object.assign(new Error(message(result?.error)), {
+      code: ERROR_CODES.has(result?.error?.code) ? result.error.code : "DELIVERY_PROJECTION_UNAVAILABLE"
+    });
     return result.value;
   };
   const client = {
@@ -2883,6 +2971,7 @@ function createDeliveryControlPlaneClient(rpc) {
         const previous = inventory.getSnapshot();
         inventory.publish({
           kind: previous.kind === "ready" ? "reconnecting" : "error",
+          code: typeof error?.code === "string" ? error.code : "DELIVERY_PROJECTION_UNAVAILABLE",
           message: message(error),
           ...previous.kind === "ready" ? { snapshot: previous.snapshot } : {}
         });
@@ -2901,7 +2990,7 @@ function createDeliveryControlPlaneClient(rpc) {
           try {
             store.publish({ kind: "ready", view: await read("session/read", { sessionCorrelation }) });
           } catch (error) {
-            store.publish({ kind: "error", code: "DELIVERY_PROJECTION_UNAVAILABLE", message: message(error) });
+            store.publish({ kind: "error", code: typeof error?.code === "string" ? error.code : "DELIVERY_PROJECTION_UNAVAILABLE", message: message(error) });
           }
         }
       });
@@ -3053,8 +3142,17 @@ var LIFECYCLES2 = /* @__PURE__ */ new Set([
   "TERMINAL_HANDLING",
   "TERMINAL"
 ]);
+var ERROR_CODES2 = /* @__PURE__ */ new Set([
+  "DELIVERY_PROJECTION_CORRUPT",
+  "DELIVERY_PROJECTION_STALE_BINDING",
+  "DELIVERY_PROJECTION_RECOVERY_MISMATCH",
+  "DELIVERY_PROJECTION_UNAVAILABLE"
+]);
 function errorView(label = "Delivery inventory unavailable") {
   return Object.freeze({ kind: "error", role: "alert", label, rows: Object.freeze([]) });
+}
+function diagnostic(state, label) {
+  return typeof state?.code === "string" && ERROR_CODES2.has(state.code) ? `${state.code}: ${label}` : label;
 }
 function validString(value) {
   return typeof value === "string" && value.length > 0 && value.length <= 512;
@@ -3085,13 +3183,21 @@ function rowsFrom(deliveries, selectedSessionId) {
 }
 function projectDeliveryInventory(state, { selectedSessionId } = {}) {
   if (state?.kind === "loading") return Object.freeze({ kind: "loading", role: "status", label: "Loading Deliveries", rows: Object.freeze([]) });
-  if (state?.kind === "error") return errorView(validString(state.message) ? state.message : void 0);
+  if (state?.kind === "error") {
+    const label = validString(state.message) ? state.message : "Delivery inventory unavailable";
+    return errorView(diagnostic(state, label));
+  }
   if (!(/* @__PURE__ */ new Set(["ready", "reconnecting"])).has(state?.kind)) return errorView();
   const snapshot = state.snapshot;
   if (snapshot === null || typeof snapshot !== "object" || Array.isArray(snapshot) || snapshot.schemaVersion !== CONTROL_PLANE_SCHEMA || !Number.isSafeInteger(snapshot.generation) || snapshot.generation < 1) return errorView();
   const rows = rowsFrom(snapshot.deliveries, selectedSessionId);
   if (rows === void 0) return errorView();
-  if (state.kind === "reconnecting") return Object.freeze({ kind: "reconnecting", role: "status", label: "Reconnecting to Delivery inventory", rows });
+  if (state.kind === "reconnecting") return Object.freeze({
+    kind: "reconnecting",
+    role: "status",
+    label: diagnostic(state, "Reconnecting to Delivery inventory"),
+    rows
+  });
   if (rows.length === 0) return Object.freeze({ kind: "empty", role: "status", label: "No Deliveries", rows });
   return Object.freeze({ kind: "ready", role: "list", label: "Deliveries", rows });
 }
@@ -3221,7 +3327,18 @@ function apply(ctx) {
       return source;
     }
   });
-  registerActionPresentation(ctx, createWsrCommandView({ React: import_react.default, DisclosureRow: import_dsh_client_ui_primitives.DisclosureRow, JsonTree: import_dsh_client_ui_primitives.JsonTree, MessageText: import_dsh_client_ui_primitives.MessageText, StateDot: import_dsh_client_ui_primitives.StateDot }));
+  registerActionPresentation(ctx, createWsrCommandView({
+    React: import_react.default,
+    DisclosureRow: import_dsh_client_ui_primitives.DisclosureRow,
+    IconCheckOutline16: import_dsh_client_ui_primitives.IconCheckOutline16,
+    IconCopyOutline16: import_dsh_client_ui_primitives.IconCopyOutline16,
+    JsonTree: import_dsh_client_ui_primitives.JsonTree,
+    MessageText: import_dsh_client_ui_primitives.MessageText,
+    StateDot: import_dsh_client_ui_primitives.StateDot,
+    Tooltip: import_dsh_client_ui_primitives.Tooltip,
+    writeClipboard: import_dsh_client_ui_primitives.writeClipboard,
+    inventory: controlPlane.inventory
+  }));
 }
 
     return module.exports;
