@@ -2906,6 +2906,12 @@ function registerActionPresentation(ctx, View) {
 
 // packages/execution/src/client/delivery/control-plane-port.js
 var CHANNEL = "/wsr-execution";
+var ERROR_CODES = /* @__PURE__ */ new Set([
+  "DELIVERY_PROJECTION_CORRUPT",
+  "DELIVERY_PROJECTION_STALE_BINDING",
+  "DELIVERY_PROJECTION_RECOVERY_MISMATCH",
+  "DELIVERY_PROJECTION_UNAVAILABLE"
+]);
 function createStore(initial) {
   let snapshot = initial;
   const listeners = /* @__PURE__ */ new Set();
@@ -2930,7 +2936,9 @@ function createDeliveryControlPlaneClient(rpc) {
   const sessions = /* @__PURE__ */ new Map();
   const read = async (endpoint, payload) => {
     const result = await rpc.call(CHANNEL, endpoint, payload);
-    if (result?.ok !== true) throw new Error(message(result?.error));
+    if (result?.ok !== true) throw Object.assign(new Error(message(result?.error)), {
+      code: ERROR_CODES.has(result?.error?.code) ? result.error.code : "DELIVERY_PROJECTION_UNAVAILABLE"
+    });
     return result.value;
   };
   const client = {
@@ -2944,6 +2952,7 @@ function createDeliveryControlPlaneClient(rpc) {
         const previous = inventory.getSnapshot();
         inventory.publish({
           kind: previous.kind === "ready" ? "reconnecting" : "error",
+          code: typeof error?.code === "string" ? error.code : "DELIVERY_PROJECTION_UNAVAILABLE",
           message: message(error),
           ...previous.kind === "ready" ? { snapshot: previous.snapshot } : {}
         });
@@ -2962,7 +2971,7 @@ function createDeliveryControlPlaneClient(rpc) {
           try {
             store.publish({ kind: "ready", view: await read("session/read", { sessionCorrelation }) });
           } catch (error) {
-            store.publish({ kind: "error", code: "DELIVERY_PROJECTION_UNAVAILABLE", message: message(error) });
+            store.publish({ kind: "error", code: typeof error?.code === "string" ? error.code : "DELIVERY_PROJECTION_UNAVAILABLE", message: message(error) });
           }
         }
       });
@@ -3114,8 +3123,17 @@ var LIFECYCLES2 = /* @__PURE__ */ new Set([
   "TERMINAL_HANDLING",
   "TERMINAL"
 ]);
+var ERROR_CODES2 = /* @__PURE__ */ new Set([
+  "DELIVERY_PROJECTION_CORRUPT",
+  "DELIVERY_PROJECTION_STALE_BINDING",
+  "DELIVERY_PROJECTION_RECOVERY_MISMATCH",
+  "DELIVERY_PROJECTION_UNAVAILABLE"
+]);
 function errorView(label = "Delivery inventory unavailable") {
   return Object.freeze({ kind: "error", role: "alert", label, rows: Object.freeze([]) });
+}
+function diagnostic(state, label) {
+  return typeof state?.code === "string" && ERROR_CODES2.has(state.code) ? `${state.code}: ${label}` : label;
 }
 function validString(value) {
   return typeof value === "string" && value.length > 0 && value.length <= 512;
@@ -3146,13 +3164,21 @@ function rowsFrom(deliveries, selectedSessionId) {
 }
 function projectDeliveryInventory(state, { selectedSessionId } = {}) {
   if (state?.kind === "loading") return Object.freeze({ kind: "loading", role: "status", label: "Loading Deliveries", rows: Object.freeze([]) });
-  if (state?.kind === "error") return errorView(validString(state.message) ? state.message : void 0);
+  if (state?.kind === "error") {
+    const label = validString(state.message) ? state.message : "Delivery inventory unavailable";
+    return errorView(diagnostic(state, label));
+  }
   if (!(/* @__PURE__ */ new Set(["ready", "reconnecting"])).has(state?.kind)) return errorView();
   const snapshot = state.snapshot;
   if (snapshot === null || typeof snapshot !== "object" || Array.isArray(snapshot) || snapshot.schemaVersion !== CONTROL_PLANE_SCHEMA || !Number.isSafeInteger(snapshot.generation) || snapshot.generation < 1) return errorView();
   const rows = rowsFrom(snapshot.deliveries, selectedSessionId);
   if (rows === void 0) return errorView();
-  if (state.kind === "reconnecting") return Object.freeze({ kind: "reconnecting", role: "status", label: "Reconnecting to Delivery inventory", rows });
+  if (state.kind === "reconnecting") return Object.freeze({
+    kind: "reconnecting",
+    role: "status",
+    label: diagnostic(state, "Reconnecting to Delivery inventory"),
+    rows
+  });
   if (rows.length === 0) return Object.freeze({ kind: "empty", role: "status", label: "No Deliveries", rows });
   return Object.freeze({ kind: "ready", role: "list", label: "Deliveries", rows });
 }

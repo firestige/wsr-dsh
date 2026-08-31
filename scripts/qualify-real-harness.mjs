@@ -13,6 +13,7 @@ import { localSuiteOverrideYaml, localSuiteOverrides, suiteOnlyLayers } from "./
 const root = resolve(new URL("../", import.meta.url).pathname);
 const chromeBinary = process.env.WSR_CHROME_BINARY ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.2.1/wsr-execution-0.2.1.tgz";
+const terminalFixture = process.env.WSR_QUALIFY_TERMINAL === "1";
 
 function run(command, args, options = {}) {
   const answer = spawnSync(command, args, { encoding: "utf8", ...options });
@@ -259,12 +260,16 @@ try {
   }
 
   const port = await freePort();
-  harness = spawn("dsh", ["web", "--patch", overlay, "--no-open", "--host", "127.0.0.1", "--port", String(port)], {
-    cwd: repository, env, stdio: ["ignore", "pipe", "pipe"],
-  });
-  for (const stream of [harness.stdout, harness.stderr]) stream.on("data", (chunk) => { harnessLog += chunk; });
+  const startHarness = () => {
+    const child = spawn("dsh", ["web", "--patch", overlay, "--no-open", "--host", "127.0.0.1", "--port", String(port)], {
+      cwd: repository, env, stdio: ["ignore", "pipe", "pipe"],
+    });
+    for (const stream of [child.stdout, child.stderr]) stream.on("data", (chunk) => { harnessLog += chunk; });
+    return child;
+  };
+  harness = startHarness();
   const origin = `http://127.0.0.1:${port}`;
-  const response = await waitFor(async () => {
+  let response = await waitFor(async () => {
     if (harness.exitCode !== null) throw new Error(`Harness exited ${harness.exitCode}\n${harnessLog}`);
     const candidate = await fetch(origin);
     return candidate.ok ? candidate : undefined;
@@ -274,6 +279,68 @@ try {
   const workspace = await waitFor(() => callApi(origin, "workspace.create", { path: repository }), "HARNESS_WORKSPACE_API_UNAVAILABLE");
   if (typeof workspace.workspace.workspaceId !== "string" || workspace.workspace.workspaceId.length === 0) {
     throw new Error("HARNESS_WORKSPACE_CREATE_FAILED");
+  }
+  let fixtureSessions = [];
+  if (terminalFixture) {
+    fixtureSessions = await Promise.all([
+      callApi(origin, "session.create", { workspaceId: workspace.workspace.workspaceId, sessionId: "session-terminal-a" }),
+      callApi(origin, "session.create", { workspaceId: workspace.workspace.workspaceId, sessionId: "session-terminal-b" }),
+    ]);
+    await Promise.all([
+      callApi(origin, "session.rename", { sessionId: fixtureSessions[0].sessionId, title: "Terminal A" }),
+      callApi(origin, "session.rename", { sessionId: fixtureSessions[1].sessionId, title: "Terminal B" }),
+    ]);
+    await stop(harness);
+    harness = undefined;
+    const terminalRows = [
+      { sessionKey: fixtureSessions[0].sessionId, deliveryId: "delivery-completed", correlation: "intake-completed", outcome: "SUCCEEDED", updatedAt: 180, identity: "d" },
+      { sessionKey: fixtureSessions[0].sessionId, deliveryId: "delivery-failed", correlation: "intake-failed", outcome: "FAILED", updatedAt: 190, identity: "e" },
+      { sessionKey: fixtureSessions[1].sessionId, deliveryId: "delivery-cancelled", correlation: "intake-cancelled", outcome: "CANCELLED", updatedAt: 200, identity: "f" },
+    ];
+    const completedRoot = join(state, "control-plane", "completed");
+    await mkdir(completedRoot, { recursive: true });
+    for (const row of terminalRows) {
+      const bindingIdentity = `sha256:${row.identity.repeat(64)}`;
+      const fact = {
+        schemaVersion: "execution.delivery-completed@1.0.0",
+        manifest: {
+          deliveryId: row.deliveryId,
+          taskId: `task-${row.deliveryId}`,
+          taskDisplayName: row.deliveryId,
+          createdAt: 100,
+          canonicalWorktree: repository,
+          deliveryBindingIdentity: bindingIdentity,
+          workflow: {
+            identity: "workflow.qualification", packageName: "terminal-fixture", exactPackageVersion: "1.0.0",
+            packageDigest: `sha256:${"a".repeat(64)}`, snapshotIdentity: "snapshot-terminal-fixture", snapshotDigest: `sha256:${"b".repeat(64)}`,
+          },
+        },
+        updatedAt: row.updatedAt,
+        terminal: { outcome: row.outcome, finishedAt: row.updatedAt },
+        error: row.outcome === "FAILED" ? { code: "QUALIFICATION_FAILED" } : null,
+        sessionCorrelation: row.correlation,
+      };
+      const filename = `${createHash("sha256").update(row.deliveryId).digest("hex")}.json`;
+      await writeFile(join(completedRoot, filename), `${JSON.stringify(fact)}\n`, { mode: 0o600 });
+    }
+    await writeFile(bindings, `${JSON.stringify({
+      schemaVersion: "execution.intake-bindings@3.0.0",
+      activeBindings: [],
+      historicalAssociations: terminalRows.map((row) => ({
+        sessionKey: row.sessionKey,
+        correlation: row.correlation,
+        deliveryId: row.deliveryId,
+        deliveryBindingIdentity: `sha256:${row.identity.repeat(64)}`,
+        worktree: repository,
+      })),
+    })}\n`, { mode: 0o600 });
+    harnessLog = "";
+    harness = startHarness();
+    response = await waitFor(async () => {
+      if (harness.exitCode !== null) throw new Error(`Harness exited ${harness.exitCode}\n${harnessLog}`);
+      const candidate = await fetch(origin);
+      return candidate.ok ? candidate : undefined;
+    }, "HARNESS_TERMINAL_RESTART_UNAVAILABLE", 60_000);
   }
 
   let chromeLog = "";
@@ -349,12 +416,32 @@ try {
     const deliveryTab = tabs.find((node) => node.textContent.trim() === 'Delivery');
     const studio = tabs.find((node) => node.textContent.trim() === 'WSR Studio');
     const empty = document.body.innerText.includes('No Deliveries');
-    if (!resource || !delivery || !deliveryTab || !studio || !empty || document.readyState !== 'complete') return undefined;
-    return { ready: document.readyState, delivery: delivery.textContent.trim(), empty,
+    const terminalRows = [...document.querySelectorAll('.wsr-delivery-row')].map((node) => node.getAttribute('aria-label'));
+    if (!resource || !delivery || !deliveryTab || !studio || ${terminalFixture ? "terminalRows.length !== 3" : "!empty"} || document.readyState !== 'complete') return undefined;
+    return { ready: document.readyState, delivery: delivery.textContent.trim(), empty, terminalRows,
       tabOrder: [deliveryTab.textContent.trim(), studio.textContent.trim()],
       adjacent: tabs.indexOf(studio) === tabs.indexOf(deliveryTab) + 1 };
   })()`), "HARNESS_WSR_SURFACES_UNAVAILABLE", 30_000);
-  if (shell.ready !== "complete" || !shell.empty || !shell.adjacent) throw new Error(`HARNESS_DELIVERY_READ_FAILED: ${JSON.stringify(shell)}`);
+  if (shell.ready !== "complete" || (terminalFixture ? shell.terminalRows.length !== 3 : !shell.empty) || !shell.adjacent) {
+    throw new Error(`HARNESS_DELIVERY_READ_FAILED: ${JSON.stringify(shell)}`);
+  }
+  let terminalView;
+  if (terminalFixture) {
+    await cdp.evaluate(`(() => { [...document.querySelectorAll('[role="tab"]')].find((node) => node.textContent.trim() === 'Delivery').click(); })()`);
+    terminalView = await waitFor(async () => cdp.evaluate(`(() => {
+      const view = document.querySelector('[data-wsr-delivery-id]');
+      if (!view) return undefined;
+      return { deliveryId: view.getAttribute('data-wsr-delivery-id'), text: view.textContent };
+    })()`), "HARNESS_TERMINAL_SESSION_VIEW_UNAVAILABLE");
+    const expectedOutcome = terminalView.deliveryId === "delivery-cancelled" ? "CANCELLED"
+      : terminalView.deliveryId === "delivery-failed" ? "FAILED" : undefined;
+    if (expectedOutcome === undefined || !terminalView.text.includes(expectedOutcome)) {
+      throw new Error(`HARNESS_TERMINAL_SESSION_VIEW_INVALID: ${JSON.stringify(terminalView)}`);
+    }
+    await cdp.command("Page.reload", { ignoreCache: true });
+    await waitFor(async () => cdp.evaluate(`document.querySelector('[data-wsr-delivery-id=${JSON.stringify(terminalView.deliveryId)}]')?.textContent.includes(${JSON.stringify(expectedOutcome)})`), "HARNESS_TERMINAL_RELOAD_FAILED", 30_000);
+    terminalView = { ...terminalView, reload: expectedOutcome };
+  }
   await cdp.command("Page.bringToFront");
   const before = await cdp.evaluate(`(() => {
     const button = document.querySelector('button[aria-controls="wsr-sidebar-delivery"]');
@@ -434,7 +521,7 @@ try {
       csp: csp === "" ? "absent-in-dsh-0.1.1-rc.2" : createHash("sha256").update(csp).digest("hex"),
       activation: ["wsr-execution", "wsr-studio"],
     },
-    browser: { deliveryInventory: "empty-ready", commandDiagnostic, keyboardDisclosure: `${before.expanded}->${after}`, tabOrder: shell.tabOrder, studio,
+    browser: { deliveryInventory: terminalFixture ? shell.terminalRows : "empty-ready", terminalView: terminalView ?? null, commandDiagnostic, keyboardDisclosure: `${before.expanded}->${after}`, tabOrder: shell.tabOrder, studio,
       evaluate: "compare-metric-receipt-fact-trace", storedLocation, urlLocation, refreshRecovery: restored,
       escapeBehavior: retainedAfterEscape ? "conversation-view-retained" : "invalid", degraded, narrow, trace, errors: 0 },
   }, null, 2)}\n`);

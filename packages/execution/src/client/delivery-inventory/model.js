@@ -5,9 +5,19 @@ const LIFECYCLES = new Set([
 ]);
 const WORKSPACE_KEY = "wsr.sidebar.workspace.expanded.v1";
 const DELIVERY_KEY = "wsr.sidebar.delivery.expanded.v1";
+const ERROR_CODES = new Set([
+  "DELIVERY_PROJECTION_CORRUPT",
+  "DELIVERY_PROJECTION_STALE_BINDING",
+  "DELIVERY_PROJECTION_RECOVERY_MISMATCH",
+  "DELIVERY_PROJECTION_UNAVAILABLE",
+]);
 
 function errorView(label = "Delivery inventory unavailable") {
   return Object.freeze({ kind: "error", role: "alert", label, rows: Object.freeze([]) });
+}
+
+function diagnostic(state, label) {
+  return typeof state?.code === "string" && ERROR_CODES.has(state.code) ? `${state.code}: ${label}` : label;
 }
 
 function validString(value) {
@@ -49,7 +59,10 @@ function rowsFrom(deliveries, selectedSessionId) {
 /** Project only the formal Execution DeliveryControlPlaneSnapshot. */
 export function projectDeliveryInventory(state, { selectedSessionId } = {}) {
   if (state?.kind === "loading") return Object.freeze({ kind: "loading", role: "status", label: "Loading Deliveries", rows: Object.freeze([]) });
-  if (state?.kind === "error") return errorView(validString(state.message) ? state.message : undefined);
+  if (state?.kind === "error") {
+    const label = validString(state.message) ? state.message : "Delivery inventory unavailable";
+    return errorView(diagnostic(state, label));
+  }
   if (!new Set(["ready", "reconnecting"]).has(state?.kind)) return errorView();
   const snapshot = state.snapshot;
   if (snapshot === null || typeof snapshot !== "object" || Array.isArray(snapshot)
@@ -57,7 +70,9 @@ export function projectDeliveryInventory(state, { selectedSessionId } = {}) {
     || !Number.isSafeInteger(snapshot.generation) || snapshot.generation < 1) return errorView();
   const rows = rowsFrom(snapshot.deliveries, selectedSessionId);
   if (rows === undefined) return errorView();
-  if (state.kind === "reconnecting") return Object.freeze({ kind: "reconnecting", role: "status", label: "Reconnecting to Delivery inventory", rows });
+  if (state.kind === "reconnecting") return Object.freeze({
+    kind: "reconnecting", role: "status", label: diagnostic(state, "Reconnecting to Delivery inventory"), rows,
+  });
   if (rows.length === 0) return Object.freeze({ kind: "empty", role: "status", label: "No Deliveries", rows });
   return Object.freeze({ kind: "ready", role: "list", label: "Deliveries", rows });
 }
@@ -113,4 +128,3 @@ export function createMemoryCollapseStore(storage = {}) {
     setDeliveryExpanded(value) { update("deliveryExpanded", DELIVERY_KEY, value); },
   });
 }
-

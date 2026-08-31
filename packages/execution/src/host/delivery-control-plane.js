@@ -80,33 +80,57 @@ export async function createDeliveryControlPlaneGateway(readModel) {
 /** Map the owner correlation coordinate to the DSH Session id at the Host edge. */
 export function createDshSessionControlPlaneReadModel(readModel, bindings) {
   assertReadModel(readModel);
-  if (typeof bindings?.list !== "function" || typeof bindings?.bySession !== "function") {
+  if (typeof bindings?.listProjection !== "function" || typeof bindings?.bySession !== "function") {
     throw new TypeError("DSH_SESSION_BINDINGS_REQUIRED");
   }
+  const stale = () => Object.assign(new Error("DELIVERY_PROJECTION_STALE_BINDING"), { code: "DELIVERY_PROJECTION_STALE_BINDING" });
+  const exact = (delivery, binding) => delivery.deliveryId === binding.deliveryId
+    && delivery.deliveryBindingIdentity === binding.deliveryBindingIdentity
+    && delivery.worktree === binding.worktree
+    && delivery.navigation?.sessionCorrelation === binding.correlation;
   const mapSnapshot = async (snapshot) => {
-    const rows = await bindings.list();
-    const sessions = new Map(rows.map((binding) => [binding.correlation, binding.sessionKey]));
+    const rows = await bindings.listProjection();
+    const sessions = new Map(rows.map((binding) => [binding.correlation, binding]));
+    if (sessions.size !== rows.length) throw stale();
     return Object.freeze({
       ...snapshot,
       deliveries: Object.freeze(snapshot.deliveries.map((delivery) => {
         if (delivery.navigation === null) return delivery;
-        const sessionCorrelation = sessions.get(delivery.navigation.sessionCorrelation);
-        if (sessionCorrelation === undefined) throw Object.assign(new Error("DELIVERY_PROJECTION_STALE_BINDING"), { code: "DELIVERY_PROJECTION_STALE_BINDING" });
-        return Object.freeze({ ...delivery, navigation: Object.freeze({ sessionCorrelation }) });
+        const binding = sessions.get(delivery.navigation.sessionCorrelation);
+        if (binding === undefined || !exact(delivery, binding)) throw stale();
+        return Object.freeze({ ...delivery, navigation: Object.freeze({ sessionCorrelation: binding.sessionKey }) });
       })),
     });
   };
   return Object.freeze({
     async snapshot() { return mapSnapshot(await readModel.snapshot()); },
     async session(sessionCorrelation) {
-      const binding = await bindings.bySession(sessionCorrelation);
-      if (binding === undefined) return Object.freeze({ kind: "UNBOUND", sessionCorrelation });
-      const view = await readModel.session(binding.correlation);
-      if (view.kind === "UNBOUND") return Object.freeze({ kind: "UNBOUND", sessionCorrelation });
+      const [active, associations, snapshot] = await Promise.all([
+        bindings.bySession(sessionCorrelation), bindings.listProjection(), readModel.snapshot(),
+      ]);
+      const scoped = associations.filter((binding) => binding.sessionKey === sessionCorrelation);
+      if (scoped.length === 0) return Object.freeze({ kind: "UNBOUND", sessionCorrelation });
+      const matched = scoped.map((binding) => {
+        const candidates = snapshot.deliveries.filter((delivery) => exact(delivery, binding));
+        if (candidates.length !== 1) throw stale();
+        return Object.freeze({ binding, delivery: candidates[0] });
+      });
+      let selected;
+      if (active !== undefined) {
+        selected = matched.find(({ binding }) => binding.state === "BOUND" && binding.deliveryId === active.deliveryId);
+        if (selected === undefined) throw stale();
+      } else {
+        const historical = matched.filter(({ binding, delivery }) => binding.state === "HISTORICAL"
+          && delivery.lifecycle === "TERMINAL" && delivery.recoverable === false);
+        if (historical.length !== matched.length) throw stale();
+        historical.sort((left, right) => right.delivery.timing.updatedAt - left.delivery.timing.updatedAt
+          || right.delivery.deliveryId.localeCompare(left.delivery.deliveryId));
+        selected = historical[0];
+      }
       return Object.freeze({
         kind: "BOUND",
         sessionCorrelation,
-        delivery: Object.freeze({ ...view.delivery, navigation: Object.freeze({ sessionCorrelation }) }),
+        delivery: Object.freeze({ ...selected.delivery, navigation: Object.freeze({ sessionCorrelation }) }),
       });
     },
     async subscribe(listener, onError) {

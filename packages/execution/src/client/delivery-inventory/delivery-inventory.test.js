@@ -50,6 +50,11 @@ test("represents loading, empty, error and reconnecting accessibly", () => {
   assert.deepEqual(projectDeliveryInventory({ kind: "error", message: "Inventory unavailable" }), {
     kind: "error", role: "alert", label: "Inventory unavailable", rows: [],
   });
+  assert.deepEqual(projectDeliveryInventory({ kind: "error", code: "DELIVERY_PROJECTION_STALE_BINDING", message: "Inventory unavailable" }), {
+    kind: "error", role: "alert", label: "DELIVERY_PROJECTION_STALE_BINDING: Inventory unavailable", rows: [],
+  });
+  assert.equal(projectDeliveryInventory({ kind: "reconnecting", code: "DELIVERY_PROJECTION_UNAVAILABLE", snapshot: formal() }).label,
+    "DELIVERY_PROJECTION_UNAVAILABLE: Reconnecting to Delivery inventory");
 });
 
 test("fails closed for malformed generations, lifecycles and duplicate identities", () => {

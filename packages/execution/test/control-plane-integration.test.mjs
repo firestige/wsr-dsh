@@ -5,7 +5,11 @@ import {
   createDeliveryControlPlaneGateway,
   createDshSessionControlPlaneReadModel,
 } from "../src/host/delivery-control-plane.js";
+import { IntakeSessionBindingRepository } from "../src/intake/binding-repository.js";
 import { inject as intakeInject } from "../src/intake/plugin.js";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 test("DSH Intake declares the Host connection service used by its formal projection gateway", () => {
   assert.ok(intakeInject.includes("connection"));
@@ -123,8 +127,8 @@ test("DSH Host edge maps owner correlations to Session ids without changing the 
     async subscribe(listener) { listener(await this.snapshot()); return () => undefined; },
   });
   const bindings = Object.freeze({
-    async list() { return [{ sessionKey: "session-a", correlation: "intake-correlation-a" }]; },
-    async bySession(sessionKey) { return sessionKey === "session-a" ? { sessionKey, correlation: "intake-correlation-a" } : undefined; },
+    async listProjection() { return [{ sessionKey: "session-a", correlation: "intake-correlation-a", deliveryId: "delivery-a", deliveryBindingIdentity: `sha256:${"a".repeat(64)}`, worktree: "/workspace/a", state: "BOUND" }]; },
+    async bySession(sessionKey) { return sessionKey === "session-a" ? { sessionKey, correlation: "intake-correlation-a", deliveryId: "delivery-a", deliveryBindingIdentity: `sha256:${"a".repeat(64)}`, worktree: "/workspace/a", state: "BOUND" } : undefined; },
   });
   const dsh = createDshSessionControlPlaneReadModel(owner, bindings);
   const inventory = await dsh.snapshot();
@@ -136,4 +140,148 @@ test("DSH Host edge maps owner correlations to Session ids without changing the 
     delivery: { ...item, navigation: { sessionCorrelation: "session-a" } },
   });
   assert.deepEqual(await dsh.session("session-unknown"), { kind: "UNBOUND", sessionCorrelation: "session-unknown" });
+  const drift = createDshSessionControlPlaneReadModel(owner, Object.freeze({
+    async listProjection() { return [{ ...(await bindings.listProjection())[0], deliveryBindingIdentity: `sha256:${"f".repeat(64)}` }]; },
+    bySession: bindings.bySession,
+  }));
+  await assert.rejects(() => drift.snapshot(), (error) => error?.code === "DELIVERY_PROJECTION_STALE_BINDING");
+});
+
+test("exact Core terminal facts survive Host mapping, gateway and browser reads after active cleanup", async () => {
+  const root = await mkdtemp(join(tmpdir(), "wsr-terminal-projection-"));
+  try {
+    const bindings = new IntakeSessionBindingRepository(join(root, "bindings.json"));
+    await bindings.start();
+    const history = [
+      { sessionKey: "session-a", correlation: "intake-completed", deliveryId: "delivery-completed", deliveryBindingIdentity: `sha256:${"d".repeat(64)}`, worktree: "/workspace/a", outcome: "SUCCEEDED", updatedAt: 180 },
+      { sessionKey: "session-a", correlation: "intake-failed", deliveryId: "delivery-failed", deliveryBindingIdentity: `sha256:${"e".repeat(64)}`, worktree: "/workspace/a", outcome: "FAILED", updatedAt: 190 },
+      { sessionKey: "session-b", correlation: "intake-cancelled", deliveryId: "delivery-cancelled", deliveryBindingIdentity: `sha256:${"f".repeat(64)}`, worktree: "/workspace/b", outcome: "CANCELLED", updatedAt: 200 },
+    ];
+    const terminalItems = history.map((entry) => Object.freeze({
+      ...item,
+      deliveryId: entry.deliveryId,
+      deliveryBindingIdentity: entry.deliveryBindingIdentity,
+      worktree: entry.worktree,
+      lifecycle: "TERMINAL",
+      recoverable: false,
+      navigation: Object.freeze({ sessionCorrelation: entry.correlation }),
+      current: null,
+      timing: Object.freeze({ startedAt: 100, updatedAt: entry.updatedAt, elapsedMs: entry.updatedAt - 100 }),
+      terminal: Object.freeze({ outcome: entry.outcome, finishedAt: entry.updatedAt }),
+      error: entry.outcome === "FAILED" ? Object.freeze({ code: "ACTION_FAILED" }) : null,
+    }));
+    for (let index = 0; index < history.length; index += 1) {
+      await bindings.archiveTerminal(history[index].sessionKey, terminalItems[index]);
+    }
+    const owner = Object.freeze({
+      async snapshot() { return snapshot(7, terminalItems); },
+      async session(correlation) {
+        const delivery = terminalItems.find((candidate) => candidate.navigation.sessionCorrelation === correlation);
+        return delivery === undefined ? { kind: "UNBOUND", sessionCorrelation: correlation } : { kind: "BOUND", sessionCorrelation: correlation, delivery };
+      },
+      async subscribe(listener) { listener(await this.snapshot()); return () => undefined; },
+    });
+    const gateway = await createDeliveryControlPlaneGateway(createDshSessionControlPlaneReadModel(owner, bindings));
+    const rpc = Object.freeze({ call: (_channel, endpoint, payload) => gateway.handle(endpoint, payload) });
+    const browser = createDeliveryControlPlaneClient(rpc);
+    await browser.refresh();
+    assert.deepEqual(browser.inventory.getSnapshot().snapshot.deliveries.map(({ deliveryId, terminal }) => [deliveryId, terminal.outcome]), [
+      ["delivery-completed", "SUCCEEDED"], ["delivery-failed", "FAILED"], ["delivery-cancelled", "CANCELLED"],
+    ]);
+    const sessionA = browser.bindSession("session-a");
+    await sessionA.refresh();
+    assert.equal(sessionA.getSnapshot().view.delivery.deliveryId, "delivery-failed");
+    await gateway.close();
+
+    const reloaded = new IntakeSessionBindingRepository(join(root, "bindings.json"));
+    await reloaded.start();
+    const replayed = createDshSessionControlPlaneReadModel(owner, reloaded);
+    assert.equal((await replayed.session("session-a")).delivery.deliveryId, "delivery-failed");
+    assert.equal((await replayed.session("session-b")).delivery.deliveryId, "delivery-cancelled");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Session projection prefers active exact association then deterministically selects newest history", async () => {
+  const deliveries = [
+    { ...item, deliveryId: "delivery-old", deliveryBindingIdentity: `sha256:${"d".repeat(64)}`, navigation: { sessionCorrelation: "intake-old" }, lifecycle: "TERMINAL", recoverable: false, current: null, timing: { startedAt: 10, updatedAt: 20, elapsedMs: 10 }, terminal: { outcome: "SUCCEEDED", finishedAt: 20 } },
+    { ...item, deliveryId: "delivery-z", deliveryBindingIdentity: `sha256:${"e".repeat(64)}`, navigation: { sessionCorrelation: "intake-z" }, lifecycle: "TERMINAL", recoverable: false, current: null, timing: { startedAt: 10, updatedAt: 30, elapsedMs: 20 }, terminal: { outcome: "FAILED", finishedAt: 30 } },
+    { ...item, deliveryId: "delivery-zz", deliveryBindingIdentity: `sha256:${"1".repeat(64)}`, navigation: { sessionCorrelation: "intake-zz" }, lifecycle: "TERMINAL", recoverable: false, current: null, timing: { startedAt: 10, updatedAt: 30, elapsedMs: 20 }, terminal: { outcome: "CANCELLED", finishedAt: 30 } },
+    { ...item, deliveryId: "delivery-new", deliveryBindingIdentity: `sha256:${"f".repeat(64)}`, navigation: { sessionCorrelation: "intake-new" } },
+  ];
+  const owner = Object.freeze({
+    async snapshot() { return snapshot(8, deliveries); },
+    async session(correlation) { const delivery = deliveries.find((row) => row.navigation.sessionCorrelation === correlation); return { kind: "BOUND", sessionCorrelation: correlation, delivery }; },
+    async subscribe(listener) { listener(await this.snapshot()); return () => undefined; },
+  });
+  let active = true;
+  const bindings = Object.freeze({
+    async listProjection() { return [
+      { sessionKey: "session-a", correlation: "intake-old", deliveryId: "delivery-old", deliveryBindingIdentity: `sha256:${"d".repeat(64)}`, worktree: "/workspace/a", state: "HISTORICAL" },
+      { sessionKey: "session-a", correlation: "intake-z", deliveryId: "delivery-z", deliveryBindingIdentity: `sha256:${"e".repeat(64)}`, worktree: "/workspace/a", state: "HISTORICAL" },
+      { sessionKey: "session-a", correlation: "intake-zz", deliveryId: "delivery-zz", deliveryBindingIdentity: `sha256:${"1".repeat(64)}`, worktree: "/workspace/a", state: "HISTORICAL" },
+      ...(active ? [{ sessionKey: "session-a", correlation: "intake-new", deliveryId: "delivery-new", deliveryBindingIdentity: `sha256:${"f".repeat(64)}`, worktree: "/workspace/a", state: "BOUND" }] : []),
+    ]; },
+    async bySession(sessionKey) { return active && sessionKey === "session-a" ? { sessionKey, correlation: "intake-new", deliveryId: "delivery-new", deliveryBindingIdentity: `sha256:${"f".repeat(64)}`, worktree: "/workspace/a", state: "BOUND" } : undefined; },
+  });
+  const dsh = createDshSessionControlPlaneReadModel(owner, bindings);
+  assert.equal((await dsh.session("session-a")).delivery.deliveryId, "delivery-new");
+  active = false;
+  assert.equal((await dsh.session("session-a")).delivery.deliveryId, "delivery-zz");
+});
+
+test("browser preserves bounded gateway projection codes and distinguishes reconnect from empty", async () => {
+  let mode = "empty";
+  const rpc = Object.freeze({ async call(_channel, endpoint, payload) {
+    if (mode === "stale") return { ok: false, error: { code: "DELIVERY_PROJECTION_STALE_BINDING", message: "Delivery control plane unavailable" } };
+    if (endpoint === "inventory/read") return { ok: true, value: snapshot(9, []) };
+    return { ok: true, value: { kind: "UNBOUND", sessionCorrelation: payload.sessionCorrelation } };
+  } });
+  const browser = createDeliveryControlPlaneClient(rpc);
+  await browser.refresh();
+  assert.deepEqual(browser.inventory.getSnapshot(), { kind: "ready", snapshot: snapshot(9, []) });
+  mode = "stale";
+  await browser.refresh();
+  assert.equal(browser.inventory.getSnapshot().kind, "reconnecting");
+  assert.equal(browser.inventory.getSnapshot().code, "DELIVERY_PROJECTION_STALE_BINDING");
+  const session = browser.bindSession("session-a");
+  await session.refresh();
+  assert.equal(session.getSnapshot().code, "DELIVERY_PROJECTION_STALE_BINDING");
+});
+
+test("repository terminal transition recovers a cached gateway failure without another Core invalidation", async () => {
+  const root = await mkdtemp(join(tmpdir(), "wsr-terminal-reconnect-"));
+  try {
+    const bindings = new IntakeSessionBindingRepository(join(root, "bindings.json"));
+    await bindings.start();
+    await bindings.claim({ sessionKey: "session-a", correlation: "intake-a", deliveryId: "delivery-a", deliveryBindingIdentity: item.deliveryBindingIdentity, worktree: item.worktree });
+    let current = { ...item, navigation: { sessionCorrelation: "intake-a" } };
+    let ownerListener;
+    const owner = Object.freeze({
+      async snapshot() { return snapshot(1, [current]); },
+      async session(correlation) { return { kind: "BOUND", sessionCorrelation: correlation, delivery: current }; },
+      async subscribe(listener) { ownerListener = listener; listener(await this.snapshot()); return () => undefined; },
+    });
+    const gateway = await createDeliveryControlPlaneGateway(createDshSessionControlPlaneReadModel(owner, bindings));
+    assert.equal((await gateway.handle("inventory/read", {})).ok, true);
+
+    current = {
+      ...current, lifecycle: "TERMINAL", recoverable: false, current: null,
+      timing: { startedAt: 100, updatedAt: 180, elapsedMs: 80 },
+      terminal: { outcome: "SUCCEEDED", finishedAt: 180 },
+    };
+    ownerListener(snapshot(2, [current]));
+    await new Promise((accept) => setTimeout(accept, 0));
+    await bindings.archiveTerminal("session-a", current);
+    await new Promise((accept) => setTimeout(accept, 0));
+
+    const recovered = await gateway.handle("inventory/read", {});
+    assert.equal(recovered.ok, true);
+    assert.equal(recovered.value.deliveries[0].lifecycle, "TERMINAL");
+    assert.deepEqual(recovered.value.deliveries[0].navigation, { sessionCorrelation: "session-a" });
+    await gateway.close();
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
