@@ -55,7 +55,10 @@ export async function createDeliveryControlPlaneGateway(readModel) {
         if (payload === null || typeof payload !== "object" || Array.isArray(payload) || Object.keys(payload).length !== 0) {
           throw new TypeError("CONTROL_PLANE_RPC_INVALID");
         }
-        if (failure !== undefined) return failure;
+        if (failure !== undefined) {
+          try { current = await readModel.snapshot(); failure = undefined; }
+          catch (error) { failure = errorResult(error); return failure; }
+        }
         if (current === undefined) {
           try { current = await readModel.snapshot(); }
           catch (error) { return errorResult(error); }

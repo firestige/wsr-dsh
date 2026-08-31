@@ -78,13 +78,33 @@ test("Host gateway consumes the exact async DeliveryControlPlaneReadModel and ex
   listener(inventory);
   assert.deepEqual(await gateway.handle("inventory/read", {}), { ok: true, value: inventory });
   onError(Object.assign(new Error("unavailable"), { code: "DELIVERY_PROJECTION_UNAVAILABLE" }));
-  assert.deepEqual(await gateway.handle("inventory/read", {}), {
-    ok: false,
-    error: { code: "DELIVERY_PROJECTION_UNAVAILABLE", message: "Delivery control plane unavailable" },
-  });
+  assert.deepEqual(await gateway.handle("inventory/read", {}), { ok: true, value: inventory });
   await assert.rejects(() => gateway.handle("delivery/delete", { deliveryId: "delivery-a" }), /CONTROL_PLANE_RPC_INVALID/u);
   await gateway.close();
   assert.equal(disposed, 1);
+});
+
+test("Host gateway retries the owner snapshot after a transient subscription failure", async () => {
+  let onError;
+  let reads = 0;
+  const readModel = Object.freeze({
+    async snapshot() { reads += 1; return snapshot(reads); },
+    async session(sessionCorrelation) { return { kind: "UNBOUND", sessionCorrelation }; },
+    async subscribe(listener, error) {
+      onError = error;
+      listener(await this.snapshot());
+      return () => undefined;
+    },
+  });
+  const gateway = await createDeliveryControlPlaneGateway(readModel);
+  onError(Object.assign(new Error("stale"), { code: "DELIVERY_PROJECTION_STALE_BINDING" }));
+
+  const recovered = await gateway.handle("inventory/read", {});
+
+  assert.equal(recovered.ok, true);
+  assert.equal(recovered.value.generation, 2);
+  assert.equal(reads, 2);
+  await gateway.close();
 });
 
 test("browser store maps unary Host reads into replayable React snapshots without commands", async () => {
