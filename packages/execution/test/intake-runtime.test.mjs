@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, realpath, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -28,6 +28,7 @@ test("runtime archives only an exact terminal Core row, releases routing, and pe
     const worktree = await realpath(spelling);
     const requests = [];
     const pending = [];
+    const attachments = [];
     let projected = [];
     const application = Object.freeze({
       async start() {},
@@ -42,7 +43,9 @@ test("runtime archives only an exact terminal Core row, releases routing, and pe
     });
     const control = Object.freeze({
       async bindingInventory() { return []; },
-      attach() {},
+      attach(deliveryId, correlation) {
+        attachments.push(readFile(join(root, "bindings.json"), "utf8").then((value) => ({ deliveryId, correlation, value })));
+      },
       async waitForDelivery(correlation) {
         const index = requests.findIndex((request) => request.intakeCorrelation === correlation);
         return { deliveryId: `delivery-${index + 1}`, worktree, deliveryBindingIdentity: identity(`delivery-${index + 1}`) };
@@ -68,6 +71,11 @@ test("runtime archives only an exact terminal Core row, releases routing, and pe
     });
     assert.match((await runtime.invokeForSession(input("first"))).kind, /START_UNCERTAIN/u);
     const first = await runtime.bindings.bySession("session-a");
+    assert.equal(attachments.length, 1);
+    const attached = await attachments[0];
+    assert.equal(attached.deliveryId, "delivery-1");
+    assert.equal(attached.correlation, first.correlation);
+    assert.match(attached.value, /delivery-1/u);
     projected = [{
       deliveryId: first.deliveryId, deliveryBindingIdentity: first.deliveryBindingIdentity,
       task: { identity: "task-a", displayName: "Task A" }, worktree,
