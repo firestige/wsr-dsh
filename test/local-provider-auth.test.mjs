@@ -16,7 +16,7 @@ function fixture({ authenticated = true, models = ["gpt-5.3-codex"] } = {}) {
   const runtime = {
     wrapperPackageName: "@github/copilot",
     wrapperPackageVersion: "1.0.78",
-    platformPackageName: "@github/copilot-darwin-arm64",
+    platformPackageName: `@github/copilot-${process.platform}-${process.arch}`,
     platformPackageVersion: "1.0.78",
     createClient(options) { observed.options = options; return client; },
   };
