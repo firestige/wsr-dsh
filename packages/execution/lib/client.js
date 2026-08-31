@@ -2720,13 +2720,39 @@ var DOT_STATE = Object.freeze({
   failed: "error",
   cancelled: "error"
 });
-function createActionPresentationView({ React: React2, DisclosureRow: DisclosureRow2, MessageText: MessageText2, StateDot: StateDot2, JsonTree: JsonTree2, observe = () => void 0 }) {
+var ACTIONS_STYLE_ID = "dsh-wsr-execution-final-actions";
+var ACTIONS_CSS = ".wsr-answer-actions{align-items:center;gap:10px;height:28px;margin-top:16px;margin-left:-6px;display:flex}.wsr-answer-action{width:28px;height:28px;color:var(--dsw-alias-label-tertiary);cursor:pointer;background:transparent;border:none;border-radius:28px;justify-content:center;align-items:center;padding:6px;display:inline-flex}.wsr-answer-action:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)}";
+function installActionPresentationStyle() {
+  if (typeof document === "undefined" || document.getElementById(ACTIONS_STYLE_ID) !== null) return;
+  const tag = document.createElement("style");
+  tag.id = ACTIONS_STYLE_ID;
+  tag.dataset.plugin = "dsh-wsr-execution";
+  tag.textContent = ACTIONS_CSS;
+  document.head.append(tag);
+}
+function createActionPresentationView({
+  React: React2,
+  DisclosureRow: DisclosureRow2,
+  MessageText: MessageText2,
+  StateDot: StateDot2,
+  JsonTree: JsonTree2,
+  Tooltip: Tooltip2,
+  IconCopyOutline16: IconCopyOutline162,
+  IconCheckOutline16: IconCheckOutline162,
+  writeClipboard: writeClipboard2,
+  observe = () => void 0
+}) {
   if (typeof DisclosureRow2 !== "function") throw new TypeError("DSH_DISCLOSURE_ROW_REQUIRED");
+  installActionPresentationStyle();
   return function WsrExecutionPresentationView({ node, technicalDetails }) {
     const presentation = node.data;
     const [open, setOpen] = React2.useState(presentation.defaultOpen);
+    const [copyState, setCopyState] = React2.useState("idle");
     const bodyRef = React2.useRef(null);
     const previousState = React2.useRef(presentation.state);
+    const copyPending = React2.useRef(false);
+    const copyEpoch = React2.useRef(0);
+    const copyTimer = React2.useRef(null);
     React2.useEffect(() => {
       setOpen((current) => resolveDisclosureOpen({
         current,
@@ -2736,8 +2762,39 @@ function createActionPresentationView({ React: React2, DisclosureRow: Disclosure
       }));
       previousState.current = presentation.state;
     }, [presentation.state]);
+    React2.useEffect(() => {
+      copyEpoch.current += 1;
+      copyPending.current = false;
+      if (copyTimer.current !== null) clearTimeout(copyTimer.current);
+      copyTimer.current = null;
+      setCopyState("idle");
+      return () => {
+        copyEpoch.current += 1;
+        copyPending.current = false;
+        if (copyTimer.current !== null) clearTimeout(copyTimer.current);
+      };
+    }, [presentation.body, presentation.correlation]);
     observe(presentation);
-    if (presentation.layer === "final") {
+    if (presentation.layer === "final" && presentation.state === "completed") {
+      const label = copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : "Copy";
+      const onCopy = async () => {
+        if (copyState === "copied" || copyPending.current) return;
+        const epoch = copyEpoch.current;
+        copyPending.current = true;
+        let accepted = false;
+        try {
+          accepted = await writeClipboard2(presentation.body);
+        } catch {
+          accepted = false;
+        }
+        if (epoch !== copyEpoch.current) return;
+        copyPending.current = false;
+        setCopyState(accepted ? "copied" : "failed");
+        copyTimer.current = globalThis.setTimeout(() => {
+          copyTimer.current = null;
+          setCopyState("idle");
+        }, 1e3);
+      };
       return React2.createElement(
         "article",
         {
@@ -2750,12 +2807,16 @@ function createActionPresentationView({ React: React2, DisclosureRow: Disclosure
           "aria-label": presentation.title
         },
         React2.createElement(MessageText2, { text: presentation.body }),
-        technicalDetails === void 0 ? null : React2.createElement(
-          "details",
-          null,
-          React2.createElement("summary", null, "Technical details"),
-          JsonTree2 === void 0 ? React2.createElement("pre", null, JSON.stringify(technicalDetails, null, 2)) : React2.createElement(JsonTree2, { data: technicalDetails, label: "WSR presentation", copyable: true, expandTopLevel: true })
-        )
+        React2.createElement("div", {
+          className: "wsr-answer-actions",
+          "data-wsr-answer-actions": "true"
+        }, React2.createElement(Tooltip2, { label, side: "bottom" }, React2.createElement("button", {
+          type: "button",
+          className: "wsr-answer-action",
+          "aria-label": label,
+          "data-copy-state": copyState,
+          onClick: onCopy
+        }, React2.createElement(copyState === "copied" ? IconCheckOutline162 : IconCopyOutline162, null))))
       );
     }
     const waiting = presentation.state === "waiting";
@@ -3221,7 +3282,17 @@ function apply(ctx) {
       return source;
     }
   });
-  registerActionPresentation(ctx, createWsrCommandView({ React: import_react.default, DisclosureRow: import_dsh_client_ui_primitives.DisclosureRow, JsonTree: import_dsh_client_ui_primitives.JsonTree, MessageText: import_dsh_client_ui_primitives.MessageText, StateDot: import_dsh_client_ui_primitives.StateDot }));
+  registerActionPresentation(ctx, createWsrCommandView({
+    React: import_react.default,
+    DisclosureRow: import_dsh_client_ui_primitives.DisclosureRow,
+    IconCheckOutline16: import_dsh_client_ui_primitives.IconCheckOutline16,
+    IconCopyOutline16: import_dsh_client_ui_primitives.IconCopyOutline16,
+    JsonTree: import_dsh_client_ui_primitives.JsonTree,
+    MessageText: import_dsh_client_ui_primitives.MessageText,
+    StateDot: import_dsh_client_ui_primitives.StateDot,
+    Tooltip: import_dsh_client_ui_primitives.Tooltip,
+    writeClipboard: import_dsh_client_ui_primitives.writeClipboard
+  }));
 }
 
     return module.exports;
