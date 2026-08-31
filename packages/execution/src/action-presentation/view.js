@@ -157,31 +157,62 @@ export function createActionPresentationView({
   };
 }
 
-function commandPresentation(node) {
+const TERMINAL_PRESENTATION = Object.freeze({
+  SUCCEEDED: Object.freeze({ state: "completed", label: "Succeeded" }),
+  FAILED: Object.freeze({ state: "failed", label: "Failed" }),
+  CANCELLED: Object.freeze({ state: "cancelled", label: "Cancelled" }),
+});
+
+function reconcileDeliveryPresentation(presentation, admitted, inventoryState) {
+  const deliveryId = admitted?.kind === "delivery-running" && typeof admitted.data.deliveryId === "string"
+    ? admitted.data.deliveryId
+    : undefined;
+  const deliveries = ["ready", "reconnecting"].includes(inventoryState?.kind)
+    && Array.isArray(inventoryState.snapshot?.deliveries)
+    ? inventoryState.snapshot.deliveries
+    : [];
+  const matches = deliveryId === undefined ? [] : deliveries.filter((delivery) => delivery?.deliveryId === deliveryId);
+  const terminal = matches.length === 1 && matches[0]?.lifecycle === "TERMINAL"
+    ? TERMINAL_PRESENTATION[matches[0]?.terminal?.outcome]
+    : undefined;
+  if (terminal === undefined) return presentation;
+  return Object.freeze({
+    ...presentation,
+    state: terminal.state,
+    summary: `${terminal.label} · ${deliveryId}`,
+    defaultOpen: false,
+  });
+}
+
+function commandPresentation(node, admitted, inventoryState) {
   if (node.outcome === null) return Object.freeze({
     correlation: String(node.commandId), layer: "progress", state: "running",
     title: "Workflow delivery", summary: "Running", body: undefined,
-    defaultOpen: true, focusPolicy: "none", role: "status", compatibility: "current",
+    defaultOpen: false, focusPolicy: "none", role: "status", compatibility: "current",
   });
-  const event = parseExecutionPresentation(node.outcome?.text);
+  const event = admitted ?? parseExecutionPresentation(node.outcome?.text);
   if (event.kind === "delivery-list") {
     const count = Array.isArray(event.data.items) ? event.data.items.length : 0;
     return Object.freeze({
       correlation: event.correlation, layer: "progress", state: "completed",
       title: "Delivery list", summary: `${count} ${count === 1 ? "delivery" : "deliveries"}`,
       body: count === 0 ? "No deliveries." : JSON.stringify(event.data.items, null, 2),
-      defaultOpen: count > 0, focusPolicy: "none", role: "status", compatibility: "current",
+      defaultOpen: false, focusPolicy: "none", role: "status", compatibility: "current",
     });
   }
-  return projectExecutionPresentation(event);
+  return reconcileDeliveryPresentation(projectExecutionPresentation(event), event, inventoryState);
 }
 
 /** Replace the generic command card so one-line durable JSON remains inspectable. */
 export function createWsrCommandView(options) {
   const View = createActionPresentationView(options);
+  const { React, inventory } = options;
   return function WsrCommandView({ node }) {
     const admitted = node.outcome === null ? undefined : parseExecutionPresentation(node.outcome?.text);
-    return View({ node: { data: commandPresentation(node) }, technicalDetails: admitted });
+    const inventoryState = inventory === undefined
+      ? undefined
+      : React.useSyncExternalStore(inventory.subscribe, inventory.getSnapshot, inventory.getSnapshot);
+    return View({ node: { data: commandPresentation(node, admitted, inventoryState) }, technicalDetails: admitted });
   };
 }
 

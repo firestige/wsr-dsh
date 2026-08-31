@@ -38,5 +38,6 @@ export function apply(ctx) {
     StateDot,
     Tooltip,
     writeClipboard,
+    inventory: controlPlane.inventory,
   }));
 }

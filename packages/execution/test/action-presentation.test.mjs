@@ -65,7 +65,7 @@ test("projects durable Execution progress, tool, Action and final facts without 
   }))), {
     correlation: "delivery-1:action-1", layer: "progress", state: "recovering",
     title: "Workflow delivery", summary: "Recovering · delivery-1", body: undefined,
-    defaultOpen: true, focusPolicy: "none", role: "status", compatibility: "current",
+    defaultOpen: false, focusPolicy: "none", role: "status", compatibility: "current",
   });
 
   assert.deepEqual(projectExecutionPresentation(parseExecutionPresentation(valid("action-output", {
@@ -73,7 +73,7 @@ test("projects durable Execution progress, tool, Action and final facts without 
   }))), {
     correlation: "delivery-1:action-1", layer: "tool", state: "running",
     title: "Inspect repository", summary: "Running", body: "Reading files",
-    defaultOpen: true, focusPolicy: "none", role: "status", compatibility: "current",
+    defaultOpen: false, focusPolicy: "none", role: "status", compatibility: "current",
   });
 
   assert.deepEqual(projectExecutionPresentation(parseExecutionPresentation(valid("action-output", {
@@ -89,7 +89,7 @@ test("projects durable Execution progress, tool, Action and final facts without 
   }))), {
     correlation: "delivery-1:action-1", layer: "final", state: "completed",
     title: "Final result", summary: "Succeeded", body: "The delivery is ready.",
-    defaultOpen: true, focusPolicy: "none", role: "article", compatibility: "current",
+    defaultOpen: false, focusPolicy: "none", role: "article", compatibility: "current",
   });
 });
 
@@ -106,8 +106,20 @@ test("keeps Action input visible and focusable instead of hiding it behind a com
 test("keeps focused content open across completion and otherwise applies lifecycle defaults", () => {
   assert.equal(resolveDisclosureOpen({ current: true, previousState: "running", nextState: "completed", containsFocus: true }), true);
   assert.equal(resolveDisclosureOpen({ current: true, previousState: "running", nextState: "completed", containsFocus: false }), false);
-  assert.equal(resolveDisclosureOpen({ current: false, previousState: "completed", nextState: "failed", containsFocus: false }), true);
+  assert.equal(resolveDisclosureOpen({ current: false, previousState: "completed", nextState: "failed", containsFocus: false }), false);
   assert.equal(resolveDisclosureOpen({ current: false, previousState: "waiting", nextState: "waiting", containsFocus: false }), true);
+});
+
+test("keeps non-interactive presentation nodes collapsed until the user opens them", () => {
+  for (const event of [
+    valid("delivery-running", { deliveryId: "delivery-1", state: "RUNNING_CORRELATED" }),
+    valid("action-output", { state: "running", content: { text: "Working" } }),
+    valid("action-output", { state: "failed", content: { text: "Failed" } }),
+    valid("terminal-result", { outcome: "FAILED", finalOutput: "Failed" }),
+    valid("error", { code: "DELIVERY_FAILED", message: "Delivery failed" }),
+  ]) {
+    assert.equal(projectExecutionPresentation(parseExecutionPresentation(event)).defaultOpen, false);
+  }
 });
 
 test("supports the previous terminal summary explicitly while never duplicating Action output as a final answer", () => {
@@ -178,7 +190,7 @@ test("builds a replay-stable WSR conversation node from durable Harness command 
     data: {
       correlation: "delivery-1:action-1", layer: "action", state: "cancelled",
       title: "Workflow Action", summary: "Cancelled", body: "Stopped by user",
-      defaultOpen: true, focusPolicy: "none", role: "status", compatibility: "current",
+      defaultOpen: false, focusPolicy: "none", role: "status", compatibility: "current",
     },
   });
   assert.deepEqual(definition.buildViewNode({ ...context, state }), node);
@@ -252,12 +264,70 @@ test("renders friendly diagnostics and the complete bounded presentation JSON fr
   } });
 
   assert.equal(tree.type, DisclosureRow);
-  assert.equal(tree.props.open, true);
+  assert.equal(tree.props.open, false);
   assert.match(JSON.stringify(tree), /Add a Task instruction/u);
   const detail = tree.props.children[0].props.children.find((child) => child?.type === "details");
   assert.equal(detail.props.children[1].type, JsonTree);
   assert.deepEqual(detail.props.children[1].props.data, presentation);
   assert.equal(detail.props.children[1].props.copyable, true);
+});
+
+test("reconciles the original Delivery command row with its authoritative terminal outcome", () => {
+  let outcome = "SUCCEEDED";
+  const React = {
+    createElement(type, props, ...children) { return { type, props: { ...(props ?? {}), children } }; },
+    useEffect() {},
+    useRef(value) { return { current: value }; },
+    useState(value) { return [value, () => undefined]; },
+    useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot(); },
+  };
+  const inventory = {
+    subscribe() { return () => undefined; },
+    getSnapshot() {
+      return {
+        kind: "ready",
+        snapshot: {
+          schemaVersion: "execution.delivery-control-plane@1.0.0",
+          generation: 3,
+          deliveries: [{
+            deliveryId: "delivery-1",
+            lifecycle: "TERMINAL",
+            terminal: { outcome },
+          }],
+        },
+      };
+    },
+  };
+  const StateDot = (props) => ({ type: "StateDot", props });
+  const View = createWsrCommandView({
+    React,
+    DisclosureRow: (props) => ({ type: "DisclosureRow", props }),
+    MessageText: (props) => ({ type: "MessageText", props }),
+    StateDot,
+    JsonTree: (props) => ({ type: "JsonTree", props }),
+    inventory,
+  });
+
+  const node = {
+    commandId: "command-1",
+    name: "wsr",
+    outcome: { kind: "success", text: JSON.stringify(valid("delivery-running", {
+      deliveryId: "delivery-1",
+      state: "START_UNCERTAIN",
+    }, "presentation-start")) },
+  };
+  for (const expected of [
+    { outcome: "SUCCEEDED", dot: "done", label: "Succeeded" },
+    { outcome: "FAILED", dot: "error", label: "Failed" },
+    { outcome: "CANCELLED", dot: "error", label: "Cancelled" },
+  ]) {
+    outcome = expected.outcome;
+    const tree = View({ node });
+    assert.equal(tree.props.open, false);
+    assert.equal(tree.props.icon.type, StateDot);
+    assert.equal(tree.props.icon.props.state, expected.dot);
+    assert.match(JSON.stringify(tree.props.collapsedContent), new RegExp(`${expected.label} · delivery-1`, "u"));
+  }
 });
 
 test("never echoes rejected command bytes in technical details", () => {
@@ -294,7 +364,7 @@ test("renders process through DisclosureRow and final output as a persistent ass
     state: "failed", content: { text: "compiler failed" },
   }))) } });
   assert.equal(processTree.type, DisclosureRow);
-  assert.equal(processTree.props.open, true);
+  assert.equal(processTree.props.open, false);
   assert.equal(processTree.props.expandOnRowClick, true);
   assert.equal(processTree.props.previewChevron, false);
   assert.equal(processTree.props.children[0].props["data-wsr-layer"], "action");

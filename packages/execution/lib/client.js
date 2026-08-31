@@ -2640,7 +2640,7 @@ function projectExecutionPresentation(event) {
       title: "Final result",
       summary: data.outcome[0] + data.outcome.slice(1).toLowerCase(),
       body,
-      defaultOpen: true,
+      defaultOpen: false,
       focusPolicy: "none",
       role: "article",
       compatibility: typeof data.finalOutput === "string" ? "current" : "legacy-summary"
@@ -2669,7 +2669,7 @@ function projectExecutionPresentation(event) {
       title: typeof data.label === "string" ? data.label : "Workflow Action",
       summary: STATE_LABELS[state2],
       body: text(data.content) ?? "WSR content unavailable",
-      defaultOpen: state2 !== "completed",
+      defaultOpen: false,
       focusPolicy: "none",
       role: "status",
       compatibility: "current"
@@ -2683,7 +2683,7 @@ function projectExecutionPresentation(event) {
       title: "Workflow presentation",
       summary: typeof data.code === "string" ? data.code : "WSR_ERROR",
       body: typeof data.message === "string" ? data.message : "WSR presentation unavailable",
-      defaultOpen: true,
+      defaultOpen: false,
       focusPolicy: "none",
       role: "alert",
       compatibility: "current"
@@ -2698,7 +2698,7 @@ function projectExecutionPresentation(event) {
     title: "Workflow delivery",
     summary: `${STATE_LABELS[state]}${deliveryId === void 0 ? "" : ` \xB7 ${deliveryId}`}`,
     body: void 0,
-    defaultOpen: state !== "completed",
+    defaultOpen: false,
     focusPolicy: "none",
     role: "status",
     compatibility: "current"
@@ -2707,7 +2707,6 @@ function projectExecutionPresentation(event) {
 function resolveDisclosureOpen({ current, previousState, nextState, containsFocus }) {
   if (nextState === "waiting") return true;
   if (nextState === "completed" && previousState !== "completed") return containsFocus ? true : false;
-  if (["running", "recovering", "failed", "cancelled"].includes(nextState) && nextState !== previousState) return true;
   return current;
 }
 
@@ -2859,7 +2858,25 @@ function createActionPresentationView({
     }, body);
   };
 }
-function commandPresentation(node) {
+var TERMINAL_PRESENTATION = Object.freeze({
+  SUCCEEDED: Object.freeze({ state: "completed", label: "Succeeded" }),
+  FAILED: Object.freeze({ state: "failed", label: "Failed" }),
+  CANCELLED: Object.freeze({ state: "cancelled", label: "Cancelled" })
+});
+function reconcileDeliveryPresentation(presentation, admitted, inventoryState) {
+  const deliveryId = admitted?.kind === "delivery-running" && typeof admitted.data.deliveryId === "string" ? admitted.data.deliveryId : void 0;
+  const deliveries = ["ready", "reconnecting"].includes(inventoryState?.kind) && Array.isArray(inventoryState.snapshot?.deliveries) ? inventoryState.snapshot.deliveries : [];
+  const matches = deliveryId === void 0 ? [] : deliveries.filter((delivery) => delivery?.deliveryId === deliveryId);
+  const terminal = matches.length === 1 && matches[0]?.lifecycle === "TERMINAL" ? TERMINAL_PRESENTATION[matches[0]?.terminal?.outcome] : void 0;
+  if (terminal === void 0) return presentation;
+  return Object.freeze({
+    ...presentation,
+    state: terminal.state,
+    summary: `${terminal.label} \xB7 ${deliveryId}`,
+    defaultOpen: false
+  });
+}
+function commandPresentation(node, admitted, inventoryState) {
   if (node.outcome === null) return Object.freeze({
     correlation: String(node.commandId),
     layer: "progress",
@@ -2867,12 +2884,12 @@ function commandPresentation(node) {
     title: "Workflow delivery",
     summary: "Running",
     body: void 0,
-    defaultOpen: true,
+    defaultOpen: false,
     focusPolicy: "none",
     role: "status",
     compatibility: "current"
   });
-  const event = parseExecutionPresentation(node.outcome?.text);
+  const event = admitted ?? parseExecutionPresentation(node.outcome?.text);
   if (event.kind === "delivery-list") {
     const count = Array.isArray(event.data.items) ? event.data.items.length : 0;
     return Object.freeze({
@@ -2882,19 +2899,21 @@ function commandPresentation(node) {
       title: "Delivery list",
       summary: `${count} ${count === 1 ? "delivery" : "deliveries"}`,
       body: count === 0 ? "No deliveries." : JSON.stringify(event.data.items, null, 2),
-      defaultOpen: count > 0,
+      defaultOpen: false,
       focusPolicy: "none",
       role: "status",
       compatibility: "current"
     });
   }
-  return projectExecutionPresentation(event);
+  return reconcileDeliveryPresentation(projectExecutionPresentation(event), event, inventoryState);
 }
 function createWsrCommandView(options) {
   const View = createActionPresentationView(options);
+  const { React: React2, inventory } = options;
   return function WsrCommandView({ node }) {
     const admitted = node.outcome === null ? void 0 : parseExecutionPresentation(node.outcome?.text);
-    return View({ node: { data: commandPresentation(node) }, technicalDetails: admitted });
+    const inventoryState = inventory === void 0 ? void 0 : React2.useSyncExternalStore(inventory.subscribe, inventory.getSnapshot, inventory.getSnapshot);
+    return View({ node: { data: commandPresentation(node, admitted, inventoryState) }, technicalDetails: admitted });
   };
 }
 function registerActionPresentation(ctx, View) {
@@ -3317,7 +3336,8 @@ function apply(ctx) {
     MessageText: import_dsh_client_ui_primitives.MessageText,
     StateDot: import_dsh_client_ui_primitives.StateDot,
     Tooltip: import_dsh_client_ui_primitives.Tooltip,
-    writeClipboard: import_dsh_client_ui_primitives.writeClipboard
+    writeClipboard: import_dsh_client_ui_primitives.writeClipboard,
+    inventory: controlPlane.inventory
   }));
 }
 

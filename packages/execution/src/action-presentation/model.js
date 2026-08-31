@@ -148,7 +148,7 @@ export function projectExecutionPresentation(event) {
     return model({
       correlation, layer: "final", state, title: "Final result",
       summary: data.outcome[0] + data.outcome.slice(1).toLowerCase(), body,
-      defaultOpen: true, focusPolicy: "none", role: "article",
+      defaultOpen: false, focusPolicy: "none", role: "article",
       compatibility: typeof data.finalOutput === "string" ? "current" : "legacy-summary",
     });
   }
@@ -166,7 +166,7 @@ export function projectExecutionPresentation(event) {
       correlation, layer: data.channel === "tool" ? "tool" : "action", state,
       title: typeof data.label === "string" ? data.label : "Workflow Action",
       summary: STATE_LABELS[state], body: text(data.content) ?? "WSR content unavailable",
-      defaultOpen: state !== "completed", focusPolicy: "none", role: "status", compatibility: "current",
+      defaultOpen: false, focusPolicy: "none", role: "status", compatibility: "current",
     });
   }
   if (event.kind === "error") {
@@ -174,7 +174,7 @@ export function projectExecutionPresentation(event) {
       correlation, layer: "progress", state: "failed", title: "Workflow presentation",
       summary: typeof data.code === "string" ? data.code : "WSR_ERROR",
       body: typeof data.message === "string" ? data.message : "WSR presentation unavailable",
-      defaultOpen: true, focusPolicy: "none", role: "alert", compatibility: "current",
+      defaultOpen: false, focusPolicy: "none", role: "alert", compatibility: "current",
     });
   }
 
@@ -185,7 +185,7 @@ export function projectExecutionPresentation(event) {
   return model({
     correlation, layer: "progress", state, title: "Workflow delivery",
     summary: `${STATE_LABELS[state]}${deliveryId === undefined ? "" : ` · ${deliveryId}`}`,
-    body: undefined, defaultOpen: state !== "completed", focusPolicy: "none", role: "status", compatibility: "current",
+    body: undefined, defaultOpen: false, focusPolicy: "none", role: "status", compatibility: "current",
   });
 }
 
@@ -193,7 +193,6 @@ export function projectExecutionPresentation(event) {
 export function resolveDisclosureOpen({ current, previousState, nextState, containsFocus }) {
   if (nextState === "waiting") return true;
   if (nextState === "completed" && previousState !== "completed") return containsFocus ? true : false;
-  if (["running", "recovering", "failed", "cancelled"].includes(nextState) && nextState !== previousState) return true;
   return current;
 }
 
