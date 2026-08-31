@@ -345,6 +345,19 @@ export async function createPluginRuntime(config, options = {}) {
     return promise;
   }
 
+  async function awaitRegistrationOrResult(execution, correlation) {
+    const result = execution.then((value) => Object.freeze({ kind: "result", result: value }));
+    while (true) {
+      const first = await Promise.race([
+        result,
+        control.waitForDelivery(correlation, options.deliveryRegistrationTimeoutMs ?? 10_000)
+          .then((delivery) => Object.freeze({ kind: "delivery", delivery })),
+      ]);
+      if (first.kind === "result" || first.delivery !== undefined) return first;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  }
+
   async function invokeForSession(input) {
     if (!accepting) return error("APPLICATION_CLOSING");
     const candidateBinding = await bindings.bySession(input.sessionKey);
@@ -379,23 +392,13 @@ export async function createPluginRuntime(config, options = {}) {
       catch { return error("GIT_INIT_FAILED"); }
       sessionByCorrelation.set(correlation, input.sessionKey);
       const execution = track(service.invoke(Object.freeze({ operation: "create", selector: operation.selector, worktree: authorization.path, directive: operation.directive, turn, correlation }), authorization));
-      const first = await Promise.race([
-        execution.then((result) => Object.freeze({ kind: "result", result })),
-        control.waitForDelivery(correlation, options.deliveryRegistrationTimeoutMs ?? 10_000)
-          .then((delivery) => Object.freeze({ kind: "delivery", delivery })),
-      ]);
+      const first = await awaitRegistrationOrResult(execution, correlation);
       if (first.kind === "result") {
         if (first.result.kind === "TERMINAL") await archiveTerminal(input.sessionKey, correlation, first.result.deliveryId);
         if (first.result.kind === "ERROR" || first.result.kind === "TERMINAL" || first.result.kind === "RECOVERY") sessionByCorrelation.delete(correlation);
         return first.result;
       }
       const delivery = first.delivery;
-      if (delivery === undefined) {
-        const result = await execution;
-        if (result.kind === "TERMINAL") await archiveTerminal(input.sessionKey, correlation, result.deliveryId);
-        if (result.kind === "ERROR" || result.kind === "TERMINAL") sessionByCorrelation.delete(correlation);
-        return result;
-      }
       await bindings.claim(Object.freeze({ sessionKey: input.sessionKey, correlation, deliveryId: delivery.deliveryId, worktree: delivery.worktree, deliveryBindingIdentity: delivery.deliveryBindingIdentity }));
       control.attach(delivery.deliveryId, correlation);
       void track(execution.then(async (result) => {

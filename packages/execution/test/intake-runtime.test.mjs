@@ -126,3 +126,61 @@ test("pre-registration ERROR creates no historical association", async () => {
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("registration polling survives a cold-start timeout and commits the Session binding before terminal", async () => {
+  const root = await mkdtemp(join(tmpdir(), "wsr-intake-cold-registration-"));
+  try {
+    const worktree = await realpath(root);
+    let resolveExecution;
+    const execution = new Promise((resolve) => { resolveExecution = resolve; });
+    let waits = 0;
+    const attached = [];
+    let projected = [];
+    const application = Object.freeze({
+      async start() {}, async execute() { return execution; }, async inspect() {}, async cancel() {},
+      status() { return { state: "READY" }; }, async close() {},
+    });
+    const control = Object.freeze({
+      async bindingInventory() { return []; },
+      attach(deliveryId, correlation) { attached.push({ deliveryId, correlation }); },
+      async waitForDelivery() {
+        waits += 1;
+        return waits === 1 ? undefined : {
+          deliveryId: "delivery-cold", worktree, deliveryBindingIdentity: identity("delivery-cold"),
+        };
+      },
+    });
+    const runtime = await createPluginRuntime({ configFile: join(root, "execution.json"), bindingFile: join(root, "bindings.json") }, {
+      moduleLoader: async () => executionApi,
+      factory: Object.freeze({ async create() { return application; } }),
+      control,
+      ownerProjection: Object.freeze({ async snapshot() { return { schemaVersion: "execution.delivery-control-plane@1.0.0", generation: 1, deliveries: projected }; } }),
+      quiesceTimeoutMs: 1,
+      ensureGitWorktree: async () => ({ path: worktree, initialized: false }),
+      resolveConversationWorkspace: async () => ({ sessionKey: "session-cold", workspaceId: "workspace-cold", path: worktree }),
+    });
+
+    const terminalFallback = setTimeout(() => resolveExecution({ kind: "TERMINAL", worktree, deliveryId: "delivery-cold", outcome: "SUCCEEDED" }), 25);
+    const result = await runtime.invokeForSession({
+      sessionKey: "session-cold", agent: { id: "session-cold" },
+      operation: parseWsrCommand("create fixture@1.0.0\nrun after cold start"),
+      turnText: "/wsr create fixture@1.0.0\nrun after cold start", images: [],
+    });
+    assert.deepEqual(result, { kind: "START_UNCERTAIN", worktree, deliveryId: "delivery-cold" });
+    assert.equal(waits, 2);
+    assert.equal(attached.length, 1);
+    assert.match((await readFile(join(root, "bindings.json"), "utf8")), /delivery-cold/u);
+    clearTimeout(terminalFallback);
+    projected = [{
+      deliveryId: "delivery-cold", deliveryBindingIdentity: identity("delivery-cold"),
+      worktree, lifecycle: "TERMINAL", recoverable: false, current: null,
+      navigation: { sessionCorrelation: attached[0].correlation },
+      timing: { updatedAt: 100 }, terminal: { outcome: "SUCCEEDED", finishedAt: 100 },
+    }];
+    resolveExecution({ kind: "TERMINAL", worktree, deliveryId: "delivery-cold", outcome: "SUCCEEDED" });
+    await waitFor(async () => (await runtime.bindings.listProjection())[0]?.state === "HISTORICAL");
+    await runtime.close();
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
