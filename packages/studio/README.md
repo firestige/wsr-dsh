@@ -1,7 +1,7 @@
 # WSR Studio
 
 `dsh-wsr-studio` is the independently installable **WSR Studio** bundle. It
-provides the Harness-native, non-modal top-level Evaluate view, Task single/compare selection,
+provides the Harness-native, non-modal Evaluate conversation tab immediately after Delivery, Task single/compare selection,
 Metric Result, receipt, Fact, and recorded Trace navigation.
 
 The browser calls only the DSH Host channel. The Host gateway accepts exact

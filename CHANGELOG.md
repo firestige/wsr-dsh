@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Render WSR Studio as the native conversation tab immediately after Delivery without changing the SPA URL.
+- Replace the generic one-line `/wsr` result with one keyed command view that exposes friendly diagnostics and complete bounded JSON details.
+- Reject selector-only create requests with an actionable Task-prompt diagnostic before Core admission and remove duplicate immediate command rows.
+
 ## 0.2.2 — 2026-08-30
 
 - Qualify `dsh-wsr-execution@0.2.1` against stable `wsr-execution@0.2.1`, including the Codex structured-output schema compatibility fix.

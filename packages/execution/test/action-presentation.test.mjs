@@ -12,6 +12,7 @@ import {
 } from "../src/action-presentation/model.js";
 import {
   createActionPresentationView,
+  createWsrCommandView,
   registerActionPresentation,
 } from "../src/action-presentation/view.js";
 
@@ -101,7 +102,6 @@ test("fails closed for unknown revisions, kinds, states and unusable final resul
     valid("future-kind", { content: { text: "secret" } }),
     valid("action-output", { state: "future", content: { text: "secret" } }),
     valid("delivery-status", { state: "FUTURE", message: "secret" }),
-    valid("terminal-result", { outcome: "SUCCEEDED" }),
     valid("terminal-result", { outcome: "SUCCEEDED", finalOutput: "" }),
     { ...valid("action-output"), extra: true },
   ]) {
@@ -168,10 +168,22 @@ test("leaves the known delivery-list event to its feature owner instead of rende
   assert.equal(definition.buildViewNode({ ...context, state }), null);
 });
 
-test("registers only the typed WSR conversation node and never impersonates a Harness toolview", () => {
+test("keeps a successful control-plane terminal without public output out of the chat instead of fabricating an invalid presentation", () => {
+  const definition = createExecutionPresentationDefinition();
+  const context = {
+    key: "wsr:terminal-1", id: "terminal-1", start: { location: { kind: "turn", turn: 2 } },
+    state: { seq: 61, presentation: undefined },
+  };
+  const state = definition.update(context, { event: { seq: 62, type: "command/done", data: {
+    commandId: "terminal-1", kind: "success", text: JSON.stringify(valid("terminal-result", { outcome: "SUCCEEDED" })),
+  } } });
+
+  assert.equal(definition.buildViewNode({ ...context, state }), null);
+});
+
+test("hides the native command row and renders only the later ordered presentation row", () => {
   const calls = [];
   const ctx = {
-    conversationEvents: { register(definition) { calls.push(["event", definition.kind]); } },
     slots: {
       inject(name, callback) { calls.push(["inject", name]); callback(); },
       register(specification, view) { calls.push(["register", specification, view]); },
@@ -180,14 +192,61 @@ test("registers only the typed WSR conversation node and never impersonates a Ha
   const View = () => null;
   registerActionPresentation(ctx, View);
 
-  assert.deepEqual(calls.slice(0, 2), [
-    ["event", "wsr-execution-presentation"],
-    ["inject", "conversation.chat.node"],
-  ]);
-  assert.equal(calls[2][0], "register");
-  assert.deepEqual(calls[2][1], { name: "conversation.chat.node", key: "wsr-execution-presentation" });
+  assert.deepEqual(calls[0], ["inject", "conversation.chat.commandview"]);
+  assert.deepEqual(calls[1][1], { name: "conversation.chat.commandview", key: "wsr" });
+  assert.equal(calls[1][2](), null);
+  assert.deepEqual(calls[2][1], { name: "conversation.chat.commandview", key: "wsr-presentation" });
   assert.equal(calls[2][2], View);
+  assert.equal(calls.some((entry) => JSON.stringify(entry).includes("conversation.chat.node")), false);
   assert.equal(calls.some((entry) => JSON.stringify(entry).includes("tool.call.toolview")), false);
+});
+
+test("renders friendly diagnostics and the complete bounded presentation JSON from a single-line command result", () => {
+  const React = {
+    createElement(type, props, ...children) { return { type, props: { ...(props ?? {}), children } }; },
+    useEffect() {},
+    useRef(value) { return { current: value }; },
+    useState(value) { return [value, () => undefined]; },
+  };
+  const DisclosureRow = (props) => ({ type: "DisclosureRow", props });
+  const MessageText = (props) => ({ type: "MessageText", props });
+  const StateDot = (props) => ({ type: "StateDot", props });
+  const JsonTree = (props) => ({ type: "JsonTree", props });
+  const View = createWsrCommandView({ React, DisclosureRow, MessageText, StateDot, JsonTree });
+  const presentation = valid("error", {
+    code: "TASK_PROMPT_REQUIRED",
+    message: "Add a Task instruction after the Workflow selector or attach a file.",
+  }, "presentation-error-1");
+
+  const tree = View({ node: {
+    commandId: "command-1", name: "wsr", args: " create hello-world-workflow@0.2.0",
+    outcome: { kind: "error", text: JSON.stringify(presentation) },
+  } });
+
+  assert.equal(tree.type, DisclosureRow);
+  assert.equal(tree.props.open, true);
+  assert.match(JSON.stringify(tree), /Add a Task instruction/u);
+  const detail = tree.props.children[0].props.children.find((child) => child?.type === "details");
+  assert.equal(detail.props.children[1].type, JsonTree);
+  assert.deepEqual(detail.props.children[1].props.data, presentation);
+  assert.equal(detail.props.children[1].props.copyable, true);
+});
+
+test("never echoes rejected command bytes in technical details", () => {
+  const React = {
+    createElement(type, props, ...children) { return { type, props: { ...(props ?? {}), children } }; },
+    useEffect() {}, useRef(value) { return { current: value }; }, useState(value) { return [value, () => undefined]; },
+  };
+  const View = createWsrCommandView({
+    React,
+    DisclosureRow: (props) => ({ type: "DisclosureRow", props }),
+    MessageText: (props) => ({ type: "MessageText", props }),
+    StateDot: (props) => ({ type: "StateDot", props }),
+    JsonTree: (props) => ({ type: "JsonTree", props }),
+  });
+  const tree = View({ node: { commandId: "command-1", name: "wsr", args: null, outcome: { kind: "error", text: '{"secret":"must-not-render"}' } } });
+  assert.doesNotMatch(JSON.stringify(tree), /must-not-render/u);
+  assert.match(JSON.stringify(tree), /WSR presentation unavailable/u);
 });
 
 test("renders process through DisclosureRow and final output as a persistent assistant-style MessageText", () => {
@@ -234,6 +293,6 @@ test("renders process through DisclosureRow and final output as a persistent ass
 test("the unified Harness binding imports the public primitive root and no private DSH source", async () => {
   const source = await readFile(resolve(import.meta.dirname, "../src/client/browser-entry.js"), "utf8");
   assert.match(source, /import React from ["']react["']/u);
-  assert.match(source, /import \{ DisclosureRow, MessageText, StateDot \} from ["']@deepseek-ai\/dsh-client-ui-primitives["']/u);
+  assert.match(source, /import \{ DisclosureRow, JsonTree, MessageText, StateDot \} from ["']@deepseek-ai\/dsh-client-ui-primitives["']/u);
   assert.doesNotMatch(source, /\/src\/|tool\.call\.toolview/u);
 });

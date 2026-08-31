@@ -61,9 +61,12 @@ function hasValidTypedData(value) {
       && (channel === "action" || channel === "tool");
   }
   if (value.kind === "terminal-result") {
-    const outputValid = Object.hasOwn(value.data, "finalOutput")
+    const hasFinalOutput = Object.hasOwn(value.data, "finalOutput");
+    const hasSummary = Object.hasOwn(value.data, "summary");
+    const outputValid = hasFinalOutput
       ? typeof value.data.finalOutput === "string" && value.data.finalOutput.length > 0
-      : typeof value.data.summary === "string" && value.data.summary.length > 0;
+      : hasSummary ? typeof value.data.summary === "string" && value.data.summary.length > 0
+        : value.data.outcome === "SUCCEEDED";
     return typeof value.data.outcome === "string" && TERMINAL_OUTCOMES.has(value.data.outcome) && outputValid;
   }
   if (value.kind === "delivery-running" || value.kind === "delivery-status") {
@@ -215,6 +218,10 @@ export function createExecutionPresentationDefinition() {
     update(context, match) {
       const event = parseExecutionPresentation(match.event?.data?.text);
       if (event.kind === "delivery-list") {
+        return Object.freeze({ ...context.state, presentation: undefined });
+      }
+      if (event.kind === "terminal-result" && event.data.outcome === "SUCCEEDED"
+        && !Object.hasOwn(event.data, "finalOutput") && !Object.hasOwn(event.data, "summary")) {
         return Object.freeze({ ...context.state, presentation: undefined });
       }
       return Object.freeze({ ...context.state, presentation: projectExecutionPresentation(event) });

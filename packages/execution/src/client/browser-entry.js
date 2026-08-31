@@ -1,15 +1,15 @@
 import React from "react";
-import { DisclosureRow, MessageText, StateDot } from "@deepseek-ai/dsh-client-ui-primitives";
+import { DisclosureRow, JsonTree, MessageText, StateDot } from "@deepseek-ai/dsh-client-ui-primitives";
 import * as workspaceUi from "@deepseek-ai/dsh-client-ui-workspace";
 
-import { createActionPresentationView, registerActionPresentation } from "../action-presentation/view.js";
+import { createWsrCommandView, registerActionPresentation } from "../action-presentation/view.js";
 import { createDeliveryControlPlaneClient } from "./delivery/control-plane-port.js";
 import { registerSessionDeliveryView } from "./delivery/session-delivery-view.js";
 import { applyDeliverySidebar } from "./delivery-inventory/sidebar.js";
 
 export const name = "wsr-execution-client";
 export const inject = Object.freeze([
-  "connection", "conversationEvents", "sessions", "slots", "workspaces", "locale",
+  "connection", "sessions", "slots", "workspaces", "locale",
 ]);
 
 export function apply(ctx) {
@@ -28,5 +28,5 @@ export function apply(ctx) {
       return source;
     },
   });
-  registerActionPresentation(ctx, createActionPresentationView({ React, DisclosureRow, MessageText, StateDot }));
+  registerActionPresentation(ctx, createWsrCommandView({ React, DisclosureRow, JsonTree, MessageText, StateDot }));
 }
