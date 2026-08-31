@@ -3,27 +3,10 @@ import test from "node:test";
 
 import {
   createEvaluateController,
-  createBrowserStudioLocation,
   parseStudioLocation,
   projectStudioPresentation,
   serializeStudioLocation,
 } from "../src/client/evaluate-model.js";
-
-test("browser deep links preserve the host URL and refresh through history", () => {
-  const calls = [];
-  const location = { href: "https://harness.test/chat?keep=yes#anchor" };
-  const history = { replaceState(_state, _title, href) { calls.push(href); location.href = href; } };
-  const storage = createBrowserStudioLocation({ location, history });
-  assert.equal(storage.getItem("ignored"), null);
-  storage.setItem("ignored", "/evaluate?v=1&task=task-a");
-  assert.equal(new URL(location.href).searchParams.get("wsr-studio"), "/evaluate?v=1&task=task-a");
-  assert.equal(new URL(location.href).searchParams.get("keep"), "yes");
-  assert.equal(new URL(location.href).hash, "#anchor");
-  assert.equal(storage.getItem("ignored"), "/evaluate?v=1&task=task-a");
-  storage.removeItem("ignored");
-  assert.equal(new URL(location.href).searchParams.has("wsr-studio"), false);
-  assert.equal(calls.length, 2);
-});
 
 const taskPage = {
   contract: { name: "evidence.query", revision: "1.0.0" },
@@ -112,7 +95,7 @@ test("Task discovery appends cursor pages with deterministic de-duplication", as
   assert.equal(controller.getSnapshot().taskList.page.next_cursor, null);
 });
 
-test("reload restores the valid evaluate location and refresh recovery retains the last result", async () => {
+test("session storage restores the valid evaluate location and refresh recovery retains the last result", async () => {
   const storage = new Map();
   const persisted = {
     getItem: (key) => storage.get(key) ?? null,

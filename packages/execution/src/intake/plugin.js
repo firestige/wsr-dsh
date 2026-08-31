@@ -1,9 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
-import { readFile, readdir, realpath, stat, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { lstat, readFile, readdir, realpath, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { IntakeSessionBindingRepository } from "./binding-repository.js";
-import { parseWsrCommand } from "./command.js";
+import { parseWsrCommand, promptDiagnostic } from "./command.js";
 import {
   createDshSessionControlPlaneReadModel,
   registerDeliveryControlPlaneGateway,
@@ -59,6 +60,72 @@ function defaultDependencies(attachmentBytes, present) {
 
 function error(code) {
   return Object.freeze({ kind: "ERROR", code, message: code });
+}
+
+function gitInitFailure(cause) {
+  return Object.assign(new Error("GIT_INIT_FAILED", { cause }), { code: "GIT_INIT_FAILED" });
+}
+
+async function defaultGitInit(workspace) {
+  await runGit(workspace, ["init", "--quiet"]);
+}
+
+async function runGit(workspace, arguments_) {
+  return new Promise((accept, reject) => {
+    execFile("git", arguments_, { cwd: workspace }, (cause, stdout) => cause === null ? accept(stdout) : reject(cause));
+  });
+}
+
+async function hasGitHead(workspace) {
+  try {
+    await runGit(workspace, ["rev-parse", "--verify", "HEAD"]);
+    return true;
+  } catch (cause) {
+    if (cause?.code === 128) return false;
+    throw cause;
+  }
+}
+
+async function ensureGitHead(workspace) {
+  if (!await hasGitHead(workspace)) {
+    await runGit(workspace, ["add", "-A", "--", "."]);
+    await runGit(workspace, [
+      "-c", "user.name=WSR Workspace Initializer",
+      "-c", "user.email=wsr@localhost",
+      "-c", "commit.gpgSign=false",
+      "commit", "--quiet", "--allow-empty", "--no-verify", "-m", "Initialize WSR workspace",
+    ]);
+  }
+  await runGit(workspace, ["rev-parse", "--verify", "HEAD^{tree}"]);
+}
+
+async function hasGitMarker(workspace) {
+  try {
+    const marker = await lstat(path.join(workspace, ".git"));
+    return marker.isDirectory() || marker.isFile();
+  } catch (cause) {
+    if (cause?.code === "ENOENT") return false;
+    throw cause;
+  }
+}
+
+/** Establish the Git boundary only for an already authorized exact workspace. */
+export async function ensureGitWorktree(workspace, initialize = defaultGitInit) {
+  try {
+    if (typeof workspace !== "string" || !path.isAbsolute(workspace) || typeof initialize !== "function") {
+      throw new TypeError("workspace must be an absolute path");
+    }
+    const canonical = await realpath(workspace);
+    if (canonical !== workspace || !(await stat(canonical)).isDirectory()) throw new TypeError("workspace is not canonical");
+    const initialized = !await hasGitMarker(canonical);
+    if (initialized) await initialize(canonical);
+    if (!await hasGitMarker(canonical)) throw new TypeError("git marker was not created");
+    await ensureGitHead(canonical);
+    return Object.freeze({ path: canonical, initialized });
+  } catch (cause) {
+    if (cause?.code === "GIT_INIT_FAILED") throw cause;
+    throw gitInitFailure(cause);
+  }
 }
 
 function textOf(content) {
@@ -143,7 +210,7 @@ export function presentToDshSession(agent, presentation, createId = () => `cmd-w
   const commandId = createId();
   agent.session.append("command/run", {
     commandId,
-    name: "wsr",
+    name: "wsr-presentation",
     source: { kind: "plugin", plugin: "workflow-execution" },
   });
   agent.session.append("command/done", { commandId, kind: presentation?.kind === "error" ? "error" : "success", text });
@@ -288,6 +355,8 @@ export async function createPluginRuntime(config, options = {}) {
       if (candidateBinding !== undefined) return error("SESSION_INTAKE_BOUND");
       const authorization = await conversationAuthorization();
       if (authorization === undefined) return error("DSH_INTAKE_WORKSPACE_UNAUTHORIZED");
+      try { await (options.ensureGitWorktree ?? ensureGitWorktree)(authorization.path); }
+      catch { return error("GIT_INIT_FAILED"); }
       sessionByCorrelation.set(correlation, input.sessionKey);
       const execution = track(service.invoke(Object.freeze({ operation: "create", selector: operation.selector, worktree: authorization.path, directive: operation.directive, turn, correlation }), authorization));
       const first = await Promise.race([
@@ -394,7 +463,7 @@ function commandTurn(rawInput) {
 }
 
 export async function recordWsrCommandInput(agent, rawInput, attachments = [], createId = () => `message-workflow-execution-${randomUUID()}`) {
-  if (agent === null || typeof agent !== "object" || typeof agent.followup !== "function" || typeof agent.whenIdle !== "function"
+  if (agent === null || typeof agent !== "object" || typeof agent.session?.append !== "function"
     || typeof rawInput !== "string" || !Array.isArray(attachments) || typeof createId !== "function") {
     throw new TypeError("DSH_INTAKE_USER_INPUT_INVALID");
   }
@@ -407,8 +476,7 @@ export async function recordWsrCommandInput(agent, rawInput, attachments = [], c
       ...attachments,
     ]),
   });
-  agent.followup(message);
-  await agent.whenIdle();
+  agent.session.append("user/message", message, { surfaceOp: "append" });
   return message;
 }
 
@@ -446,39 +514,39 @@ export async function apply(ctx, config) {
     recordInput: true,
     async handler(invocation) {
       return run((async () => {
-        let query = false;
         try {
+          await recordWsrCommandInput(invocation.agent, invocation.rawInput, invocation.attachments);
           const operation = parseWsrCommand(invocation.rawInput);
-          if (["create", "recover"].includes(operation.operation)) {
-            presentationRouter.retain(String(invocation.agent.id), invocation.agent);
-          }
-          query = operation.operation === "list" || operation.operation === "status";
           const { createIntakePresentation, presentationForIntakeResult, serializeIntakePresentation } = await import("wsr-execution");
-          if (!query) {
-            await recordWsrCommandInput(invocation.agent, invocation.rawInput, invocation.attachments);
-            presentToDshSession(invocation.agent, createIntakePresentation(
-              String(invocation.commandId), "command-accepted", {},
-            ));
+          const complete = (presentation, kind) => {
+            presentToDshSession(invocation.agent, presentation);
+            return { kind, text: serializeIntakePresentation(presentation, 4096) };
+          };
+          const diagnostic = promptDiagnostic(operation, invocation.attachments);
+          if (diagnostic !== undefined) {
+            const presentation = createIntakePresentation(`presentation-${randomUUID()}`, "error", diagnostic);
+            return complete(presentation, "error");
           }
           if (invocation.attachments.length > 0 && !["create", "action-finish"].includes(operation.operation)) {
             const presentation = createIntakePresentation(
               `presentation-${randomUUID()}`, "error", { code: "WSR_COMMAND_INVALID", message: "WSR_COMMAND_INVALID" },
             );
-            if (!query) presentToDshSession(invocation.agent, presentation);
-            return { kind: "error", text: serializeIntakePresentation(presentation, 4096) };
+            return complete(presentation, "error");
+          }
+          if (["create", "recover"].includes(operation.operation)) {
+            presentationRouter.retain(String(invocation.agent.id), invocation.agent);
           }
           const result = await runtime.invokeForSession({ sessionKey: String(invocation.agent.id), agent: invocation.agent, operation, turnText: commandTurn(invocation.rawInput), images: invocation.attachments, attachmentStore, signal: invocation.signal });
           if (["create", "recover"].includes(operation.operation) && !["START_UNCERTAIN", "RECOVERY"].includes(result.kind)) {
             presentationRouter.release(String(invocation.agent.id));
           }
           const presentation = presentationForDshOperation({ createIntakePresentation, presentationForIntakeResult }, `presentation-${randomUUID()}`, operation, result, 4096);
-          if (!query) presentToDshSession(invocation.agent, presentation);
-          return { kind: result.kind === "ERROR" ? "error" : "success", text: serializeIntakePresentation(presentation, 4096) };
+          return complete(presentation, result.kind === "ERROR" ? "error" : "success");
         } catch (cause) {
           const { createIntakePresentation, serializeIntakePresentation } = await import("wsr-execution");
           const code = typeof cause?.code === "string" ? cause.code : "DSH_INTAKE_FAILED";
           const presentation = createIntakePresentation(`presentation-${randomUUID()}`, "error", { code, message: code });
-          if (!query) presentToDshSession(invocation.agent, presentation);
+          presentToDshSession(invocation.agent, presentation);
           return { kind: "error", text: serializeIntakePresentation(presentation, 4096) };
         }
       })());

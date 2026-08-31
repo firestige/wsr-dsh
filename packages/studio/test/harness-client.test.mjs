@@ -42,7 +42,7 @@ test("the browser port uses only the DSH Host channel and exposes no downstream 
   assert.doesNotMatch(JSON.stringify(port), /127\.0\.0\.1|Authorization|cookie/i);
 });
 
-test("Harness registration adds one Studio entry and an overlay without replacing Conversation, Workspace, or Execution", () => {
+test("Harness registration adds WSR Studio as the native conversation tab immediately after Delivery", () => {
   const registrations = [];
   const injected = [];
   const ctx = {
@@ -65,13 +65,12 @@ test("Harness registration adds one Studio entry and an overlay without replacin
     useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot(); },
   };
   const runtime = createStudioClientPlugin({ React }).apply(ctx);
-  assert.deepEqual(injected, ["sidebar.footer.action", "shell.overlay"]);
-  assert.deepEqual(registrations.map(({ options }) => [options.name, options.id]), [["sidebar.footer.action", "wsr-studio"]]);
-  runtime.store.open({ focus() {} });
-  assert.deepEqual(registrations.map(({ options }) => [options.name, options.id]), [
-    ["sidebar.footer.action", "wsr-studio"], ["shell.overlay", "wsr-studio"],
-  ]);
-  assert.ok(registrations.every(({ options }) => !["conversation", "sidebar.workspaces"].includes(options.name)));
+  assert.deepEqual(injected, ["conversation.view"]);
+  assert.deepEqual(registrations.map(({ options }) => options), [{
+    name: "conversation.view", id: "wsr-studio", order: 30, label: "WSR Studio",
+  }]);
+  assert.equal(typeof runtime.controller.getSnapshot, "function");
+  assert.ok(registrations.every(({ options }) => !["sidebar.footer.action", "shell.overlay", "sidebar.workspaces"].includes(options.name)));
 });
 
 test("the Studio shell advertises one Evaluate route and complete keyboard/screen-reader landmarks", () => {
@@ -79,10 +78,10 @@ test("the Studio shell advertises one Evaluate route and complete keyboard/scree
   assert.deepEqual(model.routes, ["Evaluate"]);
   assert.deepEqual(STUDIO_PAGES, [{ id: "evaluate", label: "Evaluate", routePrefix: "/evaluate" }]);
   assert.deepEqual(model.landmarks, ["region", "navigation", "main"]);
-  assert.equal(model.surface, "top-level-view");
+  assert.equal(model.surface, "conversation-view");
   assert.equal(model.modal, false);
-  assert.equal(model.closeKey, "Escape");
-  assert.equal(model.focusReturnsToTrigger, true);
+  assert.equal("closeKey" in model, false);
+  assert.equal("focusReturnsToTrigger" in model, false);
   assert.equal(model.liveRegions.loading, "polite");
   assert.equal(model.liveRegions.error, "assertive");
   assert.equal(model.minimumTargetPixels, 44);
@@ -90,7 +89,7 @@ test("the Studio shell advertises one Evaluate route and complete keyboard/scree
   assert.equal(JSON.stringify(model).includes("improvement"), false);
 });
 
-test("the real slot components expose a non-modal top-level Evidence view without Session repository context", () => {
+test("the native Studio tab exposes a non-modal Evidence view without Session repository context", () => {
   const components = new Map();
   const ctx = {
     connection: { rpc: { call: async () => ({ ok: true, value: {} }) } },
@@ -111,13 +110,7 @@ test("the real slot components expose a non-modal top-level Evidence view withou
   const Primitives = { Button: "dsh-button", Input: "dsh-input", DisclosureRow: "dsh-disclosure", JsonTree: "dsh-json-tree", Pill: "dsh-pill", StateDot: "dsh-state-dot" };
   const runtime = createStudioClientPlugin({ React, Primitives, initialContext: { taskId: "task-a" } }).apply(ctx);
   assert.equal(typeof runtime, "function");
-  const action = components.get("sidebar.footer.action")({
-    useSessions: () => { throw new Error("Studio must not read Session context"); },
-  });
-  assert.equal(action.props["aria-controls"], "wsr-studio-view");
-  assert.equal(action.props["aria-haspopup"], undefined);
-  action.props.onClick({ currentTarget: { focus() {} } });
-  const rendered = components.get("shell.overlay")();
+  const rendered = components.get("conversation.view")({ sessionId: "session-a" });
   const text = textOf(rendered);
   const inputs = elementsOf(rendered).filter((element) => element.type === "input" || element.type === "dsh-input");
   assert.match(text, /Evaluate/);
@@ -134,10 +127,9 @@ test("the real slot components expose a non-modal top-level Evidence view withou
   assert.equal(Object.hasOwn(runtime.controller.getSnapshot(), "repository"), false);
   assert.equal(Object.hasOwn(runtime.controller.getSnapshot(), "workspaceId"), false);
   assert.ok(elementsOf(rendered).some((element) => element.type === "dsh-button"));
-  assert.equal(typeof view.props.onKeyDown, "function");
-  view.props.onKeyDown({ key: "Escape" });
-  assert.equal(runtime.store.getSnapshot(), false);
+  assert.equal(view.props.onKeyDown, undefined);
   assert.equal(components.has("shell.overlay"), false);
+  assert.equal(components.has("sidebar.footer.action"), false);
 });
 
 test("the browser source has no direct downstream transport, credential, or mutation escape hatch", async () => {

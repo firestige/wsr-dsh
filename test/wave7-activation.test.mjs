@@ -26,7 +26,7 @@ test("Execution and Studio activate one Host and one generated browser module ea
   assert.deepEqual(studio.dsh.client, {
     inject: [
       "@deepseek-ai/dsh-client-connection",
-      "@deepseek-ai/dsh-client-ui-sidebar",
+      "@deepseek-ai/dsh-client-ui-conversation",
       "@deepseek-ai/dsh-client-ui-primitives",
     ],
     platform: "web",

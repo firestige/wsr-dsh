@@ -1,4 +1,4 @@
-import { createBrowserStudioLocation, createEvaluateController, projectStudioPresentation } from "./evaluate-model.js";
+import { createEvaluateController, projectStudioPresentation } from "./evaluate-model.js";
 
 export const STUDIO_PAGES = Object.freeze([
   Object.freeze({ id: "evaluate", label: "Evaluate", routePrefix: "/evaluate" }),
@@ -6,11 +6,9 @@ export const STUDIO_PAGES = Object.freeze([
 
 const ACCESSIBILITY = Object.freeze({
   routes: Object.freeze(STUDIO_PAGES.map((page) => page.label)),
-  surface: "top-level-view",
+  surface: "conversation-view",
   modal: false,
   landmarks: Object.freeze(["region", "navigation", "main"]),
-  closeKey: "Escape",
-  focusReturnsToTrigger: true,
   liveRegions: Object.freeze({ loading: "polite", error: "assertive" }),
   minimumTargetPixels: 44,
 });
@@ -27,74 +25,20 @@ export function createStudioGatewayPort(ctx) {
   });
 }
 
-function createOpenStore() {
-  let open = false;
-  let trigger;
-  let registerOverlay;
-  let disposeOverlay;
-  const listeners = new Set();
-  const publish = () => { for (const listener of listeners) listener(); };
-  const mount = () => {
-    if (open && disposeOverlay === undefined && registerOverlay !== undefined) disposeOverlay = registerOverlay();
-  };
-  return {
-    getSnapshot: () => open,
-    subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
-    attach(register) {
-      registerOverlay = register;
-      mount();
-      return () => {
-        registerOverlay = undefined;
-        const dispose = disposeOverlay;
-        disposeOverlay = undefined;
-        dispose?.();
-      };
-    },
-    open(element) { trigger = element; open = true; mount(); publish(); },
-    close() {
-      open = false;
-      const dispose = disposeOverlay;
-      disposeOverlay = undefined;
-      dispose?.();
-      publish();
-      trigger?.focus?.();
-    },
-  };
-}
-
-const frameStyle = {
-  position: "fixed", inset: 0, zIndex: 1000, overflow: "auto", maxWidth: "100vw",
+const viewStyle = {
+  width: "100%", minHeight: "100%", overflow: "auto",
   color: "var(--dsw-alias-label-primary)", background: "var(--dsw-alias-bg-base)",
   border: "1px solid var(--dsw-alias-border-l2)", padding: "clamp(12px, 3vw, 32px)", boxSizing: "border-box",
 };
 const controlStyle = { minHeight: "44px", minWidth: "44px" };
 const listStyle = { maxHeight: "min(42vh, 480px)", overflow: "auto", overflowWrap: "anywhere" };
 
-function StudioAction(React, Button, store) {
-  return function StudioActionView({ wide = true }) {
-    return React.createElement(Button, {
-      type: "button",
-      style: controlStyle,
-      "aria-controls": "wsr-studio-view",
-      "aria-current": store.getSnapshot() ? "page" : undefined,
-      onClick: (event) => store.open(event.currentTarget),
-    }, wide ? "WSR Studio" : "Studio");
-  };
-}
-
-function StudioOverlay(React, Primitives, store, controller) {
+function StudioView(React, Primitives, controller) {
   const Button = Primitives.Button ?? "button";
   const DisclosureRow = Primitives.DisclosureRow;
   const JsonTree = Primitives.JsonTree;
-  return function StudioOverlayView() {
+  return function StudioConversationView() {
     const snapshot = React.useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
-    const close = () => store.close();
-    React.useEffect(() => {
-      if (typeof document === "undefined") return undefined;
-      const listener = (event) => { if (event.key === "Escape") close(); };
-      document.addEventListener("keydown", listener);
-      return () => document.removeEventListener("keydown", listener);
-    }, []);
     React.useEffect(() => {
       if (snapshot.drilldown.phase !== "idle") return;
       if (snapshot.route.page === "facts" && snapshot.result !== undefined) {
@@ -137,13 +81,11 @@ function StudioOverlay(React, Primitives, store, controller) {
     };
     return React.createElement("section", {
       id: "wsr-studio-view", role: "region", "aria-labelledby": "wsr-studio-title",
-      "data-wsr-studio-view": "evaluate", style: frameStyle,
-      onKeyDown: (event) => { if (event.key === "Escape") close(); },
+      "data-wsr-studio-view": "evaluate", style: viewStyle,
     },
     React.createElement("header", null,
       React.createElement("p", null, "Workflow Self-Recursive"),
-      React.createElement("h1", { id: "wsr-studio-title" }, "WSR Studio"),
-      React.createElement(Button, { type: "button", style: controlStyle, "aria-label": "Close WSR Studio", onClick: close }, "Close")),
+      React.createElement("h1", { id: "wsr-studio-title" }, "WSR Studio")),
     React.createElement("nav", { "aria-label": "Studio" }, ...STUDIO_PAGES.map((page) =>
       React.createElement("span", { key: page.id, "aria-current": page.id === "evaluate" ? "page" : undefined }, page.label))),
     React.createElement("main", { tabIndex: -1 },
@@ -239,21 +181,19 @@ export function createStudioClientPlugin({ React, Primitives = {}, initialContex
     name: "wsr-studio-client",
     inject: ["connection", "slots"],
     apply(ctx) {
-      const store = createOpenStore();
-      const resolvedStorage = storage ?? (typeof window === "undefined" ? undefined : createBrowserStudioLocation(window));
+      const resolvedStorage = storage ?? (typeof window === "undefined" ? undefined : window.sessionStorage);
       const controller = createEvaluateController({
         gateway: createStudioGatewayPort(ctx),
         initialContext,
         storage: resolvedStorage,
       });
-      ctx.slots.inject("sidebar.footer.action", () => ctx.slots.register({
-        name: "sidebar.footer.action", id: "wsr-studio", order: 60, label: "WSR Studio",
-      }, StudioAction(React, Primitives.Button ?? "button", store)));
-      ctx.slots.inject("shell.overlay", () => store.attach(() => ctx.slots.register({
-        name: "shell.overlay", id: "wsr-studio", order: 60,
-      }, StudioOverlay(React, Primitives, store, controller))));
-      if (controller.getSnapshot().route.page !== "select") store.open();
-      return Object.assign(() => undefined, { controller, store });
+      let dispose = () => undefined;
+      ctx.slots.inject("conversation.view", () => {
+        dispose = ctx.slots.register({
+          name: "conversation.view", id: "wsr-studio", order: 30, label: "WSR Studio",
+        }, StudioView(React, Primitives, controller));
+      });
+      return Object.assign(() => dispose?.(), { controller });
     },
   };
 }

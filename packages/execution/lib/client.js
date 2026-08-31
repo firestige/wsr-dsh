@@ -2567,7 +2567,9 @@ function hasValidTypedData(value) {
     return typeof state === "string" && ACTION_STATES.has(state) && (channel === "action" || channel === "tool");
   }
   if (value.kind === "terminal-result") {
-    const outputValid = Object.hasOwn(value.data, "finalOutput") ? typeof value.data.finalOutput === "string" && value.data.finalOutput.length > 0 : typeof value.data.summary === "string" && value.data.summary.length > 0;
+    const hasFinalOutput = Object.hasOwn(value.data, "finalOutput");
+    const hasSummary = Object.hasOwn(value.data, "summary");
+    const outputValid = hasFinalOutput ? typeof value.data.finalOutput === "string" && value.data.finalOutput.length > 0 : hasSummary ? typeof value.data.summary === "string" && value.data.summary.length > 0 : value.data.outcome === "SUCCEEDED";
     return typeof value.data.outcome === "string" && TERMINAL_OUTCOMES.has(value.data.outcome) && outputValid;
   }
   if (value.kind === "delivery-running" || value.kind === "delivery-status") {
@@ -2708,41 +2710,6 @@ function resolveDisclosureOpen({ current, previousState, nextState, containsFocu
   if (["running", "recovering", "failed", "cancelled"].includes(nextState) && nextState !== previousState) return true;
   return current;
 }
-function createExecutionPresentationDefinition() {
-  return Object.freeze({
-    kind: "wsr-execution-presentation",
-    target: "chat",
-    match(event) {
-      if (event?.type === "command/run" && event.data?.name === "wsr" && event.data?.source?.kind === "plugin" && event.data?.source?.plugin === "workflow-execution" && typeof event.data?.commandId === "string") {
-        return { id: event.data.commandId, role: "start" };
-      }
-      return event?.type === "command/done" && typeof event.data?.commandId === "string" ? { id: event.data.commandId, role: "update" } : null;
-    },
-    start(_context, match) {
-      return Object.freeze({ seq: match.event.seq, presentation: void 0 });
-    },
-    update(context, match) {
-      const event = parseExecutionPresentation(match.event?.data?.text);
-      if (event.kind === "delivery-list") {
-        return Object.freeze({ ...context.state, presentation: void 0 });
-      }
-      return Object.freeze({ ...context.state, presentation: projectExecutionPresentation(event) });
-    },
-    buildViewNode(context) {
-      if (context.state?.presentation === void 0) return null;
-      return Object.freeze({
-        key: context.key,
-        kind: "wsr-execution-presentation",
-        id: context.id,
-        target: "chat",
-        anchorSeq: context.state.seq,
-        location: context.start?.location ?? { kind: "unresolved" },
-        visibility: "visible",
-        data: context.state.presentation
-      });
-    }
-  });
-}
 
 // packages/execution/src/action-presentation/view.js
 var DOT_STATE = Object.freeze({
@@ -2753,9 +2720,9 @@ var DOT_STATE = Object.freeze({
   failed: "error",
   cancelled: "error"
 });
-function createActionPresentationView({ React: React2, DisclosureRow: DisclosureRow2, MessageText: MessageText2, StateDot: StateDot2, observe = () => void 0 }) {
+function createActionPresentationView({ React: React2, DisclosureRow: DisclosureRow2, MessageText: MessageText2, StateDot: StateDot2, JsonTree: JsonTree2, observe = () => void 0 }) {
   if (typeof DisclosureRow2 !== "function") throw new TypeError("DSH_DISCLOSURE_ROW_REQUIRED");
-  return function WsrExecutionPresentationView({ node }) {
+  return function WsrExecutionPresentationView({ node, technicalDetails }) {
     const presentation = node.data;
     const [open, setOpen] = React2.useState(presentation.defaultOpen);
     const bodyRef = React2.useRef(null);
@@ -2771,19 +2738,29 @@ function createActionPresentationView({ React: React2, DisclosureRow: Disclosure
     }, [presentation.state]);
     observe(presentation);
     if (presentation.layer === "final") {
-      return React2.createElement("article", {
-        "data-wsr-presentation": "true",
-        "data-wsr-layer": "final",
-        "data-wsr-state": presentation.state,
-        "data-wsr-correlation": presentation.correlation,
-        "data-wsr-chat-role": "assistant",
-        "data-wsr-compatibility": presentation.compatibility,
-        "aria-label": presentation.title
-      }, React2.createElement(MessageText2, { text: presentation.body }));
+      return React2.createElement(
+        "article",
+        {
+          "data-wsr-presentation": "true",
+          "data-wsr-layer": "final",
+          "data-wsr-state": presentation.state,
+          "data-wsr-correlation": presentation.correlation,
+          "data-wsr-chat-role": "assistant",
+          "data-wsr-compatibility": presentation.compatibility,
+          "aria-label": presentation.title
+        },
+        React2.createElement(MessageText2, { text: presentation.body }),
+        technicalDetails === void 0 ? null : React2.createElement(
+          "details",
+          null,
+          React2.createElement("summary", null, "Technical details"),
+          JsonTree2 === void 0 ? React2.createElement("pre", null, JSON.stringify(technicalDetails, null, 2)) : React2.createElement(JsonTree2, { data: technicalDetails, label: "WSR presentation", copyable: true, expandTopLevel: true })
+        )
+      );
     }
     const waiting = presentation.state === "waiting";
-    const expandable = presentation.body !== void 0 && !waiting;
-    const body = presentation.body === void 0 ? void 0 : React2.createElement("div", {
+    const expandable = (presentation.body !== void 0 || technicalDetails !== void 0) && !waiting;
+    const body = presentation.body === void 0 && technicalDetails === void 0 ? void 0 : React2.createElement("div", {
       ref: bodyRef,
       "data-wsr-presentation": "true",
       "data-wsr-layer": presentation.layer,
@@ -2794,9 +2771,14 @@ function createActionPresentationView({ React: React2, DisclosureRow: Disclosure
       tabIndex: waiting ? 0 : void 0,
       "aria-label": waiting ? presentation.summary : void 0,
       "aria-live": waiting ? "polite" : void 0
-    }, React2.createElement("pre", {
+    }, presentation.body === void 0 ? null : React2.createElement("pre", {
       style: { margin: 0, maxHeight: "20rem", overflow: "auto", whiteSpace: "pre-wrap", wordBreak: "break-word" }
-    }, presentation.body));
+    }, presentation.body), technicalDetails === void 0 ? null : React2.createElement(
+      "details",
+      null,
+      React2.createElement("summary", null, "Technical details"),
+      JsonTree2 === void 0 ? React2.createElement("pre", null, JSON.stringify(technicalDetails, null, 2)) : React2.createElement(JsonTree2, { data: technicalDetails, label: "WSR presentation", copyable: true, expandTopLevel: true })
+    ));
     return React2.createElement(DisclosureRow2, {
       icon: React2.createElement(StateDot2, { state: DOT_STATE[presentation.state], size: 10 }),
       title: presentation.title,
@@ -2816,12 +2798,49 @@ function createActionPresentationView({ React: React2, DisclosureRow: Disclosure
     }, body);
   };
 }
+function commandPresentation(node) {
+  if (node.outcome === null) return Object.freeze({
+    correlation: String(node.commandId),
+    layer: "progress",
+    state: "running",
+    title: "Workflow delivery",
+    summary: "Running",
+    body: void 0,
+    defaultOpen: true,
+    focusPolicy: "none",
+    role: "status",
+    compatibility: "current"
+  });
+  const event = parseExecutionPresentation(node.outcome?.text);
+  if (event.kind === "delivery-list") {
+    const count = Array.isArray(event.data.items) ? event.data.items.length : 0;
+    return Object.freeze({
+      correlation: event.correlation,
+      layer: "progress",
+      state: "completed",
+      title: "Delivery list",
+      summary: `${count} ${count === 1 ? "delivery" : "deliveries"}`,
+      body: count === 0 ? "No deliveries." : JSON.stringify(event.data.items, null, 2),
+      defaultOpen: count > 0,
+      focusPolicy: "none",
+      role: "status",
+      compatibility: "current"
+    });
+  }
+  return projectExecutionPresentation(event);
+}
+function createWsrCommandView(options) {
+  const View = createActionPresentationView(options);
+  return function WsrCommandView({ node }) {
+    const admitted = node.outcome === null ? void 0 : parseExecutionPresentation(node.outcome?.text);
+    return View({ node: { data: commandPresentation(node) }, technicalDetails: admitted });
+  };
+}
 function registerActionPresentation(ctx, View) {
-  ctx.conversationEvents.register(createExecutionPresentationDefinition());
-  ctx.slots.inject("conversation.chat.node", () => ctx.slots.register({
-    name: "conversation.chat.node",
-    key: "wsr-execution-presentation"
-  }, View));
+  ctx.slots.inject("conversation.chat.commandview", () => {
+    ctx.slots.register({ name: "conversation.chat.commandview", key: "wsr" }, () => null);
+    ctx.slots.register({ name: "conversation.chat.commandview", key: "wsr-presentation" }, View);
+  });
 }
 
 // packages/execution/src/client/delivery/control-plane-port.js
@@ -3180,7 +3199,6 @@ function applyDeliverySidebar(ctx, { React: React2, workspaceUi: workspaceUi2, i
 var name = "wsr-execution-client";
 var inject = Object.freeze([
   "connection",
-  "conversationEvents",
   "sessions",
   "slots",
   "workspaces",
@@ -3203,7 +3221,7 @@ function apply(ctx) {
       return source;
     }
   });
-  registerActionPresentation(ctx, createActionPresentationView({ React: import_react.default, DisclosureRow: import_dsh_client_ui_primitives.DisclosureRow, MessageText: import_dsh_client_ui_primitives.MessageText, StateDot: import_dsh_client_ui_primitives.StateDot }));
+  registerActionPresentation(ctx, createWsrCommandView({ React: import_react.default, DisclosureRow: import_dsh_client_ui_primitives.DisclosureRow, JsonTree: import_dsh_client_ui_primitives.JsonTree, MessageText: import_dsh_client_ui_primitives.MessageText, StateDot: import_dsh_client_ui_primitives.StateDot }));
 }
 
     return module.exports;

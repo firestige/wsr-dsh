@@ -42,3 +42,13 @@ export function parseWsrCommand(value) {
   }
   return invalid();
 }
+
+export function promptDiagnostic(operation, attachments = []) {
+  if (operation?.operation !== "create") return undefined;
+  const hasPrompt = typeof operation.remainder === "string" && operation.remainder.trim().length > 0;
+  if (hasPrompt || (Array.isArray(attachments) && attachments.length > 0)) return undefined;
+  return Object.freeze({
+    code: "TASK_PROMPT_REQUIRED",
+    message: "Add a Task instruction after the Workflow selector or attach a file.",
+  });
+}

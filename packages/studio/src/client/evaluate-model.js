@@ -5,23 +5,6 @@ const TRACE_ID = /^[a-f0-9]{32}$/u;
 const SPAN_ID = /^[a-f0-9]{16}$/u;
 const encoder = new TextEncoder();
 
-export function createBrowserStudioLocation({ location, history } = globalThis) {
-  if (location === undefined || history === undefined) return undefined;
-  return Object.freeze({
-    getItem() { return new URL(location.href).searchParams.get("wsr-studio"); },
-    setItem(_key, value) {
-      const url = new URL(location.href);
-      url.searchParams.set("wsr-studio", value);
-      history.replaceState(history.state ?? null, "", url.href);
-    },
-    removeItem() {
-      const url = new URL(location.href);
-      url.searchParams.delete("wsr-studio");
-      history.replaceState(history.state ?? null, "", url.href);
-    },
-  });
-}
-
 function validIds(ids) {
   return Array.isArray(ids) && ids.length >= 1 && ids.length <= 24 &&
     ids.every((id) => typeof id === "string" && TASK_ID.test(id)) &&

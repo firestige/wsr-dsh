@@ -50,24 +50,6 @@ var TASK_ID = /^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,127}$/u;
 var TRACE_ID = /^[a-f0-9]{32}$/u;
 var SPAN_ID = /^[a-f0-9]{16}$/u;
 var encoder = new TextEncoder();
-function createBrowserStudioLocation({ location, history } = globalThis) {
-  if (location === void 0 || history === void 0) return void 0;
-  return Object.freeze({
-    getItem() {
-      return new URL(location.href).searchParams.get("wsr-studio");
-    },
-    setItem(_key, value) {
-      const url = new URL(location.href);
-      url.searchParams.set("wsr-studio", value);
-      history.replaceState(history.state ?? null, "", url.href);
-    },
-    removeItem() {
-      const url = new URL(location.href);
-      url.searchParams.delete("wsr-studio");
-      history.replaceState(history.state ?? null, "", url.href);
-    }
-  });
-}
 function validIds(ids) {
   return Array.isArray(ids) && ids.length >= 1 && ids.length <= 24 && ids.every((id) => typeof id === "string" && TASK_ID.test(id)) && new Set(ids).size === ids.length;
 }
@@ -385,11 +367,9 @@ var STUDIO_PAGES = Object.freeze([
 ]);
 var ACCESSIBILITY = Object.freeze({
   routes: Object.freeze(STUDIO_PAGES.map((page) => page.label)),
-  surface: "top-level-view",
+  surface: "conversation-view",
   modal: false,
   landmarks: Object.freeze(["region", "navigation", "main"]),
-  closeKey: "Escape",
-  focusReturnsToTrigger: true,
   liveRegions: Object.freeze({ loading: "polite", error: "assertive" }),
   minimumTargetPixels: 44
 });
@@ -400,56 +380,10 @@ function createStudioGatewayPort(ctx) {
     }
   });
 }
-function createOpenStore() {
-  let open = false;
-  let trigger;
-  let registerOverlay;
-  let disposeOverlay;
-  const listeners = /* @__PURE__ */ new Set();
-  const publish = () => {
-    for (const listener of listeners) listener();
-  };
-  const mount = () => {
-    if (open && disposeOverlay === void 0 && registerOverlay !== void 0) disposeOverlay = registerOverlay();
-  };
-  return {
-    getSnapshot: () => open,
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
-    attach(register) {
-      registerOverlay = register;
-      mount();
-      return () => {
-        registerOverlay = void 0;
-        const dispose = disposeOverlay;
-        disposeOverlay = void 0;
-        dispose?.();
-      };
-    },
-    open(element) {
-      trigger = element;
-      open = true;
-      mount();
-      publish();
-    },
-    close() {
-      open = false;
-      const dispose = disposeOverlay;
-      disposeOverlay = void 0;
-      dispose?.();
-      publish();
-      trigger?.focus?.();
-    }
-  };
-}
-var frameStyle = {
-  position: "fixed",
-  inset: 0,
-  zIndex: 1e3,
+var viewStyle = {
+  width: "100%",
+  minHeight: "100%",
   overflow: "auto",
-  maxWidth: "100vw",
   color: "var(--dsw-alias-label-primary)",
   background: "var(--dsw-alias-bg-base)",
   border: "1px solid var(--dsw-alias-border-l2)",
@@ -458,32 +392,12 @@ var frameStyle = {
 };
 var controlStyle = { minHeight: "44px", minWidth: "44px" };
 var listStyle = { maxHeight: "min(42vh, 480px)", overflow: "auto", overflowWrap: "anywhere" };
-function StudioAction(React2, Button, store) {
-  return function StudioActionView({ wide = true }) {
-    return React2.createElement(Button, {
-      type: "button",
-      style: controlStyle,
-      "aria-controls": "wsr-studio-view",
-      "aria-current": store.getSnapshot() ? "page" : void 0,
-      onClick: (event) => store.open(event.currentTarget)
-    }, wide ? "WSR Studio" : "Studio");
-  };
-}
-function StudioOverlay(React2, Primitives2, store, controller) {
+function StudioView(React2, Primitives2, controller) {
   const Button = Primitives2.Button ?? "button";
   const DisclosureRow = Primitives2.DisclosureRow;
   const JsonTree = Primitives2.JsonTree;
-  return function StudioOverlayView() {
+  return function StudioConversationView() {
     const snapshot = React2.useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
-    const close = () => store.close();
-    React2.useEffect(() => {
-      if (typeof document === "undefined") return void 0;
-      const listener = (event) => {
-        if (event.key === "Escape") close();
-      };
-      document.addEventListener("keydown", listener);
-      return () => document.removeEventListener("keydown", listener);
-    }, []);
     React2.useEffect(() => {
       if (snapshot.drilldown.phase !== "idle") return;
       if (snapshot.route.page === "facts" && snapshot.result !== void 0) {
@@ -527,17 +441,13 @@ function StudioOverlay(React2, Primitives2, store, controller) {
         role: "region",
         "aria-labelledby": "wsr-studio-title",
         "data-wsr-studio-view": "evaluate",
-        style: frameStyle,
-        onKeyDown: (event) => {
-          if (event.key === "Escape") close();
-        }
+        style: viewStyle
       },
       React2.createElement(
         "header",
         null,
         React2.createElement("p", null, "Workflow Self-Recursive"),
-        React2.createElement("h1", { id: "wsr-studio-title" }, "WSR Studio"),
-        React2.createElement(Button, { type: "button", style: controlStyle, "aria-label": "Close WSR Studio", onClick: close }, "Close")
+        React2.createElement("h1", { id: "wsr-studio-title" }, "WSR Studio")
       ),
       React2.createElement("nav", { "aria-label": "Studio" }, ...STUDIO_PAGES.map((page) => React2.createElement("span", { key: page.id, "aria-current": page.id === "evaluate" ? "page" : void 0 }, page.label))),
       React2.createElement(
@@ -681,26 +591,22 @@ function createStudioClientPlugin({ React: React2, Primitives: Primitives2 = {},
     name: "wsr-studio-client",
     inject: ["connection", "slots"],
     apply(ctx) {
-      const store = createOpenStore();
-      const resolvedStorage = storage ?? (typeof window === "undefined" ? void 0 : createBrowserStudioLocation(window));
+      const resolvedStorage = storage ?? (typeof window === "undefined" ? void 0 : window.sessionStorage);
       const controller = createEvaluateController({
         gateway: createStudioGatewayPort(ctx),
         initialContext,
         storage: resolvedStorage
       });
-      ctx.slots.inject("sidebar.footer.action", () => ctx.slots.register({
-        name: "sidebar.footer.action",
-        id: "wsr-studio",
-        order: 60,
-        label: "WSR Studio"
-      }, StudioAction(React2, Primitives2.Button ?? "button", store)));
-      ctx.slots.inject("shell.overlay", () => store.attach(() => ctx.slots.register({
-        name: "shell.overlay",
-        id: "wsr-studio",
-        order: 60
-      }, StudioOverlay(React2, Primitives2, store, controller))));
-      if (controller.getSnapshot().route.page !== "select") store.open();
-      return Object.assign(() => void 0, { controller, store });
+      let dispose = () => void 0;
+      ctx.slots.inject("conversation.view", () => {
+        dispose = ctx.slots.register({
+          name: "conversation.view",
+          id: "wsr-studio",
+          order: 30,
+          label: "WSR Studio"
+        }, StudioView(React2, Primitives2, controller));
+      });
+      return Object.assign(() => dispose?.(), { controller });
     }
   };
 }

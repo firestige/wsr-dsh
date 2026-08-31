@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer as createHttpServer } from "node:http";
 import { createServer as createNetServer } from "node:net";
@@ -42,6 +42,21 @@ async function waitFor(predicate, label, timeoutMs = 30_000) {
     await new Promise((accept) => setTimeout(accept, 100));
   }
   throw new Error(`${label}: ${last?.message ?? "timed out"}`);
+}
+
+async function callApi(origin, method, payload) {
+  const rpcId = randomUUID();
+  const response = await fetch(`${origin}/api/${method}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ type: "client-request", rpcId, method, payload }),
+  });
+  if (!response.ok) throw new Error(`HARNESS_API_TRANSPORT_FAILED: ${method} HTTP ${response.status}`);
+  const envelope = await response.json();
+  if (envelope.rpcId !== rpcId || envelope.result?.ok !== true) {
+    throw new Error(`HARNESS_API_FAILED: ${method} ${JSON.stringify(envelope.result?.error)}`);
+  }
+  return envelope.result.value;
 }
 
 class Cdp {
@@ -256,6 +271,10 @@ try {
   }, "HARNESS_HTTP_UNAVAILABLE", 60_000);
   const csp = response.headers.get("content-security-policy") ?? "";
   if (/unsafe-eval/iu.test(csp)) throw new Error(`HARNESS_CSP_INVALID: ${csp}`);
+  const workspace = await waitFor(() => callApi(origin, "workspace.create", { path: repository }), "HARNESS_WORKSPACE_API_UNAVAILABLE");
+  if (typeof workspace.workspace.workspaceId !== "string" || workspace.workspace.workspaceId.length === 0) {
+    throw new Error("HARNESS_WORKSPACE_CREATE_FAILED");
+  }
 
   let chromeLog = "";
   chrome = spawn(chromeBinary, [
@@ -273,15 +292,69 @@ try {
   await cdp.open();
   await Promise.all([cdp.command("Runtime.enable"), cdp.command("Page.enable"), cdp.command("Log.enable")]);
 
+  await cdp.command("Page.bringToFront");
+  await waitFor(async () => cdp.evaluate(`document.querySelector('textarea:not(:disabled)') !== null`), "HARNESS_WORKSPACE_PICKER_UNAVAILABLE");
+  const workspaceSelected = await cdp.evaluate(`(() => {
+    const input = document.querySelector('textarea:not(:disabled)');
+    if (!/选择一个工作区开始|Choose a workspace to start/.test(input.placeholder)) return true;
+    const picker = [...document.querySelectorAll('button')].find((node) => /选择工作区|Choose workspace/.test(node.textContent.trim()));
+    if (!picker) return false;
+    picker.click();
+    return false;
+  })()`);
+  if (workspaceSelected !== true) {
+    await waitFor(async () => cdp.evaluate(`(() => {
+      const item = [...document.querySelectorAll('[role="menuitem"], button')].find((node) => node.textContent.trim() === 'repository');
+      if (!item) return false;
+      item.click();
+      return true;
+    })()`), "HARNESS_WORKSPACE_SELECTION_FAILED");
+  }
+  await waitFor(async () => cdp.evaluate(`(() => {
+    const input = document.querySelector('textarea:not(:disabled)');
+    return input && !/选择一个工作区开始|Choose a workspace to start/.test(input.placeholder) && document.body.innerText.includes('repository');
+  })()`), "HARNESS_SESSION_COMPOSER_UNAVAILABLE");
+  await cdp.evaluate(`document.querySelector('textarea:not(:disabled)').focus()`);
+  await cdp.command("Input.insertText", { text: "/wsr create hello-world-workflow@0.2.0" });
+  const commandDraft = await cdp.evaluate(`(() => {
+    const inputs = [...document.querySelectorAll('textarea')].map((input) => ({ value: input.value, disabled: input.disabled, placeholder: input.placeholder }));
+    return inputs;
+  })()`);
+  if (!commandDraft.some((input) => input.value.includes("hello-world-workflow@0.2.0"))) {
+    throw new Error(`HARNESS_COMMAND_DRAFT_FAILED: ${JSON.stringify(commandDraft)}`);
+  }
+  await cdp.command("Input.dispatchKeyEvent", {
+    type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 36,
+  });
+  await cdp.command("Input.dispatchKeyEvent", {
+    type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 36,
+  });
+  const commandDiagnostic = await waitFor(async () => cdp.evaluate(`(() => {
+    const presentations = [...document.querySelectorAll('[data-wsr-presentation="true"]')];
+    const detail = presentations[0]?.querySelector('details');
+    if (presentations.length !== 1 || !document.body.innerText.includes('Add a Task instruction') || !detail?.textContent.includes('TASK_PROMPT_REQUIRED')) return undefined;
+    const inputs = [...document.querySelectorAll('*')]
+      .filter((node) => node.textContent.includes('/wsr') && node.textContent.includes('create hello-world-workflow@0.2.0'))
+      .sort((left, right) => left.textContent.length - right.textContent.length);
+    const ordered = inputs.length > 0
+      && Boolean(inputs[0].compareDocumentPosition(presentations[0]) & Node.DOCUMENT_POSITION_FOLLOWING);
+    if (!ordered) return undefined;
+    return { presentations: presentations.length, technicalDetails: true, userBeforePresentation: true };
+  })()`), "HARNESS_COMMAND_DIAGNOSTIC_UNAVAILABLE");
+
   const shell = await waitFor(async () => cdp.evaluate(`(() => {
     const resource = document.querySelector('[data-wsr-sidebar-resources="true"]');
     const delivery = document.querySelector('button[aria-controls="wsr-sidebar-delivery"]');
-    const studio = [...document.querySelectorAll('button')].find((node) => /^(WSR )?Studio$/.test(node.textContent.trim()));
+    const tabs = [...document.querySelectorAll('[role="tab"]')];
+    const deliveryTab = tabs.find((node) => node.textContent.trim() === 'Delivery');
+    const studio = tabs.find((node) => node.textContent.trim() === 'WSR Studio');
     const empty = document.body.innerText.includes('No Deliveries');
-    if (!resource || !delivery || !studio || !empty || document.readyState !== 'complete') return undefined;
-    return { ready: document.readyState, delivery: delivery.textContent.trim(), empty };
+    if (!resource || !delivery || !deliveryTab || !studio || !empty || document.readyState !== 'complete') return undefined;
+    return { ready: document.readyState, delivery: delivery.textContent.trim(), empty,
+      tabOrder: [deliveryTab.textContent.trim(), studio.textContent.trim()],
+      adjacent: tabs.indexOf(studio) === tabs.indexOf(deliveryTab) + 1 };
   })()`), "HARNESS_WSR_SURFACES_UNAVAILABLE", 30_000);
-  if (shell.ready !== "complete" || !shell.empty) throw new Error(`HARNESS_DELIVERY_READ_FAILED: ${JSON.stringify(shell)}`);
+  if (shell.ready !== "complete" || !shell.empty || !shell.adjacent) throw new Error(`HARNESS_DELIVERY_READ_FAILED: ${JSON.stringify(shell)}`);
   await cdp.command("Page.bringToFront");
   const before = await cdp.evaluate(`(() => {
     const button = document.querySelector('button[aria-controls="wsr-sidebar-delivery"]');
@@ -295,7 +368,7 @@ try {
     return value !== before.expanded ? value : undefined;
   }, "HARNESS_KEYBOARD_DISCLOSURE_FAILED");
 
-  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => /^(WSR )?Studio$/.test(node.textContent.trim())).click(); })()`);
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('[role="tab"]')].find((node) => node.textContent.trim() === 'WSR Studio').click(); })()`);
   const studio = await waitFor(async () => cdp.evaluate(`(() => {
     const view = document.querySelector('[data-wsr-studio-view="evaluate"]');
     if (!view) return undefined;
@@ -307,13 +380,6 @@ try {
   if (studio.role !== "region" || studio.modal !== null || !studio.landmarks || !studio.labelled || studio.repositoryInput || studio.color === studio.background) {
     throw new Error(`HARNESS_THEME_OR_ACCESSIBILITY_FAILED: ${JSON.stringify(studio)}`);
   }
-  const closeFocused = await cdp.evaluate(`(() => {
-    const close = document.querySelector('button[aria-label="Close WSR Studio"]');
-    close.focus();
-    return { focused: document.activeElement === close, inert: close.closest('[inert]') !== null };
-  })()`);
-  if (!closeFocused.focused || closeFocused.inert) throw new Error(`HARNESS_STUDIO_CLOSE_FOCUS_FAILED: ${JSON.stringify(closeFocused)}`);
-  await cdp.evaluate(`document.querySelector('button[aria-label="Close WSR Studio"]').blur()`);
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Load Tasks').click(); })()`);
   await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Alpha Task')`), "HARNESS_STUDIO_TASKS_FAILED");
   await cdp.evaluate(`(() => { const row = [...document.querySelectorAll('li')].find((node) => node.textContent.includes('Alpha Task')); const input = row?.querySelector('input[type="checkbox"]'); if (!input) throw new Error('qualification task checkbox missing'); input.click(); })()`);
@@ -328,8 +394,11 @@ try {
   await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('EVENT_CONTRIBUTION · fact-1')`), "HARNESS_STUDIO_FACT_FAILED");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Open recorded trace').click(); })()`);
   const trace = await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('NODE · trace-node-1')`), "HARNESS_STUDIO_TRACE_FAILED");
-  const deepLink = await cdp.evaluate(`new URL(location.href).searchParams.get('wsr-studio')`);
-  if (!deepLink?.startsWith('/evaluate/trace/')) throw new Error(`HARNESS_STUDIO_DEEP_LINK_FAILED: ${deepLink}`);
+  const storedLocation = await cdp.evaluate(`sessionStorage.getItem('wsr.studio.location@1')`);
+  const urlLocation = await cdp.evaluate(`new URL(location.href).searchParams.get('wsr-studio')`);
+  if (!storedLocation?.startsWith('/evaluate/trace/') || urlLocation !== null) {
+    throw new Error(`HARNESS_STUDIO_LOCATION_FAILED: ${JSON.stringify({ storedLocation, urlLocation })}`);
+  }
   await cdp.command("Emulation.setDeviceMetricsOverride", { width: 360, height: 720, deviceScaleFactor: 1, mobile: false });
   const narrow = await cdp.evaluate(`(() => { const view = document.querySelector('[data-wsr-studio-view="evaluate"]'); return view.scrollWidth <= view.clientWidth; })()`);
   if (!narrow) throw new Error("HARNESS_STUDIO_NARROW_OVERFLOW");
@@ -351,7 +420,7 @@ try {
     windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 53,
   });
   await cdp.command("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 53 });
-  await waitFor(async () => cdp.evaluate(`document.querySelector('[data-wsr-studio-view="evaluate"]') === null`), "HARNESS_ESCAPE_CLOSE_FAILED", 3_000);
+  const retainedAfterEscape = await waitFor(async () => cdp.evaluate(`document.querySelector('[data-wsr-studio-view="evaluate"]') !== null`), "HARNESS_ESCAPE_RETENTION_FAILED", 3_000);
 
   const severe = cdp.events.filter((event) => event.method === "Runtime.exceptionThrown"
     || (event.method === "Log.entryAdded" && ["error"].includes(event.params.entry.level)));
@@ -365,8 +434,9 @@ try {
       csp: csp === "" ? "absent-in-dsh-0.1.1-rc.2" : createHash("sha256").update(csp).digest("hex"),
       activation: ["wsr-execution", "wsr-studio"],
     },
-    browser: { deliveryInventory: "empty-ready", keyboardDisclosure: `${before.expanded}->${after}`, studio, escapeClose: "native",
-      evaluate: "compare-metric-receipt-fact-trace", deepLink, refreshRecovery: restored, degraded, narrow, trace, errors: 0 },
+    browser: { deliveryInventory: "empty-ready", commandDiagnostic, keyboardDisclosure: `${before.expanded}->${after}`, tabOrder: shell.tabOrder, studio,
+      evaluate: "compare-metric-receipt-fact-trace", storedLocation, urlLocation, refreshRecovery: restored,
+      escapeBehavior: retainedAfterEscape ? "conversation-view-retained" : "invalid", degraded, narrow, trace, errors: 0 },
   }, null, 2)}\n`);
 } catch (error) {
   process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`);
