@@ -1,4 +1,10 @@
 const CHANNEL = "/wsr-execution";
+const ERROR_CODES = new Set([
+  "DELIVERY_PROJECTION_CORRUPT",
+  "DELIVERY_PROJECTION_STALE_BINDING",
+  "DELIVERY_PROJECTION_RECOVERY_MISMATCH",
+  "DELIVERY_PROJECTION_UNAVAILABLE",
+]);
 
 function createStore(initial) {
   let snapshot = initial;
@@ -23,7 +29,9 @@ export function createDeliveryControlPlaneClient(rpc) {
   const sessions = new Map();
   const read = async (endpoint, payload) => {
     const result = await rpc.call(CHANNEL, endpoint, payload);
-    if (result?.ok !== true) throw new Error(message(result?.error));
+    if (result?.ok !== true) throw Object.assign(new Error(message(result?.error)), {
+      code: ERROR_CODES.has(result?.error?.code) ? result.error.code : "DELIVERY_PROJECTION_UNAVAILABLE",
+    });
     return result.value;
   };
   const client = {
@@ -37,6 +45,7 @@ export function createDeliveryControlPlaneClient(rpc) {
         const previous = inventory.getSnapshot();
         inventory.publish({
           kind: previous.kind === "ready" ? "reconnecting" : "error",
+          code: typeof error?.code === "string" ? error.code : "DELIVERY_PROJECTION_UNAVAILABLE",
           message: message(error),
           ...(previous.kind === "ready" ? { snapshot: previous.snapshot } : {}),
         });
@@ -53,7 +62,7 @@ export function createDeliveryControlPlaneClient(rpc) {
         subscribe: store.subscribe,
         async refresh() {
           try { store.publish({ kind: "ready", view: await read("session/read", { sessionCorrelation }) }); }
-          catch (error) { store.publish({ kind: "error", code: "DELIVERY_PROJECTION_UNAVAILABLE", message: message(error) }); }
+          catch (error) { store.publish({ kind: "error", code: typeof error?.code === "string" ? error.code : "DELIVERY_PROJECTION_UNAVAILABLE", message: message(error) }); }
         },
       });
       sessions.set(sessionCorrelation, source);

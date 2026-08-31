@@ -268,16 +268,36 @@ export async function createPluginRuntime(config, options = {}) {
   const factory = options.factory ?? new api.DefaultExecutionApplicationFactory();
   const application = await factory.create(admitted.configFile, dependencies);
   const control = options.control ?? api.getExecutionApplicationControl(application);
+  const ownerProjection = options.ownerProjection ?? api.getExecutionControlPlaneProjection(application);
   const bindingInventory = () => typeof control.bindingInventory === "function" ? control.bindingInventory() : control.list();
+  const archiveTerminal = async (sessionKey, correlation, deliveryId) => {
+    const snapshot = await ownerProjection.snapshot();
+    const matches = snapshot.deliveries.filter((delivery) => delivery.lifecycle === "TERMINAL"
+      && delivery.navigation?.sessionCorrelation === correlation
+      && (deliveryId === undefined || delivery.deliveryId === deliveryId));
+    if (matches.length !== 1) {
+      throw Object.assign(new Error("INTAKE_BINDING_INVARIANT_VIOLATION"), { code: "INTAKE_BINDING_INVARIANT_VIOLATION" });
+    }
+    await bindings.archiveTerminal(sessionKey, matches[0]);
+  };
   try {
     await application.start();
     const inventory = await bindingInventory();
     await bindings.start(inventory);
+    const snapshot = await ownerProjection.snapshot();
     for (const binding of await bindings.list()) {
       const sameDelivery = inventory.filter((item) => item.deliveryId === binding.deliveryId || item.worktree === binding.worktree);
       const matches = sameDelivery.filter((item) => item.deliveryId === binding.deliveryId && item.worktree === binding.worktree
         && item.deliveryBindingIdentity === binding.deliveryBindingIdentity);
       if (matches.length === 0 && sameDelivery.length === 0) {
+        const terminal = snapshot.deliveries.filter((delivery) => delivery.lifecycle === "TERMINAL"
+          && delivery.deliveryId === binding.deliveryId && delivery.worktree === binding.worktree
+          && delivery.deliveryBindingIdentity === binding.deliveryBindingIdentity
+          && delivery.navigation?.sessionCorrelation === binding.correlation);
+        if (terminal.length === 1) {
+          await bindings.archiveTerminal(binding.sessionKey, terminal[0]);
+          continue;
+        }
         await bindings.detach(binding.deliveryId);
         continue;
       }
@@ -365,12 +385,14 @@ export async function createPluginRuntime(config, options = {}) {
           .then((delivery) => Object.freeze({ kind: "delivery", delivery })),
       ]);
       if (first.kind === "result") {
+        if (first.result.kind === "TERMINAL") await archiveTerminal(input.sessionKey, correlation, first.result.deliveryId);
         if (first.result.kind === "ERROR" || first.result.kind === "TERMINAL" || first.result.kind === "RECOVERY") sessionByCorrelation.delete(correlation);
         return first.result;
       }
       const delivery = first.delivery;
       if (delivery === undefined) {
         const result = await execution;
+        if (result.kind === "TERMINAL") await archiveTerminal(input.sessionKey, correlation, result.deliveryId);
         if (result.kind === "ERROR" || result.kind === "TERMINAL") sessionByCorrelation.delete(correlation);
         return result;
       }
@@ -382,7 +404,8 @@ export async function createPluginRuntime(config, options = {}) {
         })); }
         catch { /* presentation is not Delivery control */ }
         if (result.kind === "TERMINAL" || result.kind === "ERROR") {
-          await bindings.detach(delivery.deliveryId);
+          if (result.kind === "TERMINAL") await archiveTerminal(input.sessionKey, correlation, delivery.deliveryId);
+          else await bindings.detach(delivery.deliveryId);
           sessionByCorrelation.delete(correlation);
         }
       })).catch(() => undefined);
@@ -426,7 +449,7 @@ export async function createPluginRuntime(config, options = {}) {
     const result = await service.invoke(Object.freeze({ operation: "abandon", deliveryId: operation.deliveryId, correlation }));
     if (result.kind === "TERMINAL") {
       const detached = await bindings.byDelivery(operation.deliveryId);
-      await bindings.detach(operation.deliveryId);
+      if (detached !== undefined) await archiveTerminal(detached.sessionKey, detached.correlation, operation.deliveryId);
       if (detached !== undefined) sessionByCorrelation.delete(detached.correlation);
     }
     return result;
@@ -454,7 +477,7 @@ export async function createPluginRuntime(config, options = {}) {
     return closePromise;
   }
 
-  return Object.freeze({ application, service, control, bindings, invokeForSession, answerForSession, close });
+  return Object.freeze({ application, service, control, ownerProjection, bindings, invokeForSession, answerForSession, close });
 }
 
 function commandTurn(rawInput) {
@@ -498,11 +521,9 @@ export async function apply(ctx, config) {
   const runtime = await createPluginRuntime(config, { present: (value) => presentationRouter.present(value),
   sessionAvailable: (sessionKey) => ctx.agents.get(sessionKey) !== undefined,
   resolveConversationWorkspace: async (agent) => resolveConversationWorkspace(ctx, agent) });
-  const executionApi = await import("wsr-execution");
-  const ownerProjection = executionApi.getExecutionControlPlaneProjection(runtime.application);
   await registerDeliveryControlPlaneGateway(
     ctx,
-    createDshSessionControlPlaneReadModel(ownerProjection, runtime.bindings),
+    createDshSessionControlPlaneReadModel(runtime.ownerProjection, runtime.bindings),
   );
   const active = new Set();
   const attachmentStore = ctx.attachments;
