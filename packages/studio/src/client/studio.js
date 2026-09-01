@@ -4,6 +4,12 @@ export const STUDIO_PAGES = Object.freeze([
   Object.freeze({ id: "evaluate", label: "Evaluate", routePrefix: "/evaluate" }),
 ]);
 
+export const STUDIO_TRACE_VIEWS = Object.freeze([
+  Object.freeze({ id: "waterfall", label: "Waterfall", renderer: "TraceWaterfall" }),
+  Object.freeze({ id: "tree", label: "Tree", renderer: "TraceTree" }),
+  Object.freeze({ id: "statistics", label: "Statistics", renderer: "TraceStatistics" }),
+]);
+
 const ACCESSIBILITY = Object.freeze({
   routes: Object.freeze(STUDIO_PAGES.map((page) => page.label)),
   surface: "conversation-view",
@@ -142,11 +148,33 @@ export function createStudioLayoutStore(storage) {
 }
 
 const hostStyles = `
+#wsr-studio-view { --studio-surface:color-mix(in srgb,var(--dsw-alias-bg-base) 88%,var(--dsw-alias-label-primary)); --studio-raised:color-mix(in srgb,var(--dsw-alias-bg-base) 82%,var(--dsw-alias-label-primary)); }
+#wsr-studio-view, #wsr-studio-view > *, #wsr-studio-view .studio-page-copy { min-width:0; max-width:100%; }
+#wsr-studio-view [data-wsr-studio-region="header"] { overflow:hidden; border:1px solid var(--dsw-alias-border-l2); border-radius:10px; background:var(--studio-surface); }
+#wsr-studio-view .studio-product-row, #wsr-studio-view .studio-page-row { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; }
+#wsr-studio-view .studio-product-row { min-height:44px; border-bottom:1px solid var(--dsw-alias-border-l2); }
+#wsr-studio-view .studio-breadcrumbs, #wsr-studio-view .studio-controls, #wsr-studio-view .studio-mode { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+#wsr-studio-view .studio-breadcrumbs { color:var(--dsw-alias-label-secondary); font-size:12px; }
+#wsr-studio-view .studio-page-copy h1 { margin:2px 0; font-size:20px; }
+#wsr-studio-view .studio-page-copy p, #wsr-studio-view .studio-selection-copy { margin:2px 0; color:var(--dsw-alias-label-secondary); font-size:12px; }
+#wsr-studio-view .studio-page-copy p { overflow-wrap:anywhere; }
+#wsr-studio-view .studio-eyebrow { display:block; color:var(--dsw-alias-label-secondary); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+#wsr-studio-view .studio-view-link[aria-current="page"] { border-color:var(--dsw-alias-blue-l1); color:var(--dsw-alias-blue-l1); }
+#wsr-studio-view [data-wsr-studio-region="main"] { margin-top:12px; }
+#wsr-studio-view .studio-selection-grid { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(250px,.75fr); gap:12px; }
+#wsr-studio-view .studio-selection-card { overflow:hidden; border:1px solid var(--dsw-alias-border-l2); border-radius:10px; background:var(--studio-surface); }
+#wsr-studio-view .studio-selection-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border-bottom:1px solid var(--dsw-alias-border-l2); }
+#wsr-studio-view .studio-task-list { display:grid; max-height:min(50vh,520px); margin:0; padding:6px 10px; overflow:auto; list-style:none; }
+#wsr-studio-view .studio-task-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; min-height:52px; gap:10px; padding:8px; border-bottom:1px solid var(--dsw-alias-border-l2); }
+#wsr-studio-view .studio-task-row label { display:flex; align-items:center; gap:9px; min-width:0; }
+#wsr-studio-view .studio-task-id { display:block; color:var(--dsw-alias-label-secondary); font:11px ui-monospace,monospace; overflow-wrap:anywhere; }
+#wsr-studio-view .studio-selected-list { display:grid; gap:8px; padding:12px; }
+#wsr-studio-view .studio-selected-item { padding:10px; border:1px solid var(--dsw-alias-border-l2); border-radius:8px; background:var(--studio-raised); }
 #wsr-studio-view [data-wsr-dashboard-layout] { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:12px; }
 #wsr-studio-view [data-wsr-dashboard-panel] { grid-column:span var(--studio-panel-desktop-columns,3); min-width:0; }
-#wsr-studio-view [data-wsr-studio-region="header"], #wsr-studio-view [data-wsr-studio-region="footer"] { border:1px solid var(--dsw-alias-border-l2); padding:12px; }
-#wsr-studio-view .studio-title-row, #wsr-studio-view .studio-controls { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
+#wsr-studio-view [data-wsr-studio-region="footer"] { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; padding:12px 14px; border:1px dashed var(--dsw-alias-border-l2); border-radius:10px; background:var(--studio-surface); }
 @media (max-width:900px) { #wsr-studio-view [data-wsr-dashboard-layout] { grid-template-columns:repeat(6,minmax(0,1fr)); } #wsr-studio-view [data-wsr-dashboard-panel] { grid-column:span var(--studio-panel-tablet-columns,3); } }
+@media (max-width:700px) { #wsr-studio-view .studio-selection-grid { grid-template-columns:1fr; } #wsr-studio-view .studio-product-row, #wsr-studio-view .studio-page-row { align-items:flex-start; flex-direction:column; } }
 @media (max-width:560px) { #wsr-studio-view [data-wsr-dashboard-layout] { grid-template-columns:1fr; } #wsr-studio-view [data-wsr-dashboard-panel] { grid-column:span 1 !important; } }
 `;
 
@@ -213,8 +241,21 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
   return function StudioConversationView() {
     const [technicalDetailsOpen, setTechnicalDetailsOpen] = React.useState(false);
     const [traceView, setTraceView] = React.useState("waterfall");
+    const [taskQuery, setTaskQuery] = React.useState("");
     const [editingDashboard, setEditingDashboard] = React.useState(false);
     const snapshot = React.useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
+    const [studioPage, setStudioPage] = React.useState(() =>
+      snapshot.result !== undefined || ["receipt", "facts", "trace"].includes(snapshot.route.page)
+        ? "dashboard"
+        : "selection");
+    const [selectionRequested, setSelectionRequested] = React.useState(false);
+    React.useEffect(() => {
+      if (!selectionRequested &&
+          (snapshot.result !== undefined || ["receipt", "facts", "trace"].includes(snapshot.route.page)) &&
+          studioPage !== "dashboard") {
+        setStudioPage("dashboard");
+      }
+    }, [selectionRequested, snapshot.result, snapshot.route.page, studioPage]);
     React.useEffect(() => {
       if (snapshot.drilldown.phase !== "idle") return;
       if (snapshot.route.page === "facts" && snapshot.result !== undefined) {
@@ -242,6 +283,11 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
       ? React.createElement("pre", { "aria-label": label }, JSON.stringify(data, null, 2))
       : React.createElement(JsonTree, { data, label, copyable: true, expandTopLevel: true });
     const taskItems = snapshot.taskList.items ?? [];
+    const visibleTaskItems = taskItems.filter((task) => {
+      const query = taskQuery.trim().toLocaleLowerCase();
+      return query === "" || task.task_id.toLocaleLowerCase().includes(query) ||
+        task.display_name?.toLocaleLowerCase().includes(query);
+    });
     const current = snapshot.selection?.mode === "single" ? snapshot.selection.taskIds : [];
     const before = snapshot.selection?.mode === "compare" ? snapshot.selection.leftTaskIds : [];
     const after = snapshot.selection?.mode === "compare" ? snapshot.selection.rightTaskIds : [];
@@ -282,22 +328,66 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
         ? { mode: "single", taskIds: [seed] }
         : { mode: "compare", leftTaskIds: [seed], rightTaskIds: [seed] });
     };
+    const evaluateSelection = async () => {
+      await controller.evaluate();
+      if (controller.getSnapshot().result !== undefined) {
+        setSelectionRequested(false);
+        setStudioPage("dashboard");
+      }
+    };
+    const pageIdentity = studioPage === "selection"
+      ? { eyebrow: "New evaluation", title: "Select task population", detail: "Choose exact Task identities; display names are recognition only." }
+      : snapshot.route.page === "trace"
+        ? { eyebrow: "Recorded Evidence · exact identity", title: "Recorded Trace", detail: `${snapshot.route.traceId} · current evaluation · no inferred causality` }
+        : snapshot.route.page === "facts"
+          ? { eyebrow: "Evaluation Evidence", title: "Evidence", detail: "Exact recorded Facts and provenance for the current evaluation." }
+          : snapshot.route.page === "receipt"
+            ? { eyebrow: "Resolved evaluation context", title: "Evaluation receipt", detail: "Exact selection and resolved read-set identities." }
+            : { eyebrow: `${snapshot.result?.mode === "COMPARE" ? "Compare" : "Single"} evaluation`, title: "Current evaluation", detail: "Current receipt · exact selection" };
     return React.createElement("section", {
       id: "wsr-studio-view", role: "region", "aria-labelledby": "wsr-studio-title",
       "data-wsr-studio-view": "evaluate", style: viewStyle,
     },
     React.createElement("style", { "data-wsr-studio-host-styles": "wsr-dsh@1" }, hostStyles),
+    sharedStyles === undefined ? null : React.createElement("style", { "data-wsr-bi-styles": "wsr-ui-core@0.1.0-rc.0" }, sharedStyles),
     React.createElement("header", { "data-wsr-studio-region": "header" },
-      React.createElement("div", { className: "studio-title-row" },
-        React.createElement("div", null,
-          React.createElement("p", null, "Single evaluation · current receipt"),
-          React.createElement("h1", { id: "wsr-studio-title" }, "WSR Studio")),
-        React.createElement("div", { className: "studio-controls" },
-          React.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Dashboard"),
-          React.createElement(Button, { type: "button", disabled: snapshot.route.page !== "facts" }, "Evidence"),
-          React.createElement(Button, { type: "button", disabled: snapshot.route.page !== "trace" }, "Recorded Trace"),
-          React.createElement(Button, { type: "button", onClick: () => setDashboardState(reduceStudioDashboardState(expandedDashboardState, { type: "PRESET", preset: "default" })) }, "Default overview"),
-          editingDashboard
+      React.createElement("div", { className: "studio-product-row" },
+        React.createElement("div", { className: "studio-breadcrumbs" },
+          React.createElement("strong", null, "WSR Studio"),
+          React.createElement("span", null, "/"),
+          React.createElement("span", null, "Evaluation"),
+          snapshot.route.page === "trace" ? React.createElement(React.Fragment, null,
+            React.createElement("span", null, "/"), React.createElement("span", null, "Trace")) : null),
+        React.createElement("nav", { className: "studio-controls", "aria-label": "Studio views" },
+          React.createElement(Button, { className: "studio-view-link", type: "button", "aria-current": studioPage === "selection" ? "page" : undefined, onClick: () => {
+            setSelectionRequested(true);
+            setStudioPage("selection");
+          } }, "Select"),
+          React.createElement(Button, { className: "studio-view-link", type: "button", disabled: snapshot.result === undefined && !["receipt", "facts", "trace"].includes(snapshot.route.page), "aria-current": studioPage === "dashboard" && snapshot.route.page === "results" ? "page" : undefined, onClick: () => {
+            controller.backToResults();
+            setSelectionRequested(false);
+            setStudioPage("dashboard");
+          } }, "Dashboard"),
+          React.createElement(Button, { className: "studio-view-link", type: "button", disabled: snapshot.route.page !== "facts", "aria-current": snapshot.route.page === "facts" ? "page" : undefined }, "Evidence"),
+          React.createElement(Button, { className: "studio-view-link", type: "button", disabled: snapshot.route.page !== "trace", "aria-current": snapshot.route.page === "trace" ? "page" : undefined }, "Recorded Trace"))),
+      React.createElement("div", { className: "studio-page-row" },
+        React.createElement("div", { className: "studio-page-copy" },
+          React.createElement("span", { className: "studio-eyebrow" }, pageIdentity.eyebrow),
+          React.createElement("h1", { id: "wsr-studio-title" }, pageIdentity.title),
+          React.createElement("p", null, pageIdentity.detail)),
+        React.createElement("div", { className: "studio-controls", "aria-label": "Page actions" },
+          studioPage === "selection" ? React.createElement(React.Fragment, null,
+            snapshot.taskList.phase === "idle" ? React.createElement(Button, { type: "button", onClick: () => controller.loadTasks() }, "Load Tasks") : null,
+            React.createElement(Button, { type: "button", disabled: snapshot.selection === undefined, onClick: evaluateSelection }, "Evaluate selection")) : null,
+          studioPage === "dashboard" && snapshot.route.page === "results" ? React.createElement(React.Fragment, null,
+            snapshot.result === undefined ? null : React.createElement(Button, { type: "button", onClick: () => controller.openReceipt() }, "View receipt"),
+            React.createElement(Button, { type: "button", onClick: () => setDashboardState(reduceStudioDashboardState(expandedDashboardState, { type: "PRESET", preset: "default" })) }, "Default overview"),
+            React.createElement(Button, { type: "button", onClick: () => {
+              setSelectionRequested(true);
+              setStudioPage("selection");
+            } }, "Change evaluation")) : null,
+          studioPage === "dashboard" && snapshot.route.page === "trace" ? React.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Dashboard") : null,
+          studioPage === "dashboard" && editingDashboard
             ? React.createElement(React.Fragment, null,
               React.createElement(Button, { type: "button", onClick: () => setDashboardState(reduceStudioDashboardState(expandedDashboardState, { type: "RESET" })) }, "Reset layout"),
               React.createElement(Button, { type: "button", onClick: () => {
@@ -309,18 +399,21 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
                 setDashboardState(savedDashboardState);
                 setEditingDashboard(false);
               } }, "Cancel editing"))
-            : React.createElement(Button, { type: "button", "aria-pressed": false, onClick: () => {
+            : studioPage === "dashboard" && snapshot.route.page === "results" ? React.createElement(Button, { type: "button", "aria-pressed": false, onClick: () => {
               setSavedDashboardState(expandedDashboardState);
               setEditingDashboard(true);
-            } }, "Edit dashboard"))),
-      editingDashboard && metricPanelIds.some((id) => expandedDashboardState.hidden.includes(id))
+            } }, "Edit dashboard") : null)),
+      studioPage === "dashboard" && editingDashboard && metricPanelIds.some((id) => expandedDashboardState.hidden.includes(id))
         ? React.createElement("div", { className: "studio-controls", "aria-label": "Add dashboard panels" },
           ...metricPanelIds.filter((id) => expandedDashboardState.hidden.includes(id)).map((panelId) =>
             React.createElement(Button, { key: panelId, type: "button", onClick: () => updateDashboard({ type: "ADD", panelId }) }, `Add ${panelId}`)))
         : null,
-      React.createElement("nav", { "aria-label": "Studio" }, ...STUDIO_PAGES.map((page) =>
-        React.createElement("span", { key: page.id, "aria-current": page.id === "evaluate" ? "page" : undefined }, page.label)))),
-    React.createElement("main", { tabIndex: -1, "data-wsr-studio-region": "main" },
+      ),
+    React.createElement("main", {
+      tabIndex: -1,
+      "data-wsr-studio-region": "main",
+      "data-wsr-studio-page": studioPage,
+    },
       snapshot.phase === "loading" || snapshot.refreshing
         ? React.createElement("p", { role: "status", "aria-live": "polite" }, snapshot.refreshing ? "Refreshing evaluation…" : "Loading evaluation…") : null,
       snapshot.error === undefined ? null
@@ -328,40 +421,60 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
           React.createElement("h2", null, snapshot.result === undefined ? "Evaluate unavailable" : "Showing the last result"),
           React.createElement("p", null, snapshot.error.message),
           React.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.refresh() }, "Retry")),
-      React.createElement("section", { "aria-labelledby": "wsr-task-selection" },
-        React.createElement("h2", { id: "wsr-task-selection" }, "Task selection"),
-        React.createElement("fieldset", null,
-          React.createElement("legend", null, "Evaluation mode"),
-          React.createElement("label", null,
-            React.createElement("input", { type: "radio", name: "wsr-evaluation-mode", value: "single", checked: snapshot.selection?.mode !== "compare", onChange: () => chooseMode("single") }),
-            "Single"),
-          React.createElement("label", null,
-            React.createElement("input", { type: "radio", name: "wsr-evaluation-mode", value: "compare", checked: snapshot.selection?.mode === "compare", onChange: () => chooseMode("compare") }),
-            "Compare")),
-        snapshot.taskList.phase === "idle"
-          ? React.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.loadTasks() }, "Load Tasks") : null,
-        snapshot.taskList.phase === "error"
-          ? React.createElement("p", { role: "alert" }, "Task list unavailable; the current selection remains usable.") : null,
-        snapshot.selection?.mode === "compare"
-          ? React.createElement("div", null, ...[["Before", "left", before], ["After", "right", after]].map(([label, side, selected]) =>
-            React.createElement("fieldset", { key: side },
-              React.createElement("legend", null, label),
-              ...taskItems.map((task) => React.createElement("label", { key: `${side}-${task.task_id}` },
-                React.createElement("input", { type: "checkbox", checked: selected.includes(task.task_id), onChange: (event) => setComparedTask(side, task.task_id, event.target.checked) }),
-                task.display_name ?? task.task_id)))))
-          : React.createElement("ul", { style: listStyle }, ...taskItems.map((task) => React.createElement("li", { key: task.task_id },
-            React.createElement("label", null,
-              React.createElement("input", { type: "checkbox", checked: current.includes(task.task_id), onChange: (event) => setTask(task.task_id, event.target.checked) }),
-              task.display_name ?? task.task_id)))),
-        snapshot.taskList.phase === "ready" && taskItems.length === 0 ? React.createElement("p", { role: "status" }, "No Tasks are available in Evidence.") : null,
-        snapshot.taskList.page?.next_cursor ? React.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.loadTasks(snapshot.taskList.page.next_cursor) }, "Load more Tasks") : null,
-        React.createElement(Button, { type: "button", style: controlStyle, disabled: snapshot.selection === undefined, onClick: () => controller.evaluate() }, "Evaluate selection")),
-      snapshot.result === undefined ? React.createElement("p", null, "Choose one or more Tasks to evaluate.")
+      studioPage === "selection" ? React.createElement("section", {
+        "aria-labelledby": "wsr-task-selection",
+        className: "studio-selection-grid",
+      },
+        React.createElement("section", { className: "studio-selection-card", "data-wsr-selection-browser": "task-population" },
+          React.createElement("header", { className: "studio-selection-head" },
+            React.createElement("div", null,
+              React.createElement("h2", { id: "wsr-task-selection" }, "Task population"),
+              React.createElement("p", { className: "studio-selection-copy" }, `${taskItems.length} Tasks · exact identities retained in the receipt`)),
+            React.createElement("div", { className: "studio-mode", role: "radiogroup", "aria-label": "Evaluation mode" },
+              React.createElement("label", null,
+                React.createElement("input", { type: "radio", name: "wsr-evaluation-mode", value: "single", checked: snapshot.selection?.mode !== "compare", onChange: () => chooseMode("single") }),
+                "Single"),
+              React.createElement("label", null,
+                React.createElement("input", { type: "radio", name: "wsr-evaluation-mode", value: "compare", checked: snapshot.selection?.mode === "compare", onChange: () => chooseMode("compare") }),
+                "Compare"))),
+          React.createElement("div", { className: "studio-selection-head" },
+            React.createElement("input", { type: "search", "aria-label": "Search Tasks", placeholder: "Search name or exact Task ID", value: taskQuery, onChange: (event) => setTaskQuery(event.target.value) }),
+            snapshot.taskList.page?.next_cursor ? React.createElement(Button, { type: "button", onClick: () => controller.loadTasks(snapshot.taskList.page.next_cursor) }, "Load more Tasks") : null),
+          snapshot.taskList.phase === "error" ? React.createElement("p", { role: "alert" }, "Task list unavailable; the current selection remains usable.") : null,
+          snapshot.selection?.mode === "compare"
+            ? React.createElement("div", { className: "studio-task-list" }, ...[["Before", "left", before], ["After", "right", after]].flatMap(([label, side, selected]) => [
+              React.createElement("strong", { key: `${side}-label` }, label),
+              ...visibleTaskItems.map((task) => React.createElement("div", { className: "studio-task-row", "data-wsr-selection-side": side, "data-wsr-task-id": task.task_id, key: `${side}-${task.task_id}` },
+                React.createElement("label", null,
+                  React.createElement("input", { type: "checkbox", checked: selected.includes(task.task_id), onChange: (event) => setComparedTask(side, task.task_id, event.target.checked) }),
+                  React.createElement("span", null, task.display_name ?? task.task_id, React.createElement("small", { className: "studio-task-id" }, task.task_id))),
+                React.createElement("span", null, selected.includes(task.task_id) ? "Selected" : "Available")))]))
+            : React.createElement("div", { className: "studio-task-list", role: "list" }, ...visibleTaskItems.map((task) => React.createElement("div", { className: "studio-task-row", "data-wsr-task-id": task.task_id, key: task.task_id, role: "listitem" },
+              React.createElement("label", null,
+                React.createElement("input", { type: "checkbox", checked: current.includes(task.task_id), onChange: (event) => setTask(task.task_id, event.target.checked) }),
+                React.createElement("span", null, task.display_name ?? task.task_id, React.createElement("small", { className: "studio-task-id" }, task.task_id))),
+              React.createElement("span", null, current.includes(task.task_id) ? "Selected" : "Available")))),
+          snapshot.taskList.phase === "ready" && taskItems.length === 0 ? React.createElement("p", { role: "status" }, "No Tasks are available in Evidence.") : null),
+        React.createElement("aside", { className: "studio-selection-card", "aria-label": "Current selection" },
+          React.createElement("header", { className: "studio-selection-head" },
+            React.createElement("div", null,
+              React.createElement("h2", null, "Current selection"),
+              React.createElement("p", { className: "studio-selection-copy" }, snapshot.selection?.mode === "compare" ? `${before.length} Before · ${after.length} After` : `Single evaluation · ${current.length} Tasks`))),
+          React.createElement("div", { className: "studio-selected-list" },
+            ...(snapshot.selection?.mode === "compare" ? [["Before", before], ["After", after]] : [["Selected", current]]).flatMap(([label, ids]) => [
+              React.createElement("strong", { key: `${label}-heading` }, label),
+              ...ids.map((id) => {
+                const task = taskItems.find((candidate) => candidate.task_id === id);
+                return React.createElement("div", { className: "studio-selected-item", key: `${label}-${id}` },
+                  React.createElement("strong", null, task?.display_name ?? id),
+                  React.createElement("small", { className: "studio-task-id" }, id));
+              }),
+            ]),
+            React.createElement("p", { className: "studio-selection-copy" }, "Evaluation resolves a current receipt. Layout and display names do not enter evaluation identity.")))) : null,
+      studioPage !== "dashboard" || snapshot.route.page !== "results" ? null : snapshot.result === undefined ? React.createElement("p", null, "Choose one or more Tasks to evaluate.")
         : React.createElement("section", { "aria-label": snapshot.result.mode === "COMPARE" ? "Compared Metric Results" : "Metric Results" },
           snapshot.phase === "partial" ? React.createElement("p", { role: "status" }, "Partial comparison: the available side remains visible.") : null,
-          React.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.openReceipt() }, "View receipt"),
           React.createElement(Bi.BiSurface, { theme },
-            sharedStyles === undefined ? null : React.createElement("style", { "data-wsr-bi-styles": "wsr-ui-core@0.1.0-rc.0" }, sharedStyles),
             React.createElement("div", {
               "data-wsr-dashboard-layout": DEFAULT_LAYOUT.schemaVersion,
             }, ...dashboardMetrics.filter((metric) => snapshot.result.mode !== "COMPARE" || !deltaCoordinates.has(metric.coordinate))
@@ -427,7 +540,7 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
           technicalDetailsOpen ? json(snapshot.result, "Evaluation result JSON") : null),
           ...presentation.deltas.map((delta) => React.createElement("p", { key: `${delta.metric_coordinate}-${JSON.stringify(delta.slice_key)}` },
             `${delta.metric_coordinate}: ${delta.state}${delta.direction === undefined ? "" : ` · ${delta.direction}`}`))),
-      snapshot.route.page === "receipt"
+      studioPage === "dashboard" && snapshot.route.page === "receipt"
         ? React.createElement("section", { "aria-label": "Evaluation receipts" },
           React.createElement("h2", null, "Receipts"),
           React.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Metric Results"),
@@ -440,7 +553,7 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
           React.createElement("details", { onToggle: (event) => setTechnicalDetailsOpen(event.currentTarget.open) },
             React.createElement("summary", null, "Technical JSON details"),
             technicalDetailsOpen ? json(snapshot.result, "Evaluation receipt JSON") : null)) : null,
-      snapshot.route.page === "facts"
+      studioPage === "dashboard" && snapshot.route.page === "facts"
         ? React.createElement("section", { "aria-label": "Fact drill-down" },
           React.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Metric Results"),
           React.createElement(Bi.BiSurface, { theme },
@@ -473,10 +586,8 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
                 void controller.loadTrace({ trace_id: traceId, limit: 200 });
               },
             }))) : null,
-      snapshot.route.page === "trace"
+      studioPage === "dashboard" && snapshot.route.page === "trace"
         ? React.createElement("section", { "aria-label": "Recorded Trace drill-down" },
-          React.createElement("h2", null, "Recorded Trace"),
-          React.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Metric Results"),
           presentation.drilldownError === undefined ? null : React.createElement("p", { role: "alert" }, presentation.drilldownError.message),
           recorded === undefined
             ? React.createElement("p", { role: presentation.trace.length > 0 ? "alert" : "status" },
@@ -484,14 +595,11 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
             : React.createElement(Bi.BiSurface, { theme },
               recorded.status === "INVALID" ? React.createElement("p", { role: "alert" }, recorded.errors.join("; ")) : null,
               React.createElement("div", { className: "studio-controls", role: "group", "aria-label": "Trace view" },
-                React.createElement(Button, { type: "button", "aria-pressed": traceView === "waterfall", onClick: () => setTraceView("waterfall") }, "Waterfall"),
-                React.createElement(Button, { type: "button", "aria-pressed": traceView === "tree", onClick: () => setTraceView("tree") }, "Tree")),
-              traceView === "tree"
-                ? React.createElement(Bi.TraceTree, { trace: recorded })
-                : React.createElement(Bi.TraceWaterfall, { trace: recorded }))) : null),
-      React.createElement("footer", { "data-wsr-studio-region": "footer" },
+                ...STUDIO_TRACE_VIEWS.map((view) => React.createElement(Button, { key: view.id, type: "button", "aria-pressed": traceView === view.id, onClick: () => setTraceView(view.id) }, view.label))),
+              React.createElement(Bi[STUDIO_TRACE_VIEWS.find(({ id }) => id === traceView)?.renderer ?? "TraceWaterfall"], { trace: recorded }))) : null),
+      studioPage === "dashboard" && snapshot.route.page === "results" && snapshot.result !== undefined ? React.createElement("footer", { "data-wsr-studio-region": "footer" },
         React.createElement("strong", null, presentation.trace.length > 0 ? "Recorded Trace is available" : "Recorded Trace availability follows current Evidence"),
-        React.createElement("span", null, " · exact recorded identities only; no inferred ordering")));
+        React.createElement("span", null, " · exact recorded identities only; no inferred ordering")) : null);
   };
 }
 
@@ -500,7 +608,7 @@ export function createStudioClientPlugin({ React, Primitives = {}, Bi, sharedSty
   const component = (value) => typeof value === "function" || typeof value === "string";
   if (Bi === undefined || !component(Bi.BiSurface) || !component(Bi.MetricPanel) ||
       !component(Bi.CompareResultFrame) || !component(Bi.ReceiptView) || !component(Bi.ScopedError) ||
-      !component(Bi.EvidenceConsoleFoundation) || !component(Bi.TraceWaterfall) || !component(Bi.TraceTree) ||
+      !component(Bi.EvidenceConsoleFoundation) || !component(Bi.TraceWaterfall) || !component(Bi.TraceTree) || !component(Bi.TraceStatistics) ||
       typeof Bi.compileTraceView !== "function" || typeof Bi.selectDefaultVisualizer !== "function" ||
       typeof Bi.createBiTheme !== "function") {
     throw new Error("STUDIO_BI_REQUIRED");

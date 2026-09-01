@@ -57,16 +57,16 @@ function descending(a2, b2) {
 }
 
 // node_modules/d3-array/src/bisector.js
-function bisector(f2) {
+function bisector(f) {
   let compare1, compare2, delta;
-  if (f2.length !== 2) {
+  if (f.length !== 2) {
     compare1 = ascending;
-    compare2 = (d2, x2) => ascending(f2(d2), x2);
-    delta = (d2, x2) => f2(d2) - x2;
+    compare2 = (d, x2) => ascending(f(d), x2);
+    delta = (d, x2) => f(d) - x2;
   } else {
-    compare1 = f2 === ascending || f2 === descending ? f2 : zero;
-    compare2 = f2;
-    delta = f2;
+    compare1 = f === ascending || f === descending ? f : zero;
+    compare2 = f;
+    delta = f;
   }
   function left(a2, x2, lo = 0, hi = a2.length) {
     if (lo < hi) {
@@ -330,8 +330,8 @@ function selector_default(selector) {
 // node_modules/d3-selection/src/selection/select.js
 function select_default(select) {
   if (typeof select !== "function") select = selector_default(select);
-  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
-    for (var group = groups[j], n2 = group.length, subgroup = subgroups[j] = new Array(n2), node, subnode, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j2 = 0; j2 < m2; ++j2) {
+    for (var group = groups[j2], n2 = group.length, subgroup = subgroups[j2] = new Array(n2), node, subnode, i = 0; i < n2; ++i) {
       if ((node = group[i]) && (subnode = select.call(node, node.__data__, i, group))) {
         if ("__data__" in node) subnode.__data__ = node.__data__;
         subgroup[i] = subnode;
@@ -365,8 +365,8 @@ function arrayAll(select) {
 function selectAll_default(select) {
   if (typeof select === "function") select = arrayAll(select);
   else select = selectorAll_default(select);
-  for (var groups = this._groups, m2 = groups.length, subgroups = [], parents = [], j = 0; j < m2; ++j) {
-    for (var group = groups[j], n2 = group.length, node, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, subgroups = [], parents = [], j2 = 0; j2 < m2; ++j2) {
+    for (var group = groups[j2], n2 = group.length, node, i = 0; i < n2; ++i) {
       if (node = group[i]) {
         subgroups.push(select.call(node, node.__data__, i, group));
         parents.push(node);
@@ -419,8 +419,8 @@ function selectChildren_default(match) {
 // node_modules/d3-selection/src/selection/filter.js
 function filter_default(match) {
   if (typeof match !== "function") match = matcher_default(match);
-  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
-    for (var group = groups[j], n2 = group.length, subgroup = subgroups[j] = [], node, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j2 = 0; j2 < m2; ++j2) {
+    for (var group = groups[j2], n2 = group.length, subgroup = subgroups[j2] = [], node, i = 0; i < n2; ++i) {
       if ((node = group[i]) && match.call(node, node.__data__, i, group)) {
         subgroup.push(node);
       }
@@ -520,8 +520,8 @@ function data_default(value, key) {
   if (!arguments.length) return Array.from(this, datum);
   var bind = key ? bindKey : bindIndex, parents = this._parents, groups = this._groups;
   if (typeof value !== "function") value = constant_default(value);
-  for (var m2 = groups.length, update = new Array(m2), enter = new Array(m2), exit = new Array(m2), j = 0; j < m2; ++j) {
-    var parent = parents[j], group = groups[j], groupLength = group.length, data = arraylike(value.call(parent, parent && parent.__data__, j, parents)), dataLength = data.length, enterGroup = enter[j] = new Array(dataLength), updateGroup = update[j] = new Array(dataLength), exitGroup = exit[j] = new Array(groupLength);
+  for (var m2 = groups.length, update = new Array(m2), enter = new Array(m2), exit = new Array(m2), j2 = 0; j2 < m2; ++j2) {
+    var parent = parents[j2], group = groups[j2], groupLength = group.length, data = arraylike(value.call(parent, parent && parent.__data__, j2, parents)), dataLength = data.length, enterGroup = enter[j2] = new Array(dataLength), updateGroup = update[j2] = new Array(dataLength), exitGroup = exit[j2] = new Array(groupLength);
     bind(parent, group, enterGroup, updateGroup, exitGroup, data, key);
     for (var i0 = 0, i1 = 0, previous, next; i0 < dataLength; ++i0) {
       if (previous = enterGroup[i0]) {
@@ -566,23 +566,23 @@ function join_default(onenter, onupdate, onexit) {
 // node_modules/d3-selection/src/selection/merge.js
 function merge_default(context) {
   var selection2 = context.selection ? context.selection() : context;
-  for (var groups0 = this._groups, groups1 = selection2._groups, m0 = groups0.length, m1 = groups1.length, m2 = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m2; ++j) {
-    for (var group0 = groups0[j], group1 = groups1[j], n2 = group0.length, merge = merges[j] = new Array(n2), node, i = 0; i < n2; ++i) {
+  for (var groups0 = this._groups, groups1 = selection2._groups, m0 = groups0.length, m1 = groups1.length, m2 = Math.min(m0, m1), merges = new Array(m0), j2 = 0; j2 < m2; ++j2) {
+    for (var group0 = groups0[j2], group1 = groups1[j2], n2 = group0.length, merge = merges[j2] = new Array(n2), node, i = 0; i < n2; ++i) {
       if (node = group0[i] || group1[i]) {
         merge[i] = node;
       }
     }
   }
-  for (; j < m0; ++j) {
-    merges[j] = groups0[j];
+  for (; j2 < m0; ++j2) {
+    merges[j2] = groups0[j2];
   }
   return new Selection(merges, this._parents);
 }
 
 // node_modules/d3-selection/src/selection/order.js
 function order_default() {
-  for (var groups = this._groups, j = -1, m2 = groups.length; ++j < m2; ) {
-    for (var group = groups[j], i = group.length - 1, next = group[i], node; --i >= 0; ) {
+  for (var groups = this._groups, j2 = -1, m2 = groups.length; ++j2 < m2; ) {
+    for (var group = groups[j2], i = group.length - 1, next = group[i], node; --i >= 0; ) {
       if (node = group[i]) {
         if (next && node.compareDocumentPosition(next) ^ 4) next.parentNode.insertBefore(node, next);
         next = node;
@@ -598,8 +598,8 @@ function sort_default(compare) {
   function compareNode(a2, b2) {
     return a2 && b2 ? compare(a2.__data__, b2.__data__) : !a2 - !b2;
   }
-  for (var groups = this._groups, m2 = groups.length, sortgroups = new Array(m2), j = 0; j < m2; ++j) {
-    for (var group = groups[j], n2 = group.length, sortgroup = sortgroups[j] = new Array(n2), node, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, sortgroups = new Array(m2), j2 = 0; j2 < m2; ++j2) {
+    for (var group = groups[j2], n2 = group.length, sortgroup = sortgroups[j2] = new Array(n2), node, i = 0; i < n2; ++i) {
       if (node = group[i]) {
         sortgroup[i] = node;
       }
@@ -627,8 +627,8 @@ function nodes_default() {
 
 // node_modules/d3-selection/src/selection/node.js
 function node_default() {
-  for (var groups = this._groups, j = 0, m2 = groups.length; j < m2; ++j) {
-    for (var group = groups[j], i = 0, n2 = group.length; i < n2; ++i) {
+  for (var groups = this._groups, j2 = 0, m2 = groups.length; j2 < m2; ++j2) {
+    for (var group = groups[j2], i = 0, n2 = group.length; i < n2; ++i) {
       var node = group[i];
       if (node) return node;
     }
@@ -650,8 +650,8 @@ function empty_default() {
 
 // node_modules/d3-selection/src/selection/each.js
 function each_default(callback) {
-  for (var groups = this._groups, j = 0, m2 = groups.length; j < m2; ++j) {
-    for (var group = groups[j], i = 0, n2 = group.length, node; i < n2; ++i) {
+  for (var groups = this._groups, j2 = 0, m2 = groups.length; j2 < m2; ++j2) {
+    for (var group = groups[j2], i = 0, n2 = group.length, node; i < n2; ++i) {
       if (node = group[i]) callback.call(node, node.__data__, i, group);
     }
   }
@@ -934,8 +934,8 @@ function onRemove(typename) {
   return function() {
     var on = this.__on;
     if (!on) return;
-    for (var j = 0, i = -1, m2 = on.length, o2; j < m2; ++j) {
-      if (o2 = on[j], (!typename.type || o2.type === typename.type) && o2.name === typename.name) {
+    for (var j2 = 0, i = -1, m2 = on.length, o2; j2 < m2; ++j2) {
+      if (o2 = on[j2], (!typename.type || o2.type === typename.type) && o2.name === typename.name) {
         this.removeEventListener(o2.type, o2.listener, o2.options);
       } else {
         on[++i] = o2;
@@ -948,8 +948,8 @@ function onRemove(typename) {
 function onAdd(typename, value, options) {
   return function() {
     var on = this.__on, o2, listener = contextListener(value);
-    if (on) for (var j = 0, m2 = on.length; j < m2; ++j) {
-      if ((o2 = on[j]).type === typename.type && o2.name === typename.name) {
+    if (on) for (var j2 = 0, m2 = on.length; j2 < m2; ++j2) {
+      if ((o2 = on[j2]).type === typename.type && o2.name === typename.name) {
         this.removeEventListener(o2.type, o2.listener, o2.options);
         this.addEventListener(o2.type, o2.listener = listener, o2.options = options);
         o2.value = value;
@@ -966,8 +966,8 @@ function on_default(typename, value, options) {
   var typenames = parseTypenames2(typename + ""), i, n2 = typenames.length, t2;
   if (arguments.length < 2) {
     var on = this.node().__on;
-    if (on) for (var j = 0, m2 = on.length, o2; j < m2; ++j) {
-      for (i = 0, o2 = on[j]; i < n2; ++i) {
+    if (on) for (var j2 = 0, m2 = on.length, o2; j2 < m2; ++j2) {
+      for (i = 0, o2 = on[j2]; i < n2; ++i) {
         if ((t2 = typenames[i]).type === o2.type && t2.name === o2.name) {
           return o2.value;
         }
@@ -1008,8 +1008,8 @@ function dispatch_default2(type2, params) {
 
 // node_modules/d3-selection/src/selection/iterator.js
 function* iterator_default() {
-  for (var groups = this._groups, j = 0, m2 = groups.length; j < m2; ++j) {
-    for (var group = groups[j], i = 0, n2 = group.length, node; i < n2; ++i) {
+  for (var groups = this._groups, j2 = 0, m2 = groups.length; j2 < m2; ++j2) {
+    for (var group = groups[j2], i = 0, n2 = group.length, node; i < n2; ++i) {
       if (node = group[i]) yield node;
     }
   }
@@ -1271,9 +1271,9 @@ function color_formatRgb() {
   return this.rgb().formatRgb();
 }
 function color(format2) {
-  var m2, l;
+  var m2, l2;
   format2 = (format2 + "").trim().toLowerCase();
-  return (m2 = reHex.exec(format2)) ? (l = m2[1].length, m2 = parseInt(m2[1], 16), l === 6 ? rgbn(m2) : l === 3 ? new Rgb(m2 >> 8 & 15 | m2 >> 4 & 240, m2 >> 4 & 15 | m2 & 240, (m2 & 15) << 4 | m2 & 15, 1) : l === 8 ? rgba(m2 >> 24 & 255, m2 >> 16 & 255, m2 >> 8 & 255, (m2 & 255) / 255) : l === 4 ? rgba(m2 >> 12 & 15 | m2 >> 8 & 240, m2 >> 8 & 15 | m2 >> 4 & 240, m2 >> 4 & 15 | m2 & 240, ((m2 & 15) << 4 | m2 & 15) / 255) : null) : (m2 = reRgbInteger.exec(format2)) ? new Rgb(m2[1], m2[2], m2[3], 1) : (m2 = reRgbPercent.exec(format2)) ? new Rgb(m2[1] * 255 / 100, m2[2] * 255 / 100, m2[3] * 255 / 100, 1) : (m2 = reRgbaInteger.exec(format2)) ? rgba(m2[1], m2[2], m2[3], m2[4]) : (m2 = reRgbaPercent.exec(format2)) ? rgba(m2[1] * 255 / 100, m2[2] * 255 / 100, m2[3] * 255 / 100, m2[4]) : (m2 = reHslPercent.exec(format2)) ? hsla(m2[1], m2[2] / 100, m2[3] / 100, 1) : (m2 = reHslaPercent.exec(format2)) ? hsla(m2[1], m2[2] / 100, m2[3] / 100, m2[4]) : named.hasOwnProperty(format2) ? rgbn(named[format2]) : format2 === "transparent" ? new Rgb(NaN, NaN, NaN, 0) : null;
+  return (m2 = reHex.exec(format2)) ? (l2 = m2[1].length, m2 = parseInt(m2[1], 16), l2 === 6 ? rgbn(m2) : l2 === 3 ? new Rgb(m2 >> 8 & 15 | m2 >> 4 & 240, m2 >> 4 & 15 | m2 & 240, (m2 & 15) << 4 | m2 & 15, 1) : l2 === 8 ? rgba(m2 >> 24 & 255, m2 >> 16 & 255, m2 >> 8 & 255, (m2 & 255) / 255) : l2 === 4 ? rgba(m2 >> 12 & 15 | m2 >> 8 & 240, m2 >> 8 & 15 | m2 >> 4 & 240, m2 >> 4 & 15 | m2 & 240, ((m2 & 15) << 4 | m2 & 15) / 255) : null) : (m2 = reRgbInteger.exec(format2)) ? new Rgb(m2[1], m2[2], m2[3], 1) : (m2 = reRgbPercent.exec(format2)) ? new Rgb(m2[1] * 255 / 100, m2[2] * 255 / 100, m2[3] * 255 / 100, 1) : (m2 = reRgbaInteger.exec(format2)) ? rgba(m2[1], m2[2], m2[3], m2[4]) : (m2 = reRgbaPercent.exec(format2)) ? rgba(m2[1] * 255 / 100, m2[2] * 255 / 100, m2[3] * 255 / 100, m2[4]) : (m2 = reHslPercent.exec(format2)) ? hsla(m2[1], m2[2] / 100, m2[3] / 100, 1) : (m2 = reHslaPercent.exec(format2)) ? hsla(m2[1], m2[2] / 100, m2[3] / 100, m2[4]) : named.hasOwnProperty(format2) ? rgbn(named[format2]) : format2 === "transparent" ? new Rgb(NaN, NaN, NaN, 0) : null;
 }
 function rgbn(n2) {
   return new Rgb(n2 >> 16 & 255, n2 >> 8 & 255, n2 & 255, 1);
@@ -1342,11 +1342,11 @@ function hex(value) {
   value = clampi(value);
   return (value < 16 ? "0" : "") + value.toString(16);
 }
-function hsla(h2, s2, l, a2) {
-  if (a2 <= 0) h2 = s2 = l = NaN;
-  else if (l <= 0 || l >= 1) h2 = s2 = NaN;
+function hsla(h2, s2, l2, a2) {
+  if (a2 <= 0) h2 = s2 = l2 = NaN;
+  else if (l2 <= 0 || l2 >= 1) h2 = s2 = NaN;
   else if (s2 <= 0) h2 = NaN;
-  return new Hsl(h2, s2, l, a2);
+  return new Hsl(h2, s2, l2, a2);
 }
 function hslConvert(o2) {
   if (o2 instanceof Hsl) return new Hsl(o2.h, o2.s, o2.l, o2.opacity);
@@ -1354,25 +1354,25 @@ function hslConvert(o2) {
   if (!o2) return new Hsl();
   if (o2 instanceof Hsl) return o2;
   o2 = o2.rgb();
-  var r = o2.r / 255, g2 = o2.g / 255, b2 = o2.b / 255, min2 = Math.min(r, g2, b2), max2 = Math.max(r, g2, b2), h2 = NaN, s2 = max2 - min2, l = (max2 + min2) / 2;
+  var r = o2.r / 255, g2 = o2.g / 255, b2 = o2.b / 255, min2 = Math.min(r, g2, b2), max2 = Math.max(r, g2, b2), h2 = NaN, s2 = max2 - min2, l2 = (max2 + min2) / 2;
   if (s2) {
     if (r === max2) h2 = (g2 - b2) / s2 + (g2 < b2) * 6;
     else if (g2 === max2) h2 = (b2 - r) / s2 + 2;
     else h2 = (r - g2) / s2 + 4;
-    s2 /= l < 0.5 ? max2 + min2 : 2 - max2 - min2;
+    s2 /= l2 < 0.5 ? max2 + min2 : 2 - max2 - min2;
     h2 *= 60;
   } else {
-    s2 = l > 0 && l < 1 ? 0 : h2;
+    s2 = l2 > 0 && l2 < 1 ? 0 : h2;
   }
-  return new Hsl(h2, s2, l, o2.opacity);
+  return new Hsl(h2, s2, l2, o2.opacity);
 }
-function hsl(h2, s2, l, opacity) {
-  return arguments.length === 1 ? hslConvert(h2) : new Hsl(h2, s2, l, opacity == null ? 1 : opacity);
+function hsl(h2, s2, l2, opacity) {
+  return arguments.length === 1 ? hslConvert(h2) : new Hsl(h2, s2, l2, opacity == null ? 1 : opacity);
 }
-function Hsl(h2, s2, l, opacity) {
+function Hsl(h2, s2, l2, opacity) {
   this.h = +h2;
   this.s = +s2;
-  this.l = +l;
+  this.l = +l2;
   this.opacity = +opacity;
 }
 define_default(Hsl, hsl, extend(Color, {
@@ -1385,7 +1385,7 @@ define_default(Hsl, hsl, extend(Color, {
     return new Hsl(this.h, this.s, this.l * k2, this.opacity);
   },
   rgb() {
-    var h2 = this.h % 360 + (this.h < 0) * 360, s2 = isNaN(h2) || isNaN(this.s) ? 0 : this.s, l = this.l, m2 = l + (l < 0.5 ? l : 1 - l) * s2, m1 = 2 * l - m2;
+    var h2 = this.h % 360 + (this.h < 0) * 360, s2 = isNaN(h2) || isNaN(this.s) ? 0 : this.s, l2 = this.l, m2 = l2 + (l2 < 0.5 ? l2 : 1 - l2) * s2, m1 = 2 * l2 - m2;
     return new Rgb(
       hsl2rgb(h2 >= 240 ? h2 - 240 : h2 + 120, m1, m2),
       hsl2rgb(h2, m1, m2),
@@ -1441,9 +1441,9 @@ function basisClosed_default(values) {
 var constant_default2 = (x2) => () => x2;
 
 // node_modules/d3-interpolate/src/color.js
-function linear(a2, d2) {
+function linear(a2, d) {
   return function(t2) {
-    return a2 + t2 * d2;
+    return a2 + t2 * d;
   };
 }
 function exponential(a2, b2, y2) {
@@ -1457,8 +1457,8 @@ function gamma(y2) {
   };
 }
 function nogamma(a2, b2) {
-  var d2 = b2 - a2;
-  return d2 ? linear(a2, d2) : constant_default2(isNaN(a2) ? b2 : a2);
+  var d = b2 - a2;
+  return d ? linear(a2, d) : constant_default2(isNaN(a2) ? b2 : a2);
 }
 
 // node_modules/d3-interpolate/src/rgb.js
@@ -1527,9 +1527,9 @@ function genericArray(a2, b2) {
 
 // node_modules/d3-interpolate/src/date.js
 function date_default(a2, b2) {
-  var d2 = /* @__PURE__ */ new Date();
+  var d = /* @__PURE__ */ new Date();
   return a2 = +a2, b2 = +b2, function(t2) {
-    return d2.setTime(a2 * (1 - t2) + b2 * t2), d2;
+    return d.setTime(a2 * (1 - t2) + b2 * t2), d;
   };
 }
 
@@ -1623,15 +1623,15 @@ var identity = {
   scaleX: 1,
   scaleY: 1
 };
-function decompose_default(a2, b2, c2, d2, e3, f2) {
+function decompose_default(a2, b2, c2, d, e3, f) {
   var scaleX, scaleY, skewX;
   if (scaleX = Math.sqrt(a2 * a2 + b2 * b2)) a2 /= scaleX, b2 /= scaleX;
-  if (skewX = a2 * c2 + b2 * d2) c2 -= a2 * skewX, d2 -= b2 * skewX;
-  if (scaleY = Math.sqrt(c2 * c2 + d2 * d2)) c2 /= scaleY, d2 /= scaleY, skewX /= scaleY;
-  if (a2 * d2 < b2 * c2) a2 = -a2, b2 = -b2, skewX = -skewX, scaleX = -scaleX;
+  if (skewX = a2 * c2 + b2 * d) c2 -= a2 * skewX, d -= b2 * skewX;
+  if (scaleY = Math.sqrt(c2 * c2 + d * d)) c2 /= scaleY, d /= scaleY, skewX /= scaleY;
+  if (a2 * d < b2 * c2) a2 = -a2, b2 = -b2, skewX = -skewX, scaleX = -scaleX;
   return {
     translateX: e3,
-    translateY: f2,
+    translateY: f,
     rotate: Math.atan2(b2, a2) * degrees,
     skewX: Math.atan(skewX) * degrees,
     scaleX,
@@ -1720,8 +1720,8 @@ var clockLast = 0;
 var clockNow = 0;
 var clockSkew = 0;
 var clock = typeof performance === "object" && performance.now ? performance : Date;
-var setFrame = typeof window === "object" && window.requestAnimationFrame ? window.requestAnimationFrame.bind(window) : function(f2) {
-  setTimeout(f2, 17);
+var setFrame = typeof window === "object" && window.requestAnimationFrame ? window.requestAnimationFrame.bind(window) : function(f) {
+  setTimeout(f, 17);
 };
 function now() {
   return clockNow || (setFrame(clearNow), clockNow = clock.now() + clockSkew);
@@ -1877,7 +1877,7 @@ function create(node, id2, self) {
     if (self.delay <= elapsed) start2(elapsed - self.delay);
   }
   function start2(elapsed) {
-    var i, j, n2, o2;
+    var i, j2, n2, o2;
     if (self.state !== SCHEDULED) return stop();
     for (i in schedules) {
       o2 = schedules[i];
@@ -1907,12 +1907,12 @@ function create(node, id2, self) {
     if (self.state !== STARTING) return;
     self.state = STARTED;
     tween = new Array(n2 = self.tween.length);
-    for (i = 0, j = -1; i < n2; ++i) {
+    for (i = 0, j2 = -1; i < n2; ++i) {
       if (o2 = self.tween[i].value.call(node, node.__data__, self.index, self.group)) {
-        tween[++j] = o2;
+        tween[++j2] = o2;
       }
     }
-    tween.length = j + 1;
+    tween.length = j2 + 1;
   }
   function tick(elapsed) {
     var t2 = elapsed < self.duration ? self.ease.call(null, elapsed / self.duration) : (self.timer.restart(stop), self.state = ENDING, 1), i = -1, n2 = tween.length;
@@ -2176,8 +2176,8 @@ function easeVarying_default(value) {
 // node_modules/d3-transition/src/transition/filter.js
 function filter_default2(match) {
   if (typeof match !== "function") match = matcher_default(match);
-  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
-    for (var group = groups[j], n2 = group.length, subgroup = subgroups[j] = [], node, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j2 = 0; j2 < m2; ++j2) {
+    for (var group = groups[j2], n2 = group.length, subgroup = subgroups[j2] = [], node, i = 0; i < n2; ++i) {
       if ((node = group[i]) && match.call(node, node.__data__, i, group)) {
         subgroup.push(node);
       }
@@ -2189,15 +2189,15 @@ function filter_default2(match) {
 // node_modules/d3-transition/src/transition/merge.js
 function merge_default2(transition2) {
   if (transition2._id !== this._id) throw new Error();
-  for (var groups0 = this._groups, groups1 = transition2._groups, m0 = groups0.length, m1 = groups1.length, m2 = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m2; ++j) {
-    for (var group0 = groups0[j], group1 = groups1[j], n2 = group0.length, merge = merges[j] = new Array(n2), node, i = 0; i < n2; ++i) {
+  for (var groups0 = this._groups, groups1 = transition2._groups, m0 = groups0.length, m1 = groups1.length, m2 = Math.min(m0, m1), merges = new Array(m0), j2 = 0; j2 < m2; ++j2) {
+    for (var group0 = groups0[j2], group1 = groups1[j2], n2 = group0.length, merge = merges[j2] = new Array(n2), node, i = 0; i < n2; ++i) {
       if (node = group0[i] || group1[i]) {
         merge[i] = node;
       }
     }
   }
-  for (; j < m0; ++j) {
-    merges[j] = groups0[j];
+  for (; j2 < m0; ++j2) {
+    merges[j2] = groups0[j2];
   }
   return new Transition(merges, this._parents, this._name, this._id);
 }
@@ -2239,8 +2239,8 @@ function remove_default2() {
 function select_default2(select) {
   var name2 = this._name, id2 = this._id;
   if (typeof select !== "function") select = selector_default(select);
-  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
-    for (var group = groups[j], n2 = group.length, subgroup = subgroups[j] = new Array(n2), node, subnode, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j2 = 0; j2 < m2; ++j2) {
+    for (var group = groups[j2], n2 = group.length, subgroup = subgroups[j2] = new Array(n2), node, subnode, i = 0; i < n2; ++i) {
       if ((node = group[i]) && (subnode = select.call(node, node.__data__, i, group))) {
         if ("__data__" in node) subnode.__data__ = node.__data__;
         subgroup[i] = subnode;
@@ -2255,10 +2255,10 @@ function select_default2(select) {
 function selectAll_default2(select) {
   var name2 = this._name, id2 = this._id;
   if (typeof select !== "function") select = selectorAll_default(select);
-  for (var groups = this._groups, m2 = groups.length, subgroups = [], parents = [], j = 0; j < m2; ++j) {
-    for (var group = groups[j], n2 = group.length, node, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, subgroups = [], parents = [], j2 = 0; j2 < m2; ++j2) {
+    for (var group = groups[j2], n2 = group.length, node, i = 0; i < n2; ++i) {
       if (node = group[i]) {
-        for (var children2 = select.call(node, node.__data__, i, group), child, inherit2 = get2(node, id2), k2 = 0, l = children2.length; k2 < l; ++k2) {
+        for (var children2 = select.call(node, node.__data__, i, group), child, inherit2 = get2(node, id2), k2 = 0, l2 = children2.length; k2 < l2; ++k2) {
           if (child = children2[k2]) {
             schedule_default(child, name2, id2, k2, children2, inherit2);
           }
@@ -2385,8 +2385,8 @@ function textTween_default(value) {
 // node_modules/d3-transition/src/transition/transition.js
 function transition_default() {
   var name2 = this._name, id0 = this._id, id1 = newId();
-  for (var groups = this._groups, m2 = groups.length, j = 0; j < m2; ++j) {
-    for (var group = groups[j], n2 = group.length, node, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, j2 = 0; j2 < m2; ++j2) {
+    for (var group = groups[j2], n2 = group.length, node, i = 0; i < n2; ++i) {
       if (node = group[i]) {
         var inherit2 = get2(node, id0);
         schedule_default(node, name2, id1, i, group, {
@@ -2499,8 +2499,8 @@ function transition_default2(name2) {
   } else {
     id2 = newId(), (timing = defaultTiming).time = now(), name2 = name2 == null ? null : name2 + "";
   }
-  for (var groups = this._groups, m2 = groups.length, j = 0; j < m2; ++j) {
-    for (var group = groups[j], n2 = group.length, node, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, j2 = 0; j2 < m2; ++j2) {
+    for (var group = groups[j2], n2 = group.length, node, i = 0; i < n2; ++i) {
       if (node = group[i]) {
         schedule_default(node, name2, id2, i, group, timing || inherit(node, id2));
       }
@@ -2576,12 +2576,12 @@ function exponent_default(x2) {
 // node_modules/d3-format/src/formatGroup.js
 function formatGroup_default(grouping, thousands) {
   return function(value, width) {
-    var i = value.length, t2 = [], j = 0, g2 = grouping[0], length = 0;
+    var i = value.length, t2 = [], j2 = 0, g2 = grouping[0], length = 0;
     while (i > 0 && g2 > 0) {
       if (length + g2 + 1 > width) g2 = Math.max(1, width - length);
       t2.push(value.substring(i -= g2, i + g2));
       if ((length += g2 + 1) > width) break;
-      g2 = grouping[j = (j + 1) % grouping.length];
+      g2 = grouping[j2 = (j2 + 1) % grouping.length];
     }
     return t2.reverse().join(thousands);
   };
@@ -2654,17 +2654,17 @@ function formatTrim_default(s2) {
 // node_modules/d3-format/src/formatPrefixAuto.js
 var prefixExponent;
 function formatPrefixAuto_default(x2, p2) {
-  var d2 = formatDecimalParts(x2, p2);
-  if (!d2) return prefixExponent = void 0, x2.toPrecision(p2);
-  var coefficient = d2[0], exponent = d2[1], i = exponent - (prefixExponent = Math.max(-8, Math.min(8, Math.floor(exponent / 3))) * 3) + 1, n2 = coefficient.length;
+  var d = formatDecimalParts(x2, p2);
+  if (!d) return prefixExponent = void 0, x2.toPrecision(p2);
+  var coefficient = d[0], exponent = d[1], i = exponent - (prefixExponent = Math.max(-8, Math.min(8, Math.floor(exponent / 3))) * 3) + 1, n2 = coefficient.length;
   return i === n2 ? coefficient : i > n2 ? coefficient + new Array(i - n2 + 1).join("0") : i > 0 ? coefficient.slice(0, i) + "." + coefficient.slice(i) : "0." + new Array(1 - i).join("0") + formatDecimalParts(x2, Math.max(0, p2 + i - 1))[0];
 }
 
 // node_modules/d3-format/src/formatRounded.js
 function formatRounded_default(x2, p2) {
-  var d2 = formatDecimalParts(x2, p2);
-  if (!d2) return x2 + "";
-  var coefficient = d2[0], exponent = d2[1];
+  var d = formatDecimalParts(x2, p2);
+  if (!d) return x2 + "";
+  var coefficient = d[0], exponent = d[1];
   return exponent < 0 ? "0." + new Array(-exponent).join("0") + coefficient : coefficient.length > exponent + 1 ? coefficient.slice(0, exponent + 1) + "." + coefficient.slice(exponent + 1) : coefficient + new Array(exponent - coefficient.length + 2).join("0");
 }
 
@@ -2753,9 +2753,9 @@ function locale_default(locale2) {
     return format2;
   }
   function formatPrefix2(specifier, value) {
-    var e3 = Math.max(-8, Math.min(8, Math.floor(exponent_default(value) / 3))) * 3, k2 = Math.pow(10, -e3), f2 = newFormat((specifier = formatSpecifier(specifier), specifier.type = "f", specifier), { suffix: prefixes[8 + e3 / 3] });
+    var e3 = Math.max(-8, Math.min(8, Math.floor(exponent_default(value) / 3))) * 3, k2 = Math.pow(10, -e3), f = newFormat((specifier = formatSpecifier(specifier), specifier.type = "f", specifier), { suffix: prefixes[8 + e3 / 3] });
     return function(value2) {
-      return f2(k2 * value2);
+      return f(k2 * value2);
     };
   }
   return {
@@ -2815,11 +2815,11 @@ function initRange(domain, range2) {
 var implicit = Symbol("implicit");
 function ordinal() {
   var index = new InternMap(), domain = [], range2 = [], unknown = implicit;
-  function scale(d2) {
-    let i = index.get(d2);
+  function scale(d) {
+    let i = index.get(d);
     if (i === void 0) {
       if (unknown !== implicit) return unknown;
-      index.set(d2, i = domain.push(d2) - 1);
+      index.set(d, i = domain.push(d) - 1);
     }
     return range2[i % range2.length];
   }
@@ -2948,18 +2948,18 @@ function bimap(domain, range2, interpolate) {
   };
 }
 function polymap(domain, range2, interpolate) {
-  var j = Math.min(domain.length, range2.length) - 1, d2 = new Array(j), r = new Array(j), i = -1;
-  if (domain[j] < domain[0]) {
+  var j2 = Math.min(domain.length, range2.length) - 1, d = new Array(j2), r = new Array(j2), i = -1;
+  if (domain[j2] < domain[0]) {
     domain = domain.slice().reverse();
     range2 = range2.slice().reverse();
   }
-  while (++i < j) {
-    d2[i] = normalize(domain[i], domain[i + 1]);
+  while (++i < j2) {
+    d[i] = normalize(domain[i], domain[i + 1]);
     r[i] = interpolate(range2[i], range2[i + 1]);
   }
   return function(x2) {
-    var i2 = bisect_default(domain, x2, 1, j) - 1;
-    return r[i2](d2[i2](x2));
+    var i2 = bisect_default(domain, x2, 1, j2) - 1;
+    return r[i2](d[i2](x2));
   };
 }
 function copy(source, target) {
@@ -2998,8 +2998,8 @@ function transformer() {
   scale.unknown = function(_2) {
     return arguments.length ? (unknown = _2, scale) : unknown;
   };
-  return function(t2, u) {
-    transform2 = t2, untransform = u;
+  return function(t2, u2) {
+    transform2 = t2, untransform = u2;
     return rescale();
   };
 }
@@ -3038,20 +3038,20 @@ function tickFormat(start2, stop, count, specifier) {
 function linearish(scale) {
   var domain = scale.domain;
   scale.ticks = function(count) {
-    var d2 = domain();
-    return ticks(d2[0], d2[d2.length - 1], count == null ? 10 : count);
+    var d = domain();
+    return ticks(d[0], d[d.length - 1], count == null ? 10 : count);
   };
   scale.tickFormat = function(count, specifier) {
-    var d2 = domain();
-    return tickFormat(d2[0], d2[d2.length - 1], count == null ? 10 : count, specifier);
+    var d = domain();
+    return tickFormat(d[0], d[d.length - 1], count == null ? 10 : count, specifier);
   };
   scale.nice = function(count) {
     if (count == null) count = 10;
-    var d2 = domain();
+    var d = domain();
     var i0 = 0;
-    var i1 = d2.length - 1;
-    var start2 = d2[i0];
-    var stop = d2[i1];
+    var i1 = d.length - 1;
+    var start2 = d[i0];
+    var stop = d[i1];
     var prestep;
     var step;
     var maxIter = 10;
@@ -3062,9 +3062,9 @@ function linearish(scale) {
     while (maxIter-- > 0) {
       step = tickIncrement(start2, stop, count);
       if (step === prestep) {
-        d2[i0] = start2;
-        d2[i1] = stop;
-        return domain(d2);
+        d[i0] = start2;
+        d[i1] = stop;
+        return domain(d);
       } else if (step > 0) {
         start2 = Math.floor(start2 / step) * step;
         stop = Math.ceil(stop / step) * step;
@@ -3140,7 +3140,7 @@ function transform(node) {
 
 // node_modules/wsr-ui-core/dist/index.js
 var import_react = require("react");
-function c({ children: e3, className: n2, density: r, theme: i = "system" }) {
+function u({ children: e3, className: n2, density: r, theme: i = "system" }) {
   let a2 = typeof i == "string" ? i : i.mode, o2 = r ?? (typeof i == "string" ? "comfortable" : i.density), s2 = typeof i == "string" ? void 0 : { "--wsr-container-border-style": i.containerBorderStyle };
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: ["wsr-bi", n2].filter(Boolean).join(" "),
@@ -3150,44 +3150,44 @@ function c({ children: e3, className: n2, density: r, theme: i = "system" }) {
     children: e3
   });
 }
-function d({ mode: e3, density: t2 = "comfortable", containerBorderStyle: n2 = "solid" }) {
+function p({ mode: e3, density: t2 = "comfortable", containerBorderStyle: n2 = "solid" }) {
   return Object.freeze({
     mode: e3,
     density: t2,
     containerBorderStyle: n2
   });
 }
-function f(e3) {
+function m(e3) {
   let t2 = e3.startsWith("-"), n2 = (t2 ? e3.slice(1) : e3).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return t2 ? `-${n2}` : n2;
 }
-function p(e3) {
+function h(e3) {
   let [t2, n2] = e3.split("/");
   return [BigInt(t2), BigInt(n2 ?? "1")];
 }
-function m(e3) {
-  let [t2, n2] = p(e3), r = t2 < 0n, i = (r ? -t2 : t2) * 10000n, a2 = i / n2;
+function g(e3) {
+  let [t2, n2] = h(e3), r = t2 < 0n, i = (r ? -t2 : t2) * 10000n, a2 = i / n2;
   i % n2 * 2n >= n2 && (a2 += 1n);
   let o2 = a2 / 100n, s2 = String(a2 % 100n).padStart(2, "0");
   return `${r ? "-" : ""}${o2}.${s2}%`;
 }
-function h(e3) {
+function _(e3) {
   let t2 = `${String(e3.value)} ${e3.unit}`;
   return e3.kind === "RATIO" ? {
-    display: m(e3.value),
+    display: g(e3.value),
     exact: t2
   } : e3.kind === "BOOLEAN" ? {
     display: t2,
     exact: t2
   } : /^-?(?:0|[1-9][0-9]*)$/.test(e3.value) ? {
-    display: `${f(e3.value)} ${e3.unit}`,
+    display: `${m(e3.value)} ${e3.unit}`,
     exact: t2
   } : {
     display: t2,
     exact: t2
   };
 }
-var g = /* @__PURE__ */ new Set([
+var ee = /* @__PURE__ */ new Set([
   "AVAILABLE",
   "LOWER_BOUND",
   "NOT_APPLICABLE",
@@ -3195,7 +3195,7 @@ var g = /* @__PURE__ */ new Set([
   "EXPIRED",
   "INCOMPATIBLE"
 ]);
-var ee = /* @__PURE__ */ new Set([
+var te = /* @__PURE__ */ new Set([
   "COUNT",
   "QUANTITY",
   "RATIO",
@@ -3203,7 +3203,7 @@ var ee = /* @__PURE__ */ new Set([
   "DURATION_MS",
   "BOOLEAN"
 ]);
-var _ = /* @__PURE__ */ new Set([
+var ne = /* @__PURE__ */ new Set([
   "SAMPLE_INSUFFICIENT",
   "MISSING_INPUT",
   "NO_APPLICABLE_POPULATION",
@@ -3212,7 +3212,7 @@ var _ = /* @__PURE__ */ new Set([
   "EXPIRED_INPUT",
   "INCOMPATIBLE_INPUT"
 ]);
-var te = /* @__PURE__ */ new Set([
+var re2 = /* @__PURE__ */ new Set([
   "NO_POPULATION",
   "NO_COVERAGE",
   "PARTIAL",
@@ -3222,12 +3222,12 @@ var v = (e3) => typeof e3 == "object" && !!e3 && !Array.isArray(e3);
 var y = (e3) => Array.isArray(e3) && e3.every((e4) => typeof e4 == "string");
 function b(e3) {
   return !v(e3) || typeof e3.metric_id != "string" || e3.metric_id.length === 0 || e3.metric_version !== "2.0.0" || !Array.isArray(e3.slices) ? false : e3.slices.every((e4) => {
-    let t2 = typeof e4 == "object" && !!e4 && (e4.coverage === null || v(e4.coverage) && typeof e4.coverage.numerator == "string" && typeof e4.coverage.denominator == "string" && (e4.coverage.raw_ratio === null || typeof e4.coverage.raw_ratio == "string") && typeof e4.coverage.state == "string" && te.has(e4.coverage.state) && (e4.coverage.alert === null || e4.coverage.alert === "LOW_COVERAGE"));
-    return !v(e4) || !v(e4.slice_key) || typeof e4.state != "string" || !g.has(e4.state) || !v(e4.measures) || !v(e4.compatibility) || !y(e4.exclusions) || !y(e4.missing_inputs) || !y(e4.provenance_refs) || !t2 || e4.numerator !== void 0 && typeof e4.numerator != "string" || e4.denominator !== void 0 && typeof e4.denominator != "string" || e4.contributing_count !== void 0 && typeof e4.contributing_count != "string" || e4.reading !== void 0 && typeof e4.reading != "string" ? false : e4.value === void 0 ? typeof e4.withholding_reason == "string" && _.has(e4.withholding_reason) : !v(e4.value) || typeof e4.value.kind != "string" || !ee.has(e4.value.kind) || typeof e4.value.unit != "string" ? false : e4.value.kind === "BOOLEAN" ? typeof e4.value.value == "boolean" : typeof e4.value.value == "string" ? e4.value.kind === "RATIO" ? /^-?(?:0|[1-9][0-9]*)(?:\/[1-9][0-9]*)?$/u.test(e4.value.value) : /^-?(?:0|[1-9][0-9]*)$/u.test(e4.value.value) || e4.value.kind === "MONEY" || e4.value.kind === "QUANTITY" : false;
+    let t2 = typeof e4 == "object" && !!e4 && (e4.coverage === null || v(e4.coverage) && typeof e4.coverage.numerator == "string" && typeof e4.coverage.denominator == "string" && (e4.coverage.raw_ratio === null || typeof e4.coverage.raw_ratio == "string") && typeof e4.coverage.state == "string" && re2.has(e4.coverage.state) && (e4.coverage.alert === null || e4.coverage.alert === "LOW_COVERAGE"));
+    return !v(e4) || !v(e4.slice_key) || typeof e4.state != "string" || !ee.has(e4.state) || !v(e4.measures) || !v(e4.compatibility) || !y(e4.exclusions) || !y(e4.missing_inputs) || !y(e4.provenance_refs) || !t2 || e4.numerator !== void 0 && typeof e4.numerator != "string" || e4.denominator !== void 0 && typeof e4.denominator != "string" || e4.contributing_count !== void 0 && typeof e4.contributing_count != "string" || e4.reading !== void 0 && typeof e4.reading != "string" ? false : e4.value === void 0 ? typeof e4.withholding_reason == "string" && ne.has(e4.withholding_reason) : !v(e4.value) || typeof e4.value.kind != "string" || !te.has(e4.value.kind) || typeof e4.value.unit != "string" ? false : e4.value.kind === "BOOLEAN" ? typeof e4.value.value == "boolean" : typeof e4.value.value == "string" ? e4.value.kind === "RATIO" ? /^-?(?:0|[1-9][0-9]*)(?:\/[1-9][0-9]*)?$/u.test(e4.value.value) : /^-?(?:0|[1-9][0-9]*)$/u.test(e4.value.value) || e4.value.kind === "MONEY" || e4.value.kind === "QUANTITY" : false;
   });
 }
 var x = (e3) => e3;
-var ne = {
+var ie = {
   "numeric-card@1": x({
     id: "numeric-card@1",
     arity: "ONE_SLICE",
@@ -3293,7 +3293,7 @@ function C(e3) {
   let t2 = e3.slices[0]?.value;
   return t2?.kind === "BOOLEAN" ? "badge@1" : t2?.kind === "RATIO" && t2.unit === "ratio" ? "ratio-bar@1" : "numeric-card@1";
 }
-var re2 = {
+var ae = {
   AVAILABLE: {
     label: "Available",
     marker: "\u2713",
@@ -3326,7 +3326,7 @@ var re2 = {
   }
 };
 function w({ state: e3, withholdingReason: r, reading: i }) {
-  let a2 = re2[e3];
+  let a2 = ae[e3];
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "status-stack",
     "data-state": e3,
@@ -3349,13 +3349,13 @@ function w({ state: e3, withholdingReason: r, reading: i }) {
     ]
   });
 }
-var ie = {
+var oe = {
   NO_POPULATION: "No applicable population",
   NO_COVERAGE: "No coverage",
   PARTIAL: "Partial coverage",
   FULL: "Full coverage"
 };
-var T = {
+var se = {
   NO_POPULATION: {
     marker: "\u25CB",
     tone: "unavailable"
@@ -3373,7 +3373,7 @@ var T = {
     tone: "available"
   }
 };
-function E({ coverage: e3 }) {
+function T({ coverage: e3 }) {
   if (e3 === null) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "coverage-label",
     "data-coverage": "UNAVAILABLE",
@@ -3385,7 +3385,7 @@ function E({ coverage: e3 }) {
       }), "Coverage unavailable"]
     })
   });
-  let r = T[e3.state];
+  let r = se[e3.state];
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "coverage-label",
     "data-coverage": e3.state,
@@ -3395,7 +3395,7 @@ function E({ coverage: e3 }) {
         children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           "aria-hidden": "true",
           children: r.marker
-        }), ie[e3.state]]
+        }), oe[e3.state]]
       }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
         className: "numeric-exact",
@@ -3412,10 +3412,10 @@ function E({ coverage: e3 }) {
     ]
   });
 }
-var D = (e3) => e3.toLowerCase().replaceAll("_", " ");
-function O(e3) {
+var E = (e3) => e3.toLowerCase().replaceAll("_", " ");
+function D(e3) {
   if (e3.traceState !== void 0) {
-    let r2 = e3.traceState === "PARTIAL" ? "partial recorded data" : D(e3.traceState), i = e3.traceState === "AVAILABLE" ? "available" : e3.traceState === "EXPIRED" ? "expired" : e3.traceState === "PARTIAL" ? "attention" : "unavailable";
+    let r2 = e3.traceState === "PARTIAL" ? "partial recorded data" : E(e3.traceState), i = e3.traceState === "AVAILABLE" ? "available" : e3.traceState === "EXPIRED" ? "expired" : e3.traceState === "PARTIAL" ? "attention" : "unavailable";
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
       className: `status-label status-${i}`,
       children: [
@@ -3432,13 +3432,13 @@ function O(e3) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "lifecycle-grid",
     children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Completeness: ", D(r.completeness ?? "UNSPECIFIED")] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Availability: ", D(r.availability)] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Expiry: ", D(r.expiry)] })
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Completeness: ", E(r.completeness ?? "UNSPECIFIED")] }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Availability: ", E(r.availability)] }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Expiry: ", E(r.expiry)] })
     ]
   });
 }
-function k({ title: e3, detail: r, correlation: i, retryable: a2, onRetry: o2, announce: s2 }) {
+function O({ title: e3, detail: r, correlation: i, retryable: a2, onRetry: o2, announce: s2 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-live": s2,
     className: "scoped-error",
@@ -3465,9 +3465,9 @@ function k({ title: e3, detail: r, correlation: i, retryable: a2, onRetry: o2, a
     ]
   });
 }
-function ae({ slice: e3 }) {
+function ce({ slice: e3 }) {
   if (e3.value === void 0) return null;
-  let r = h(e3.value), i = ` ${e3.value.unit}`, a2 = r.display.endsWith(i) ? r.display.slice(0, -i.length) : r.display;
+  let r = _(e3.value), i = ` ${e3.value.unit}`, a2 = r.display.endsWith(i) ? r.display.slice(0, -i.length) : r.display;
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "metric-value",
     children: [
@@ -3486,7 +3486,7 @@ function ae({ slice: e3 }) {
     ]
   });
 }
-function oe({ slice: e3 }) {
+function le({ slice: e3 }) {
   let r = Object.entries(e3.measures), i = [
     ["Numerator", e3.numerator],
     ["Denominator", e3.denominator],
@@ -3503,7 +3503,7 @@ function oe({ slice: e3 }) {
     })] }, e4))]
   });
 }
-function se({ slice: e3 }) {
+function ue({ slice: e3 }) {
   let r = Object.entries(e3.compatibility);
   return e3.state !== "INCOMPATIBLE" || r.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Incompatible coordinates",
@@ -3518,7 +3518,7 @@ function se({ slice: e3 }) {
     }) }, e4)) })]
   });
 }
-function A({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvidence: s2, onRecover: c2, focusEvidenceAction: l = false, recoveryLabel: u = "Recover result" }) {
+function k({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvidence: s2, onRecover: c2, focusEvidenceAction: l2 = false, recoveryLabel: u2 = "Recover result" }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
     "aria-label": r,
     className: "metric-frame",
@@ -3537,18 +3537,18 @@ function A({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvid
       className: "loading-state",
       role: "status",
       children: "Loading metric\u2026"
-    }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(k, {
+    }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, {
       announce: "assertive",
       detail: i.detail,
       onRetry: i.onRetry,
       retryable: i.retryable,
       title: "Metric request failed"
     }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ae, { slice: i.slice }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ce, { slice: i.slice }),
       i.slice.value === void 0 ? null : a2,
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(oe, { slice: i.slice }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(se, { slice: i.slice }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(E, { coverage: i.slice.coverage }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(le, { slice: i.slice }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ue, { slice: i.slice }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(T, { coverage: i.slice.coverage }),
       i.slice.missing_inputs.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
         className: "status-reading",
         children: ["Missing inputs: ", i.slice.missing_inputs.join(", ")]
@@ -3560,7 +3560,7 @@ function A({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvid
             className: "action-control",
             onClick: c2,
             type: "button",
-            children: u
+            children: u2
           }),
           o2 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
             className: "action-control",
@@ -3569,7 +3569,7 @@ function A({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvid
             children: "Metric explanation"
           }),
           s2 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-            autoFocus: l,
+            autoFocus: l2,
             className: "action-control",
             onClick: (e3) => s2(e3.currentTarget),
             type: "button",
@@ -3580,7 +3580,7 @@ function A({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvid
     ] })]
   });
 }
-function M({ onExplain: e3, onEvidence: r, focusEvidenceAction: i = false }) {
+function j({ onExplain: e3, onEvidence: r, focusEvidenceAction: i = false }) {
   return e3 === void 0 && r === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("footer", {
     className: "metric-actions",
     children: [e3 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
@@ -3597,7 +3597,7 @@ function M({ onExplain: e3, onEvidence: r, focusEvidenceAction: i = false }) {
     })]
   });
 }
-function N({ coordinate: e3, slices: r, label: i = "Result data" }) {
+function M({ coordinate: e3, slices: r, label: i = "Result data" }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "bounded-table",
     children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", {
@@ -3651,7 +3651,7 @@ function N({ coordinate: e3, slices: r, label: i = "Result data" }) {
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: e4.state }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
             className: "numeric-exact",
-            children: e4.value === void 0 ? e4.withholding_reason : h(e4.value).exact
+            children: e4.value === void 0 ? e4.withholding_reason : _(e4.value).exact
           }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("td", {
             className: "numeric-exact",
@@ -3683,7 +3683,7 @@ function N({ coordinate: e3, slices: r, label: i = "Result data" }) {
     })
   });
 }
-function le(e3) {
+function fe(e3) {
   let [t2, n2 = "1"] = e3.split("/");
   try {
     let e4 = BigInt(t2), r = BigInt(n2);
@@ -3692,9 +3692,9 @@ function le(e3) {
     return false;
   }
 }
-function ue({ slice: e3 }) {
+function pe({ slice: e3 }) {
   if (e3.value?.kind !== "RATIO") return null;
-  let [i, a2] = e3.value.value.split("/"), o2 = BigInt(a2 ?? "1"), s2 = Number(BigInt(i) * 10000n / o2), c2 = linear2().domain([0, 1e4]).range([8, 198])(s2), l = h(e3.value);
+  let [i, a2] = e3.value.value.split("/"), o2 = BigInt(a2 ?? "1"), s2 = Number(BigInt(i) * 10000n / o2), c2 = linear2().domain([0, 1e4]).range([8, 198])(s2), l2 = _(e3.value);
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "visual-with-fallback",
     children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
@@ -3703,7 +3703,7 @@ function ue({ slice: e3 }) {
       role: "img",
       viewBox: "0 0 206 70",
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("title", { children: `${l.display}; exact ${l.exact}` }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("title", { children: `${l2.display}; exact ${l2.exact}` }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
           className: "stroke-border-default",
           d: "M8 35 H198",
@@ -3729,11 +3729,11 @@ function ue({ slice: e3 }) {
       })] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("tr", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", {
         scope: "row",
         children: "Display percent"
-      }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: l.display })] })] })]
+      }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: l2.display })] })] })]
     })]
   });
 }
-function de({ slice: e3 }) {
+function me({ slice: e3 }) {
   return e3.value?.kind === "BOOLEAN" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
     "aria-label": "Boolean result",
     className: "status-label",
@@ -3748,10 +3748,10 @@ function de({ slice: e3 }) {
     ]
   }) : null;
 }
-function P({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvidenceAction: o2 = false }) {
+function N({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvidenceAction: o2 = false }) {
   if (!b(e3)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
     className: "panel-card",
-    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(k, {
+    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, {
       announce: "assertive",
       detail: "The supplied value does not satisfy the formal Metric Result 2.0.0 contract.",
       retryable: false,
@@ -3759,17 +3759,17 @@ function P({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvide
     })
   });
   let s2 = r ?? C(e3), c2 = `${e3.metric_id}@${e3.metric_version}`;
-  return e3.slices.every((e4) => e4.value === void 0 || S(e4).includes(s2) && (s2 !== "ratio-bar@1" || e4.value.kind === "RATIO" && le(e4.value.value))) ? s2 === "table@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+  return e3.slices.every((e4) => e4.value === void 0 || S(e4).includes(s2) && (s2 !== "ratio-bar@1" || e4.value.kind === "RATIO" && fe(e4.value.value))) ? s2 === "table@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     className: "panel-card",
-    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(N, {
+    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(M, {
       coordinate: c2,
       slices: e3.slices
-    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(M, {
+    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(j, {
       focusEvidenceAction: o2,
       onEvidence: a2,
       onExplain: i
     })]
-  }) : e3.slices.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(A, {
+  }) : e3.slices.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(k, {
     content: {
       tag: "RESULT",
       slice: e4
@@ -3778,22 +3778,22 @@ function P({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvide
     onEvidence: a2,
     onExplain: i,
     focusEvidenceAction: o2,
-    visualization: s2 === "ratio-bar@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ue, { slice: e4 }) : s2 === "badge@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(de, { slice: e4 }) : void 0
+    visualization: s2 === "ratio-bar@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(pe, { slice: e4 }) : s2 === "badge@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(me, { slice: e4 }) : void 0
   }, JSON.stringify(e4.slice_key))) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     className: "panel-card",
     children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(k, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, {
         announce: "polite",
         detail: `${s2} cannot consume the published Result shape without inventing a domain or value.`,
         retryable: false,
         title: "Visualizer binding incompatible"
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(N, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(M, {
         coordinate: c2,
         label: "Fallback result data",
         slices: e3.slices
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(M, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(j, {
         focusEvidenceAction: o2,
         onEvidence: a2,
         onExplain: i
@@ -3801,9 +3801,9 @@ function P({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvide
     ]
   });
 }
-function F({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRetry: s2, onExplain: c2, onEvidence: l, focusEvidenceAction: u, visualizer: d2 }) {
-  let f2 = r.lastIndexOf("@"), p2 = i === void 0 ? void 0 : {
-    metric_id: r.slice(0, f2),
+function P({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRetry: s2, onExplain: c2, onEvidence: l2, focusEvidenceAction: u2, visualizer: d }) {
+  let f = r.lastIndexOf("@"), p2 = i === void 0 ? void 0 : {
+    metric_id: r.slice(0, f),
     metric_version: "2.0.0",
     slices: [i]
   };
@@ -3813,7 +3813,7 @@ function F({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRet
     children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
       className: "text-label",
       children: e3
-    }), p2 === void 0 ? a2 !== void 0 && o2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(k, {
+    }), p2 === void 0 ? a2 !== void 0 && o2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, {
       announce: "assertive",
       detail: `${a2.code}: ${a2.detail}`,
       onRetry: s2,
@@ -3829,16 +3829,16 @@ function F({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRet
         " side unresolved: ",
         a2.code
       ]
-    }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(P, {
+    }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(N, {
       result: p2,
-      visualizer: d2,
-      focusEvidenceAction: u,
-      onEvidence: l,
+      visualizer: d,
+      focusEvidenceAction: u2,
+      onEvidence: l2,
       onExplain: c2
     })]
   });
 }
-function fe({ delta: e3 }) {
+function he({ delta: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Delta result",
     className: "compare-delta",
@@ -3850,7 +3850,7 @@ function fe({ delta: e3 }) {
       children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           className: "metric-number",
-          children: h(e3.value).display
+          children: _(e3.value).display
         }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           className: "status-reading",
@@ -3858,7 +3858,7 @@ function fe({ delta: e3 }) {
         }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
           className: "numeric-exact",
-          children: ["Exact delta: ", h(e3.value).exact]
+          children: ["Exact delta: ", _(e3.value).exact]
         })
       ]
     }) : e3.state === "SIDE_UNRESOLVED" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -3870,44 +3870,44 @@ function fe({ delta: e3 }) {
     })]
   });
 }
-function pe({ coordinate: e3, before: r, after: i, beforeError: a2, afterError: o2, delta: s2, onRetryFailedSide: c2, ownsFailedSide: l = true, focusEvidenceSide: u, onExplain: d2, onEvidence: f2, visualizer: p2 = "numeric-card@1" }) {
+function ge({ coordinate: e3, before: r, after: i, beforeError: a2, afterError: o2, delta: s2, onRetryFailedSide: c2, ownsFailedSide: l2 = true, focusEvidenceSide: u2, onExplain: d, onEvidence: f, visualizer: p2 = "numeric-card@1" }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
     "aria-label": `Compare ${e3}`,
     className: "compare-result",
     children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(F, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(P, {
         coordinate: e3,
         error: a2,
-        focusEvidenceAction: u === "left",
+        focusEvidenceAction: u2 === "left",
         label: "Before",
-        ownsError: l,
-        onEvidence: f2 === void 0 ? void 0 : (e4) => f2("left", e4),
-        onExplain: d2 === void 0 ? void 0 : (e4) => d2("left", e4),
+        ownsError: l2,
+        onEvidence: f === void 0 ? void 0 : (e4) => f("left", e4),
+        onExplain: d === void 0 ? void 0 : (e4) => d("left", e4),
         onRetry: a2 === void 0 ? void 0 : c2,
         slice: r,
         visualizer: p2
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(F, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(P, {
         coordinate: e3,
         error: o2,
-        focusEvidenceAction: u === "right",
+        focusEvidenceAction: u2 === "right",
         label: "After",
-        ownsError: l,
-        onEvidence: f2 === void 0 ? void 0 : (e4) => f2("right", e4),
-        onExplain: d2 === void 0 ? void 0 : (e4) => d2("right", e4),
+        ownsError: l2,
+        onEvidence: f === void 0 ? void 0 : (e4) => f("right", e4),
+        onExplain: d === void 0 ? void 0 : (e4) => d("right", e4),
         onRetry: o2 === void 0 ? void 0 : c2,
         slice: i,
         visualizer: p2
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(fe, { delta: s2 })
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(he, { delta: s2 })
     ]
   });
 }
-function I({ values: e3 }) {
+function F({ values: e3 }) {
   let n2 = Object.entries(e3);
   return n2.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "None" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: n2.map(([e4, t2]) => `${e4}=${t2}`).join(", ") });
 }
-function L({ membership: e3 }) {
+function _e({ membership: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
       className: "text-code",
@@ -3929,7 +3929,7 @@ function L({ membership: e3 }) {
     })
   ] });
 }
-function z({ population: e3 }) {
+function ve({ population: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
     className: "text-heading",
     children: "Task population"
@@ -3944,18 +3944,18 @@ function z({ population: e3 }) {
           children: e4.task_id
         }) : null,
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [e4.memberships.length, " Delivery memberships"] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Cohort: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(I, { values: e4.cohort_coordinates })] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Cohort: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(F, { values: e4.cohort_coordinates })] }),
         e4.terminal_reading === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Terminal reading: ", e4.terminal_reading] }),
         e4.exclusions.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Exclusions: ", e4.exclusions.join(", ")] }),
         e4.memberships.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
           className: "detail-rows",
-          children: e4.memberships.map((e6) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(L, { membership: e6 }, e6.delivery_id))
+          children: e4.memberships.map((e6) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(_e, { membership: e6 }, e6.delivery_id))
         })
       ] }, e4.task_id);
     })
   })] });
 }
-function B({ resolution: e3 }) {
+function ye({ resolution: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: e3.state }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
@@ -4028,7 +4028,7 @@ function B({ resolution: e3 }) {
     })
   ] });
 }
-function me({ receipt: e3, side: r }) {
+function be({ receipt: e3, side: r }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     className: "detail-view",
     children: [
@@ -4082,7 +4082,7 @@ function me({ receipt: e3, side: r }) {
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Catalog observation profile" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: e3.catalog.observation_profile })] })
         ]
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(z, { population: e3.task_population }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ve, { population: e3.task_population }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
         className: "text-heading",
         children: "Evidence bindings"
@@ -4093,7 +4093,7 @@ function me({ receipt: e3, side: r }) {
             className: "text-code",
             children: e4.route
           }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Filter: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(I, { values: e4.canonical_filter })] }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Filter: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(F, { values: e4.canonical_filter })] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Contract revision ", e4.contract_revision] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Observation profile ", e4.observation_profile] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Read model revision ", e4.read_model_revision] }),
@@ -4133,12 +4133,12 @@ function me({ receipt: e3, side: r }) {
         children: "No Workflow resolutions."
       }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
         className: "detail-rows",
-        children: e3.workflow_resolutions.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(B, { resolution: e4 }, e4.manifest_digest))
+        children: e3.workflow_resolutions.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ye, { resolution: e4 }, e4.manifest_digest))
       })] })
     ]
   });
 }
-var V = [
+var L = [
   {
     id: "result",
     label: "Result evidence"
@@ -4152,12 +4152,12 @@ var V = [
     label: "Resolved read set"
   }
 ];
-var he = {
+var xe = {
   result: "Exact provenance identities cited by this Metric Result; non-Fact detail may remain unresolved.",
   related: "Related Facts match the context but are not claimed as calculation contributors.",
   "read-set": "Every bounded identity recorded by this receipt; this view only hydrates matching Fact rows."
 };
-function ge({ rows: e3 }) {
+function Se({ rows: e3 }) {
   return e3.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "table-scroll",
     children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", {
@@ -4199,8 +4199,8 @@ function ge({ rows: e3 }) {
     })
   });
 }
-function _e({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
-  let s2 = V.find((e3) => e3.id === r).label;
+function Ce({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
+  let s2 = L.find((e3) => e3.id === r).label;
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "table-scroll",
     children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", {
@@ -4243,8 +4243,8 @@ function _e({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("td", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
               className: "text-code",
               children: r2.provenance
-            }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, { truth: r2.truth })] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: r2.trace === void 0 ? "No Trace reference" : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [r2.trace.state === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Trace lifecycle not loaded" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, { traceState: r2.trace.state }), o2 === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
+            }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(D, { truth: r2.truth })] }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: r2.trace === void 0 ? "No Trace reference" : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [r2.trace.state === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Trace lifecycle not loaded" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(D, { traceState: r2.trace.state }), o2 === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
               className: "text-code",
               children: [r2.trace.traceId, r2.trace.spanId === void 0 ? "" : ` / ${r2.trace.spanId}`]
             }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
@@ -4263,7 +4263,7 @@ function _e({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
     })
   });
 }
-function ve({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: s2, onScopeChange: c2, onOpenTrace: l }) {
+function R({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: s2, onScopeChange: c2, onOpenTrace: l2 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     className: "evidence-console",
     children: [
@@ -4277,7 +4277,7 @@ function ve({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: 
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", {
         "aria-label": "Evidence scope",
         className: "scope-tabs",
-        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { children: V.map((e3) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { children: L.map((e3) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
           "aria-current": r === e3.id ? "page" : void 0,
           className: "scope-tab",
           onClick: () => c2?.(e3.id),
@@ -4287,13 +4287,13 @@ function ve({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: 
       }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
         className: "scope-note",
-        children: he[r]
+        children: xe[r]
       }),
       i.tag === "LOADING" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
         "aria-live": "polite",
         role: "status",
         children: "Loading Evidence\u2026"
-      }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(k, {
+      }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, {
         announce: "assertive",
         detail: i.detail,
         onRetry: i.onRetry,
@@ -4312,18 +4312,18 @@ function ve({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: 
           className: "status-banner status-expired",
           children: "Evidence detail expired"
         }) : null,
-        a2.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(_e, {
+        a2.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ce, {
           focusedFactId: s2,
-          onOpenTrace: l,
+          onOpenTrace: l2,
           rows: a2,
           scope: r
         }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ge, { rows: o2 })
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Se, { rows: o2 })
       ] })
     ]
   });
 }
-var ye = (0, import_react.memo)(function({ model: e3 }) {
+var we = (0, import_react.memo)(function({ model: e3 }) {
   let r = /* @__PURE__ */ new Map();
   for (let t2 of e3.depthGroups) {
     let e4 = t2.nodes.map((e6) => e6.endpointId ?? e6.id), n2 = point().domain(e4).range([80, 880]);
@@ -4375,59 +4375,88 @@ var ye = (0, import_react.memo)(function({ model: e3 }) {
       ]
     })
   });
-}, be);
-function be(e3, t2) {
+}, Te);
+function Te(e3, t2) {
   return e3.model.depthGroups === t2.model.depthGroups && e3.model.parentEdges === t2.model.parentEdges && e3.model.links === t2.model.links;
 }
-function W({ node: e3 }) {
-  let r = Object.fromEntries(e3.fields.map(({ field: e4, value: t2 }) => [e4, t2]));
+var V = (e3, t2) => e3 < t2 ? -1 : +(e3 > t2);
+function H(e3, t2) {
+  let n2 = BigInt(t2);
+  return n2 <= 0n ? 0 : Number(BigInt(e3) * 10000n / n2) / 100;
+}
+function U(e3) {
+  let t2 = BigInt(e3);
+  return t2 >= 1000000000n ? `${Number(t2 / 1000000n) / 1e3} s` : t2 >= 1000000n ? `${Number(t2 / 1000n) / 1e3} ms` : t2 >= 1000n ? `${Number(t2) / 1e3} \u03BCs` : `${e3} ns`;
+}
+function ke(e3, t2) {
+  return e3.nodes.filter((e4) => e4.parentId === t2.id);
+}
+function W({ node: e3, trace: r }) {
+  let i = Object.fromEntries(e3.fields.map(({ field: e4, value: t2 }) => [e4, t2])), a2 = r === void 0 ? [] : ke(r, e3), o2 = r === void 0 ? [] : r.links.filter((t2) => t2.from.span_id === e3.id || t2.to.span_id === e3.id);
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Span passport",
     className: "span-passport panel-card",
-    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-      className: "text-heading",
-      children: "Span passport"
-    }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dl", {
-      className: "trace-passport-grid",
-      children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Span" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-          className: "text-code",
-          children: e3.endpoint.span_id
-        }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded start (ns)" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-          className: "numeric-exact",
-          children: e3.startTimeUnixNano
-        }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded end (ns)" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-          className: "numeric-exact",
-          children: e3.endTimeUnixNano
-        }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded duration (ns)" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-          className: "numeric-exact",
-          children: e3.durationNano
-        }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Status / truth" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: `${e3.status} \xB7 ${e3.truth.completeness ?? "UNKNOWN"} \xB7 ${e3.truth.availability}` }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Flags / trace state" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-          className: "text-code",
-          children: `${e3.flags} \xB7 ${e3.traceState ?? "none"}`
-        }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Fields" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-          className: "text-code",
-          children: JSON.stringify(r)
-        })
-      ]
-    })]
+    children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+        className: "trace-passport-head",
+        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+          className: "trace-eyebrow",
+          children: "Exact focus"
+        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+          className: "text-heading",
+          children: "Span Passport"
+        })] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+          className: `trace-kind trace-kind-${e3.kind.toLowerCase()}`,
+          children: e3.kind
+        })]
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
+        className: "trace-passport-name",
+        children: e3.label
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dl", {
+        className: "trace-passport-grid",
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Identity" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+            className: "text-code",
+            children: `${e3.endpoint.trace_id} / ${e3.endpoint.span_id}`
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded start / end" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+            className: "numeric-exact",
+            children: `${e3.startTimeUnixNano} \u2192 ${e3.endTimeUnixNano} ns`
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded duration" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+            className: "numeric-exact",
+            children: `${U(e3.durationNano)} \xB7 ${e3.durationNano} ns exact`
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Status / truth" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: `${e3.status} \xB7 ${e3.truth.completeness ?? "UNKNOWN"} \xB7 ${e3.truth.availability}` }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Parent / children" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: `${e3.parentId ?? "root"} \u2192 ${a2.map(({ label: e4 }) => e4).join(", ") || "no recorded child"}` }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Flags / trace state" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+            className: "text-code",
+            children: `${e3.flags} \xB7 ${e3.traceState ?? "none"}`
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded fields" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+            className: "text-code",
+            children: JSON.stringify(i)
+          })
+        ]
+      }),
+      o2.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+        className: "trace-link-receipt",
+        children: `${o2.length} independent recorded LINK${o2.length === 1 ? "" : "s"}. LINK does not change tree depth.`
+      })
+    ]
   });
 }
 function G({ trace: e3 }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(k, {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, {
     announce: "polite",
     detail: e3.errors.join(" \xB7 ") || "Recorded Trace IR is invalid.",
     retryable: false,
@@ -4445,86 +4474,384 @@ function K({ trace: e3, node: n2 }) {
     }, e4.id))
   });
 }
-function q(e3, t2) {
-  let n2 = BigInt(t2);
-  if (n2 <= 0n) return "0%";
-  let r = BigInt(e3) * 10000n / n2;
-  return `${Number(r) / 100}%`;
+function Ae({ durationNano: e3, position: r, playing: i, reducedMotion: a2, onPlayingChange: o2, onPositionChange: s2 }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("footer", {
+    className: "trace-motion",
+    children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+        className: "trace-motion-actions",
+        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+          disabled: a2,
+          onClick: () => o2(!i),
+          type: "button",
+          children: a2 ? "Reduced motion: Still" : i ? "Pause" : "Play recorded time"
+        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+          onClick: () => {
+            o2(false), s2(0);
+          },
+          type: "button",
+          children: "Restart"
+        })]
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+        className: "trace-motion-copy",
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: i ? "Playing \xB7 exact recorded time" : "Still \xB7 complete trace" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+            "aria-label": "Recorded time position",
+            "aria-valuemax": 100,
+            "aria-valuemin": 0,
+            max: 100,
+            min: 0,
+            onChange: (e4) => s2(Number(e4.currentTarget.value)),
+            type: "range",
+            value: r
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Finite reader-controlled visualization; not a running execution." })
+        ]
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: `${Math.round(r)}% / ${U(e3)}` })
+    ]
+  });
 }
-function we({ trace: e3, reducedMotion: r = false }) {
-  let [i, a2] = (0, import_react.useState)();
-  if (e3.status !== "READY" || e3.durationNano === void 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(G, { trace: e3 });
-  let o2 = e3.nodes.find((e4) => e4.id === i);
+function je({ trace: e3, reducedMotion: r = false }) {
+  let [i, a2] = (0, import_react.useState)(), [s2, c2] = (0, import_react.useState)(""), [u2, d] = (0, import_react.useState)(0), [f, p2] = (0, import_react.useState)(false);
+  if ((0, import_react.useEffect)(() => {
+    if (!f || r) return;
+    let e4 = window.setInterval(() => {
+      d((e6) => e6 >= 100 ? (p2(false), 100) : Math.min(100, e6 + 2));
+    }, 100);
+    return () => window.clearInterval(e4);
+  }, [f, r]), e3.status !== "READY" || e3.durationNano === void 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(G, { trace: e3 });
+  let m2 = s2.trim().toLocaleLowerCase(), h2 = e3.nodes.filter((e4) => m2 === "" || e4.label.toLocaleLowerCase().includes(m2) || e4.id.toLocaleLowerCase().includes(m2)), g2 = e3.nodes.find((e4) => e4.id === i) ?? e3.nodes[0], _2 = e3.nodes.filter(({ status: e4 }) => e4 === "ERROR").length;
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Recorded trace waterfall",
     className: "trace-view trace-waterfall",
     "data-motion": r ? "off" : "finite-recorded-time",
+    "data-trace-renderer": "waterfall",
     children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+        className: "trace-summary trace-summary-dense",
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+            className: "trace-eyebrow",
+            children: "Exact recorded timeline"
+          }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: e3.nodes[0]?.label ?? e3.traceId })] }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: `${e3.durationNano} ns recorded duration` }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: `Recorded spans: ${e3.nodes.length}` }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: `Recorded links: ${e3.links.length}` }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: `ERROR spans: ${_2}` })
+        ]
+      }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-        className: "trace-summary",
-        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: `${e3.durationNano} ns recorded duration` }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: `Recorded links: ${e3.links.length}` })]
-      }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-        "aria-label": "Shared recorded timeline",
-        className: "trace-timeline",
-        children: e3.nodes.map((r2) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-          className: "trace-waterfall-row",
-          children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-            "aria-label": `${r2.label}, ${r2.durationNano} nanoseconds`,
-            className: "recorded-node trace-node-label",
-            onClick: () => a2(r2.id),
+        className: "trace-view-tools",
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
             type: "button",
-            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: r2.label }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-              className: "numeric-exact",
-              children: `${r2.durationNano} ns`
-            })]
-          }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-            "aria-hidden": "true",
-            className: "trace-timeline-track",
-            children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-              className: "trace-timeline-bar",
-              style: {
-                insetInlineStart: q(r2.startOffsetNano, e3.durationNano),
-                width: q(r2.durationNano, e3.durationNano)
-              }
-            })
-          })]
-        }, r2.id))
+            children: "Expand all"
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+            onClick: () => a2(e3.nodes[0]?.id),
+            type: "button",
+            children: "Reset focus"
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+            "aria-label": "Search recorded spans",
+            onChange: (e4) => c2(e4.currentTarget.value),
+            placeholder: "Search span name or exact identity",
+            type: "search",
+            value: s2
+          })
+        ]
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(K, { trace: e3 }),
-      o2 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(W, { node: o2 })
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+        "aria-label": "Recorded trace minimap",
+        className: "trace-minimap",
+        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+          className: "trace-eyebrow",
+          children: "Trace minimap \xB7 shared recorded-time domain"
+        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+          className: "trace-minimap-track",
+          children: e3.nodes.map((n2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", { style: {
+            insetInlineStart: `${H(n2.startOffsetNano, e3.durationNano)}%`,
+            width: `${H(n2.durationNano, e3.durationNano)}%`
+          } }, n2.id))
+        })]
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+        className: "trace-workbench",
+        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+          className: "trace-waterfall-canvas",
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+              className: "trace-timeline-head",
+              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Span tree" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+                className: "trace-ruler",
+                children: "0 \xB7 25% \xB7 50% \xB7 75% \xB7 100%"
+              })]
+            }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+              "aria-label": "Recorded waterfall span outline",
+              className: "trace-timeline",
+              role: "tree",
+              children: h2.map((r2) => {
+                let i2 = H(r2.startOffsetNano, e3.durationNano), o2 = i2 + H(r2.durationNano, e3.durationNano), s3 = u2 >= i2 && u2 <= o2;
+                return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+                  "aria-level": r2.depth + 1,
+                  className: `trace-waterfall-row${g2.id === r2.id ? " is-selected" : ""}${s3 && f ? " is-current" : ""}`,
+                  role: "treeitem",
+                  children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+                    "aria-label": `${r2.label}, ${r2.durationNano} nanoseconds`,
+                    className: "recorded-node trace-node-label",
+                    onClick: () => a2(r2.id),
+                    style: { paddingInlineStart: `${0.75 + r2.depth * 1.15}rem` },
+                    type: "button",
+                    children: [
+                      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+                        className: `trace-glyph trace-kind-${r2.kind.toLowerCase()}`,
+                        children: r2.kind === "CLIENT" ? "\u2197" : "\u25C6"
+                      }),
+                      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+                        className: "trace-node-copy",
+                        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: r2.label }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: `${r2.kind} \xB7 ${r2.id}` })]
+                      }),
+                      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+                        className: r2.status === "ERROR" ? "trace-error" : "numeric-exact",
+                        children: U(r2.durationNano)
+                      })
+                    ]
+                  }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+                    "aria-hidden": "true",
+                    className: "trace-timeline-track",
+                    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+                      className: `trace-timeline-bar trace-kind-${r2.kind.toLowerCase()}${r2.status === "ERROR" ? " trace-status-error" : ""}`,
+                      style: {
+                        insetInlineStart: `${i2}%`,
+                        width: `${H(r2.durationNano, e3.durationNano)}%`
+                      },
+                      children: r2.label
+                    })
+                  })]
+                }, r2.id);
+              })
+            }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(K, { trace: e3 })
+          ]
+        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(W, {
+          node: g2,
+          trace: e3
+        })]
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ae, {
+        durationNano: e3.durationNano,
+        onPlayingChange: p2,
+        onPositionChange: d,
+        playing: f,
+        position: u2,
+        reducedMotion: r
+      })
     ]
   });
 }
-function Te({ trace: e3 }) {
-  let [r, i] = (0, import_react.useState)();
+function Me(e3) {
+  let t2 = /* @__PURE__ */ new Map();
+  for (let n2 of e3.nodes) {
+    let e4 = t2.get(n2.depth) ?? [];
+    e4.push(n2), t2.set(n2.depth, e4);
+  }
+  return [...t2.entries()].flatMap(([e4, t3]) => [...t3].sort((e6, t4) => V(e6.startTimeUnixNano, t4.startTimeUnixNano) || V(e6.id, t4.id)).map((n2, r) => ({
+    node: n2,
+    x: 35 + e4 * 300,
+    y: 55 + r * (460 / Math.max(1, t3.length))
+  })));
+}
+function q(e3, t2) {
+  let n2 = e3.x + 190, r = e3.y + 35, i = t2.x, a2 = t2.y + 35, o2 = (n2 + i) / 2;
+  return `M${n2} ${r} C${o2} ${r} ${o2} ${a2} ${i} ${a2}`;
+}
+function Ne({ trace: e3 }) {
+  let [r, i] = (0, import_react.useState)(), a2 = (0, import_react.useMemo)(() => e3.status === "READY" ? Me(e3) : [], [e3]);
   if (e3.status !== "READY") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(G, { trace: e3 });
-  let a2 = e3.nodes.find((e4) => e4.id === r);
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+  let o2 = new Map(a2.map((e4) => [e4.node.id, e4])), s2 = e3.nodes.find((e4) => e4.id === r) ?? e3.nodes[0];
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
     "aria-label": "Recorded trace tree",
-    className: "trace-view trace-tree",
-    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-      "aria-label": "Recorded trace call tree",
-      role: "tree",
-      children: e3.nodes.map((r2) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-        "aria-level": r2.depth + 1,
-        className: "trace-tree-row",
-        role: "treeitem",
-        style: { paddingInlineStart: `${r2.depth * 1.5}rem` },
-        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-          className: "recorded-node",
-          onClick: () => i(r2.id),
-          type: "button",
-          children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: r2.label }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-            className: "numeric-exact",
-            children: `${r2.durationNano} ns`
-          })]
-        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(K, {
-          node: r2,
-          trace: e3
-        })]
-      }, r2.id))
-    }), a2 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(W, { node: a2 })]
+    className: "trace-view trace-tree-graph",
+    "data-trace-renderer": "tree",
+    children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+      className: "trace-workbench",
+      children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+        className: "trace-tree-canvas-shell",
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+            className: "trace-timeline-head",
+            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Span call tree" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Deterministic depth \xB7 recorded time \xB7 exact identity" })]
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+            className: "trace-tree-canvas",
+            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
+              "aria-label": "Recorded span call tree graph",
+              className: "trace-tree-svg",
+              role: "img",
+              viewBox: "0 0 980 560",
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("defs", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("marker", {
+                  id: "trace-parent-arrow",
+                  markerHeight: "7",
+                  markerWidth: "7",
+                  orient: "auto",
+                  refX: "7",
+                  refY: "4",
+                  viewBox: "0 0 8 8",
+                  children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M0 0L8 4L0 8Z" })
+                }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("marker", {
+                  id: "trace-link-arrow",
+                  markerHeight: "7",
+                  markerWidth: "7",
+                  orient: "auto",
+                  refX: "7",
+                  refY: "4",
+                  viewBox: "0 0 8 8",
+                  children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M0 0L8 4L0 8Z" })
+                })] }),
+                a2.flatMap((e4) => {
+                  if (e4.node.parentId === void 0) return [];
+                  let n2 = o2.get(e4.node.parentId);
+                  return n2 === void 0 ? [] : [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+                    className: "trace-tree-edge",
+                    d: q(n2, e4),
+                    "data-relationship": "PARENT_EDGE"
+                  }, `parent-${e4.node.id}`)];
+                }),
+                e3.links.map((e4) => {
+                  let n2 = o2.get(e4.from.span_id), r2 = o2.get(e4.to.span_id), i2 = n2 === void 0 ? "" : r2 === void 0 ? `M${n2.x + 95} ${n2.y + 70} C${n2.x + 150} ${n2.y + 115} 900 ${n2.y + 115} 950 ${n2.y + 80}` : q(n2, r2);
+                  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+                    className: "trace-tree-edge trace-tree-link",
+                    d: i2,
+                    "data-relationship": "LINK"
+                  }, `link-${e4.id}`);
+                }),
+                a2.map(({ node: r2, x: a3, y: o3 }) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("g", {
+                  className: `trace-tree-node trace-kind-${r2.kind.toLowerCase()}${s2.id === r2.id ? " is-selected" : ""}${r2.status === "ERROR" ? " trace-status-error" : ""}`,
+                  onClick: () => i(r2.id),
+                  role: "button",
+                  tabIndex: 0,
+                  transform: `translate(${a3} ${o3})`,
+                  children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+                      className: "trace-tree-card",
+                      height: "70",
+                      rx: "9",
+                      width: "190"
+                    }),
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+                      className: "trace-tree-kind-rail",
+                      height: "70",
+                      rx: "3",
+                      width: "4"
+                    }),
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+                      className: "trace-tree-kind",
+                      x: "14",
+                      y: "17",
+                      children: r2.kind
+                    }),
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+                      className: "trace-tree-status",
+                      textAnchor: "end",
+                      x: "176",
+                      y: "17",
+                      children: r2.status
+                    }),
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+                      className: "trace-tree-name",
+                      x: "14",
+                      y: "37",
+                      children: r2.label
+                    }),
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+                      className: "trace-tree-meta",
+                      x: "14",
+                      y: "53",
+                      children: `+${U(r2.startOffsetNano)} \xB7 ${r2.id}`
+                    }),
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+                      className: "trace-tree-duration",
+                      textAnchor: "end",
+                      x: "176",
+                      y: "53",
+                      children: U(r2.durationNano)
+                    }),
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+                      className: "trace-tree-micro-bg",
+                      height: "3",
+                      rx: "2",
+                      width: "160",
+                      x: "14",
+                      y: "61"
+                    }),
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+                      className: "trace-tree-micro",
+                      height: "3",
+                      rx: "2",
+                      width: Math.max(2, H(r2.durationNano, e3.durationNano ?? "0") * 1.6),
+                      x: 14 + H(r2.startOffsetNano, e3.durationNano ?? "0") * 1.6,
+                      y: "61"
+                    })
+                  ]
+                }, r2.id))
+              ]
+            }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", {
+              "aria-label": "Semantic camera map",
+              className: "trace-camera-map",
+              role: "region",
+              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Semantic camera map" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: a2.map(({ node: e4 }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {}, e4.id)) })]
+            })]
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+            "aria-label": "Recorded trace call tree",
+            className: "trace-tree-outline",
+            role: "tree",
+            children: e3.nodes.map((r2) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+              "aria-level": r2.depth + 1,
+              role: "treeitem",
+              style: { paddingInlineStart: `${r2.depth * 1.5}rem` },
+              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+                onClick: () => i(r2.id),
+                type: "button",
+                children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: r2.label }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: U(r2.durationNano) })]
+              }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(K, {
+                node: r2,
+                trace: e3
+              })]
+            }, r2.id))
+          })
+        ]
+      }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(W, {
+        node: s2,
+        trace: e3
+      })]
+    })
+  });
+}
+function Pe({ trace: e3 }) {
+  if (e3.status !== "READY" || e3.durationNano === void 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(G, { trace: e3 });
+  let r = e3.nodes.filter(({ status: e4 }) => e4 === "ERROR").length, i = e3.nodes.reduce((e4, t2) => BigInt(t2.durationNano) > BigInt(e4) ? t2.durationNano : e4, "0"), a2 = [
+    ["Recorded spans", String(e3.nodes.length)],
+    ["Recorded links", String(e3.links.length)],
+    ["ERROR spans", String(r)],
+    ["Maximum recorded duration", `${i} ns`]
+  ];
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+    "aria-label": "Recorded trace statistics",
+    className: "trace-view trace-statistics",
+    "data-trace-renderer": "statistics",
+    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Exact inventory and recorded-time aggregates only; no inferred causality." }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dl", { children: a2.map(([e4, r2]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+      className: "panel-card",
+      children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: e4 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+        className: "numeric-exact",
+        children: r2
+      })]
+    }, e4)) })]
   });
 }
 var Z = ({ trace_id: e3, span_id: t2 }) => `${e3}:${t2}`;
@@ -4539,7 +4866,7 @@ function $(e3) {
     errors: [...new Set(e3)].sort(Q)
   };
 }
-function Oe(e3) {
+function Le(e3) {
   let t2 = [], n2 = /* @__PURE__ */ new Map(), r = /* @__PURE__ */ new Map(), i = [], a2 = [], o2 = /* @__PURE__ */ new Set();
   for (let s3 of e3) {
     if (s3.kind === "NODE") {
@@ -4579,7 +4906,7 @@ function Oe(e3) {
     });
   }
   o2.size > 1 && t2.push("multiple NODE trace identities");
-  let s2 = /* @__PURE__ */ new Map(), c2 = /* @__PURE__ */ new Set(), l = (e4) => {
+  let s2 = /* @__PURE__ */ new Map(), c2 = /* @__PURE__ */ new Set(), l2 = (e4) => {
     let i2 = s2.get(e4);
     if (i2 !== void 0) return i2;
     if (c2.has(e4)) {
@@ -4593,25 +4920,25 @@ function Oe(e3) {
       return;
     }
     c2.add(e4);
-    let o3 = l(a3);
+    let o3 = l2(a3);
     if (c2.delete(e4), o3 !== void 0) return s2.set(e4, o3 + 1), o3 + 1;
   };
-  for (let e4 of [...n2.keys()].sort(Q)) l(e4);
+  for (let e4 of [...n2.keys()].sort(Q)) l2(e4);
   if (t2.length > 0) return $(t2);
-  let u = [...n2.values()].sort((e4, t3) => {
+  let u2 = [...n2.values()].sort((e4, t3) => {
     let n3 = BigInt(e4.node.start_time_unix_nano) - BigInt(t3.node.start_time_unix_nano);
     return n3 === 0n ? Q(e4.recorded_at, t3.recorded_at) || Q(e4.id, t3.id) : n3 < 0n ? -1 : 1;
   });
-  if (u.length === 0) return $(["recorded trace has no NODE"]);
-  let d2 = u.reduce((e4, t3) => BigInt(t3.node.start_time_unix_nano) < e4 ? BigInt(t3.node.start_time_unix_nano) : e4, BigInt(u[0].node.start_time_unix_nano)), f2 = u.reduce((e4, t3) => BigInt(t3.node.end_time_unix_nano) > e4 ? BigInt(t3.node.end_time_unix_nano) : e4, BigInt(u[0].node.end_time_unix_nano));
+  if (u2.length === 0) return $(["recorded trace has no NODE"]);
+  let d = u2.reduce((e4, t3) => BigInt(t3.node.start_time_unix_nano) < e4 ? BigInt(t3.node.start_time_unix_nano) : e4, BigInt(u2[0].node.start_time_unix_nano)), f = u2.reduce((e4, t3) => BigInt(t3.node.end_time_unix_nano) > e4 ? BigInt(t3.node.end_time_unix_nano) : e4, BigInt(u2[0].node.end_time_unix_nano));
   return {
     schemaVersion: "wsr.trace-view@1",
     status: "READY",
     traceId: [...o2][0],
-    startTimeUnixNano: d2.toString(),
-    endTimeUnixNano: f2.toString(),
-    durationNano: (f2 - d2).toString(),
-    nodes: u.map((e4) => {
+    startTimeUnixNano: d.toString(),
+    endTimeUnixNano: f.toString(),
+    durationNano: (f - d).toString(),
+    nodes: u2.map((e4) => {
       let t3 = {
         trace_id: e4.trace_id,
         span_id: e4.node.span_id
@@ -4625,7 +4952,7 @@ function Oe(e3) {
         startTimeUnixNano: e4.node.start_time_unix_nano,
         endTimeUnixNano: e4.node.end_time_unix_nano,
         durationNano: (BigInt(e4.node.end_time_unix_nano) - BigInt(e4.node.start_time_unix_nano)).toString(),
-        startOffsetNano: (BigInt(e4.node.start_time_unix_nano) - d2).toString(),
+        startOffsetNano: (BigInt(e4.node.start_time_unix_nano) - d).toString(),
         flags: e4.node.span_flags,
         traceState: e4.node.trace_state,
         fields: e4.node.fields.map((e6) => ({ ...e6 })),
@@ -4644,7 +4971,7 @@ function Oe(e3) {
 }
 
 // node_modules/wsr-ui-core/dist/styles.css
-var styles_default = ".wsr-bi{--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light;--surface-canvas:oklch(97.5% .006 250);--surface-panel:oklch(100% 0 0);--surface-raised:oklch(99% .004 250);--surface-inset:oklch(94.5% .01 250);--content-primary:oklch(23% .025 255);--content-secondary:oklch(42% .025 255);--content-muted:oklch(54% .02 255);--border-default:oklch(86% .015 250);--border-strong:oklch(67% .025 250);--interaction-accent:oklch(49% .18 244);--interaction-selection:oklch(90% .05 244);--interaction-disabled:oklch(70% .01 250);--focus-ring:oklch(57% .17 244);--status-available:oklch(42% .12 155);--status-available-surface:oklch(94% .05 155);--status-attention:oklch(50% .13 75);--status-attention-surface:oklch(95% .055 85);--status-unavailable:oklch(45% .025 255);--status-unavailable-surface:oklch(94% .012 250);--status-expired:oklch(48% .1 305);--status-expired-surface:oklch(95% .035 305);--status-incompatible:oklch(48% .13 28);--status-incompatible-surface:oklch(95% .045 28);--status-error:oklch(47% .17 25);--status-error-surface:oklch(95% .05 25);--data-series-1:oklch(50% .17 244);--space-page:1.5rem;--space-grid:1rem;--space-cluster:.75rem;--space-control:.625rem;--space-tight:.375rem;--density-row:2.75rem;--density-control:2.5rem;--shape-panel:.75rem;--shape-control:.5rem;--shape-pill:999px;--type-heading-size:1rem;--type-body-size:.9375rem;--type-label-size:.6875rem;--type-code-size:.8125rem;--type-numeric-size:1.5rem;--layout-table-max-height:32rem;--layout-visual-preview-height:6rem;--motion-finite-duration:.32s;--wsr-container-border-style:solid;box-sizing:border-box;min-width:0;color:var(--content-primary);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}.wsr-bi[data-theme=dark]{--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;--surface-canvas:oklch(18% .02 255);--surface-panel:oklch(22.5% .025 255);--surface-raised:oklch(25.5% .025 255);--surface-inset:oklch(16% .02 255);--content-primary:oklch(94% .01 250);--content-secondary:oklch(76% .018 250);--content-muted:oklch(64% .02 250);--border-default:oklch(34% .025 250);--border-strong:oklch(49% .03 250);--interaction-accent:oklch(76% .13 235);--interaction-selection:oklch(32% .07 244);--interaction-disabled:oklch(48% .018 250);--focus-ring:oklch(73% .14 235);--status-available:oklch(79% .12 153);--status-available-surface:oklch(31% .07 155);--status-attention:oklch(84% .12 82);--status-attention-surface:oklch(32% .06 76);--status-unavailable:oklch(72% .025 250);--status-unavailable-surface:oklch(28% .02 250);--status-expired:oklch(79% .1 305);--status-expired-surface:oklch(31% .06 305);--status-incompatible:oklch(82% .13 35);--status-incompatible-surface:oklch(31% .07 28);--status-error:oklch(80% .14 25);--status-error-surface:oklch(31% .08 25);--data-series-1:oklch(75% .14 235)}.wsr-bi[data-density=compact]{--space-page:1rem;--space-grid:.75rem;--space-cluster:.5rem;--space-control:.375rem;--space-tight:.25rem;--density-control:2.75rem}.wsr-bi *,.wsr-bi :before,.wsr-bi :after{box-sizing:inherit}.wsr-bi :focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}.wsr-bi .panel-card,.wsr-bi .metric-frame,.wsr-bi .bi-card{gap:var(--space-grid);min-width:0;padding:var(--space-page);border:1px var(--wsr-container-border-style) var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);flex-direction:column;display:flex}.wsr-bi .bi-section{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .metric-frame-header,.wsr-bi .metric-actions{justify-content:space-between;align-items:center;gap:var(--space-cluster);flex-wrap:wrap;display:flex}.wsr-bi .metric-value,.wsr-bi .status-stack{gap:var(--space-tight);display:grid}.wsr-bi .metric-number{font-size:var(--type-numeric-size);font-variant-numeric:tabular-nums;font-weight:650}.wsr-bi .numeric-exact,.wsr-bi .text-code{overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--type-code-size);font-variant-numeric:tabular-nums}.wsr-bi .text-heading{font-size:var(--type-heading-size);margin:0;font-weight:650}.wsr-bi .text-label{font-size:var(--type-label-size);letter-spacing:.08em;text-transform:uppercase;font-weight:700}.wsr-bi .status-label{align-items:center;gap:var(--space-tight);width:fit-content;padding:var(--space-tight) var(--space-cluster);border-radius:var(--shape-pill);font-size:var(--type-label-size);border:1px solid;font-weight:700;display:inline-flex}.wsr-bi .status-available{background:var(--status-available-surface);color:var(--status-available)}.wsr-bi .status-attention{background:var(--status-attention-surface);color:var(--status-attention)}.wsr-bi .status-unavailable{background:var(--status-unavailable-surface);color:var(--status-unavailable)}.wsr-bi .status-expired{background:var(--status-expired-surface);color:var(--status-expired)}.wsr-bi .status-incompatible{background:var(--status-incompatible-surface);color:var(--status-incompatible)}.wsr-bi .status-error{background:var(--status-error-surface);color:var(--status-error)}.wsr-bi .action-control,.wsr-bi .recorded-node,.wsr-bi .recorded-relation{min-height:var(--density-control);padding:var(--space-control);border:1px solid var(--border-strong);border-radius:var(--shape-control);background:var(--surface-raised);color:var(--content-primary);font:inherit;cursor:pointer}.wsr-bi .visual-with-fallback,.wsr-bi .compare-result,.wsr-bi .recorded-structure{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .compare-result{grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr))}.wsr-bi .visual-preview{width:100%;height:var(--layout-visual-preview-height)}.wsr-bi .fill-current{fill:currentColor}.wsr-bi .text-data-series-1{color:var(--data-series-1)}.wsr-bi .stroke-border-default{stroke:var(--border-default)}.wsr-bi .visual-data-table{table-layout:fixed;border-collapse:collapse;width:100%;max-width:100%;font-size:var(--type-label-size)}.wsr-bi .visual-data-table th,.wsr-bi .visual-data-table td{padding:var(--space-tight);border-block-end:1px solid var(--border-default);overflow-wrap:anywhere;text-align:start}.wsr-bi .bounded-table,.wsr-bi .recorded-graph-frame{max-width:100%;overflow:auto}.wsr-bi .recorded-graph{width:100%;min-width:40rem}.wsr-bi .recorded-graph-parent{stroke:var(--border-strong)}.wsr-bi .recorded-graph-link{stroke:var(--interaction-accent);stroke-dasharray:5 4}.wsr-bi .recorded-graph-node{fill:var(--surface-panel);stroke:var(--interaction-accent)}.wsr-bi .recorded-graph-label{fill:var(--content-primary);font-size:var(--type-label-size)}.wsr-bi .trace-view,.wsr-bi .trace-timeline,.wsr-bi .trace-tree,.wsr-bi .trace-tree-row{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .trace-summary,.wsr-bi .trace-waterfall-row,.wsr-bi .trace-node-label,.wsr-bi .trace-tree-row>.recorded-node{justify-content:space-between;align-items:center;gap:var(--space-cluster);min-width:0;display:flex}.wsr-bi .trace-waterfall-row{grid-template-columns:minmax(10rem,.35fr) minmax(16rem,1fr);display:grid}.wsr-bi .trace-timeline-track{min-height:var(--density-row);border:1px solid var(--border-default);border-radius:var(--shape-control);background:var(--surface-inset);position:relative;overflow:hidden}.wsr-bi .trace-timeline-bar{inset-block:var(--space-tight);border-radius:var(--shape-control);background:var(--data-series-1);transform-origin:0;min-width:2px;animation:trace-recorded-reveal var(--motion-finite-duration) ease-out both;position:absolute}.wsr-bi [data-motion=off] .trace-timeline-bar{animation:none}.wsr-bi .trace-passport-grid{gap:var(--space-tight) var(--space-grid);grid-template-columns:minmax(9rem,auto) minmax(0,1fr);margin:0;display:grid}.wsr-bi .trace-passport-grid dt{color:var(--content-secondary);font-weight:650}.wsr-bi .trace-passport-grid dd{overflow-wrap:anywhere;min-width:0;margin:0}.wsr-bi .trace-link-list{color:var(--content-secondary);margin:0}@keyframes trace-recorded-reveal{0%{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}@media (width<=40rem){.wsr-bi .trace-waterfall-row{grid-template-columns:1fr}}@media (prefers-reduced-motion:reduce){.wsr-bi{--motion-finite-duration:0s}}\n/*$vite$:1*/";
+var styles_default = ".wsr-bi{--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light;--surface-canvas:oklch(97.5% .006 250);--surface-base:var(--surface-canvas);--surface-panel:oklch(100% 0 0);--surface-raised:oklch(99% .004 250);--surface-inset:oklch(94.5% .01 250);--content-primary:oklch(23% .025 255);--content-secondary:oklch(42% .025 255);--content-muted:oklch(54% .02 255);--border-default:oklch(86% .015 250);--border-strong:oklch(67% .025 250);--interaction-accent:oklch(49% .18 244);--interaction-selection:oklch(90% .05 244);--interaction-disabled:oklch(70% .01 250);--focus-ring:oklch(57% .17 244);--status-available:oklch(42% .12 155);--status-available-surface:oklch(94% .05 155);--status-attention:oklch(50% .13 75);--status-warning:var(--status-attention);--status-attention-surface:oklch(95% .055 85);--status-unavailable:oklch(45% .025 255);--status-unavailable-surface:oklch(94% .012 250);--status-expired:oklch(48% .1 305);--status-expired-surface:oklch(95% .035 305);--status-incompatible:oklch(48% .13 28);--status-incompatible-surface:oklch(95% .045 28);--status-error:oklch(47% .17 25);--status-error-surface:oklch(95% .05 25);--data-series-1:oklch(50% .17 244);--data-series-2:oklch(58% .15 185);--space-page:1.5rem;--space-grid:1rem;--space-cluster:.75rem;--space-control:.625rem;--space-tight:.375rem;--density-row:2.75rem;--density-control:2.5rem;--shape-panel:.75rem;--shape-control:.5rem;--shape-pill:999px;--type-heading-size:1rem;--type-body-size:.9375rem;--type-caption-size:.75rem;--type-label-size:.6875rem;--type-code-size:.8125rem;--type-code-family:ui-monospace, SFMono-Regular, Consolas, monospace;--type-value-size:1.5rem;--type-numeric-size:1.5rem;--layout-table-max-height:32rem;--layout-visual-preview-height:6rem;--motion-finite-duration:.32s;--wsr-container-border-style:solid;box-sizing:border-box;min-width:0;color:var(--content-primary);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}.wsr-bi[data-theme=dark]{--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;--surface-canvas:oklch(18% .02 255);--surface-panel:oklch(22.5% .025 255);--surface-raised:oklch(25.5% .025 255);--surface-inset:oklch(16% .02 255);--content-primary:oklch(94% .01 250);--content-secondary:oklch(76% .018 250);--content-muted:oklch(64% .02 250);--border-default:oklch(34% .025 250);--border-strong:oklch(49% .03 250);--interaction-accent:oklch(76% .13 235);--interaction-selection:oklch(32% .07 244);--interaction-disabled:oklch(48% .018 250);--focus-ring:oklch(73% .14 235);--status-available:oklch(79% .12 153);--status-available-surface:oklch(31% .07 155);--status-attention:oklch(84% .12 82);--status-attention-surface:oklch(32% .06 76);--status-unavailable:oklch(72% .025 250);--status-unavailable-surface:oklch(28% .02 250);--status-expired:oklch(79% .1 305);--status-expired-surface:oklch(31% .06 305);--status-incompatible:oklch(82% .13 35);--status-incompatible-surface:oklch(31% .07 28);--status-error:oklch(80% .14 25);--status-error-surface:oklch(31% .08 25);--data-series-1:oklch(75% .14 235);--data-series-2:oklch(77% .12 185)}.wsr-bi[data-density=compact]{--space-page:1rem;--space-grid:.75rem;--space-cluster:.5rem;--space-control:.375rem;--space-tight:.25rem;--density-control:2.75rem}.wsr-bi *,.wsr-bi :before,.wsr-bi :after{box-sizing:inherit}.wsr-bi :focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}.wsr-bi .panel-card,.wsr-bi .metric-frame,.wsr-bi .bi-card{gap:var(--space-grid);min-width:0;padding:var(--space-page);border:1px var(--wsr-container-border-style) var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);flex-direction:column;display:flex}.wsr-bi .bi-section{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .metric-frame-header,.wsr-bi .metric-actions{justify-content:space-between;align-items:center;gap:var(--space-cluster);flex-wrap:wrap;display:flex}.wsr-bi .metric-value,.wsr-bi .status-stack{gap:var(--space-tight);display:grid}.wsr-bi .metric-number{font-size:var(--type-numeric-size);font-variant-numeric:tabular-nums;font-weight:650}.wsr-bi .numeric-exact,.wsr-bi .text-code{overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--type-code-size);font-variant-numeric:tabular-nums}.wsr-bi .text-heading{font-size:var(--type-heading-size);margin:0;font-weight:650}.wsr-bi .text-label{font-size:var(--type-label-size);letter-spacing:.08em;text-transform:uppercase;font-weight:700}.wsr-bi .status-label{align-items:center;gap:var(--space-tight);width:fit-content;padding:var(--space-tight) var(--space-cluster);border-radius:var(--shape-pill);font-size:var(--type-label-size);border:1px solid;font-weight:700;display:inline-flex}.wsr-bi .status-available{background:var(--status-available-surface);color:var(--status-available)}.wsr-bi .status-attention{background:var(--status-attention-surface);color:var(--status-attention)}.wsr-bi .status-unavailable{background:var(--status-unavailable-surface);color:var(--status-unavailable)}.wsr-bi .status-expired{background:var(--status-expired-surface);color:var(--status-expired)}.wsr-bi .status-incompatible{background:var(--status-incompatible-surface);color:var(--status-incompatible)}.wsr-bi .status-error{background:var(--status-error-surface);color:var(--status-error)}.wsr-bi .action-control,.wsr-bi .recorded-node,.wsr-bi .recorded-relation{min-height:var(--density-control);padding:var(--space-control);border:1px solid var(--border-strong);border-radius:var(--shape-control);background:var(--surface-raised);color:var(--content-primary);font:inherit;cursor:pointer}.wsr-bi .visual-with-fallback,.wsr-bi .compare-result,.wsr-bi .recorded-structure{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .compare-result{grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr))}.wsr-bi .visual-preview{width:100%;height:var(--layout-visual-preview-height)}.wsr-bi .fill-current{fill:currentColor}.wsr-bi .text-data-series-1{color:var(--data-series-1)}.wsr-bi .stroke-border-default{stroke:var(--border-default)}.wsr-bi .visual-data-table{table-layout:fixed;border-collapse:collapse;width:100%;max-width:100%;font-size:var(--type-label-size)}.wsr-bi .visual-data-table th,.wsr-bi .visual-data-table td{padding:var(--space-tight);border-block-end:1px solid var(--border-default);overflow-wrap:anywhere;text-align:start}.wsr-bi .bounded-table,.wsr-bi .recorded-graph-frame{max-width:100%;overflow:auto}.wsr-bi .recorded-graph{width:100%;min-width:40rem}.wsr-bi .recorded-graph-parent{stroke:var(--border-strong)}.wsr-bi .recorded-graph-link{stroke:var(--interaction-accent);stroke-dasharray:5 4}.wsr-bi .recorded-graph-node{fill:var(--surface-panel);stroke:var(--interaction-accent)}.wsr-bi .recorded-graph-label{fill:var(--content-primary);font-size:var(--type-label-size)}.wsr-bi .trace-view,.wsr-bi .trace-timeline,.wsr-bi .trace-tree,.wsr-bi .trace-tree-row{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .trace-summary,.wsr-bi .trace-waterfall-row,.wsr-bi .trace-node-label,.wsr-bi .trace-tree-row>.recorded-node{justify-content:space-between;align-items:center;gap:var(--space-cluster);min-width:0;display:flex}.wsr-bi .trace-waterfall-row{grid-template-columns:minmax(10rem,.35fr) minmax(16rem,1fr);display:grid}.wsr-bi .trace-timeline-track{min-height:var(--density-row);border:1px solid var(--border-default);border-radius:var(--shape-control);background:var(--surface-inset);position:relative;overflow:hidden}.wsr-bi .trace-timeline-bar{inset-block:var(--space-tight);border-radius:var(--shape-control);background:var(--data-series-1);transform-origin:0;min-width:2px;animation:trace-recorded-reveal var(--motion-finite-duration) ease-out both;position:absolute}.wsr-bi [data-motion=off] .trace-timeline-bar{animation:none}.wsr-bi .trace-passport-grid{gap:var(--space-tight) var(--space-grid);grid-template-columns:minmax(9rem,auto) minmax(0,1fr);margin:0;display:grid}.wsr-bi .trace-passport-grid dt{color:var(--content-secondary);font-weight:650}.wsr-bi .trace-passport-grid dd{overflow-wrap:anywhere;min-width:0;margin:0}.wsr-bi .trace-link-list{color:var(--content-secondary);margin:0}@keyframes trace-recorded-reveal{0%{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}@media (width<=40rem){.wsr-bi .trace-waterfall-row{grid-template-columns:1fr}}@media (prefers-reduced-motion:reduce){.wsr-bi{--motion-finite-duration:0s}}.wsr-bi .trace-view{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .trace-summary-dense{align-items:center;gap:var(--space-grid);padding:var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);grid-template-columns:minmax(12rem,1fr) repeat(4,auto);display:grid}.wsr-bi .trace-summary-dense>span{color:var(--content-secondary);font:var(--type-code-size) var(--type-code-family)}.wsr-bi .trace-eyebrow{color:var(--content-secondary);font-size:var(--type-caption-size);letter-spacing:.08em;text-transform:uppercase;font-weight:700;display:block}.wsr-bi .trace-view-tools,.wsr-bi .trace-motion-actions,.wsr-bi .trace-passport-head{justify-content:space-between;align-items:center;gap:var(--space-cluster);flex-wrap:wrap;display:flex}.wsr-bi .trace-view-tools input{min-width:min(100%,18rem);margin-inline-start:auto}.wsr-bi .trace-minimap{gap:var(--space-tight);min-height:3.75rem;padding:var(--space-tight) var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-inset);display:grid;overflow:hidden}.wsr-bi .trace-minimap-track{border:1px solid var(--interaction-accent);border-radius:var(--shape-control);min-height:1.75rem;position:relative}.wsr-bi .trace-minimap-track i{background:var(--data-series-1);border-radius:99px;height:.22rem;position:absolute}.wsr-bi .trace-minimap-track i:nth-child(3n+1){inset-block-start:.35rem}.wsr-bi .trace-minimap-track i:nth-child(3n+2){background:var(--data-series-2);inset-block-start:.8rem}.wsr-bi .trace-minimap-track i:nth-child(3n){background:var(--status-warning);inset-block-start:1.25rem}.wsr-bi .trace-workbench{gap:var(--space-grid);grid-template-columns:minmax(0,1fr) minmax(16rem,19rem);min-width:0;display:grid}.wsr-bi .trace-waterfall-canvas,.wsr-bi .trace-tree-canvas-shell,.wsr-bi .span-passport{border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);min-width:0;overflow:hidden}.wsr-bi .trace-timeline-head{justify-content:space-between;align-items:center;gap:var(--space-grid);min-height:2.75rem;padding:0 var(--space-grid);border-block-end:1px solid var(--border-default);color:var(--content-secondary);font-size:var(--type-caption-size);text-transform:uppercase;font-weight:700;display:flex}.wsr-bi .trace-waterfall-row{border-block-end:1px solid var(--border-default);grid-template-columns:minmax(16rem,19rem) minmax(25rem,1fr);gap:0;min-height:3rem;display:grid}.wsr-bi .trace-waterfall-row.is-selected{background:var(--interaction-selection)}.wsr-bi .trace-waterfall-row.is-current{filter:brightness(1.18)}.wsr-bi .trace-node-label{gap:var(--space-tight);text-align:start;background:0 0;border:0;border-radius:0;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;display:grid}.wsr-bi .trace-node-copy{min-width:0}.wsr-bi .trace-node-copy strong,.wsr-bi .trace-node-copy small{text-overflow:ellipsis;white-space:nowrap;display:block;overflow:hidden}.wsr-bi .trace-node-copy small{color:var(--content-secondary);font:var(--type-caption-size) var(--type-code-family)}.wsr-bi .trace-glyph{border-radius:var(--shape-control);width:1.4rem;height:1.4rem;color:var(--data-series-1);border:1px solid;place-items:center;display:grid}.wsr-bi .trace-kind-client{color:var(--data-series-2)}.wsr-bi .trace-error{color:var(--status-error)}.wsr-bi .trace-timeline-track{border:0;border-inline-start:1px solid var(--border-default);background-color:var(--surface-inset);background-image:linear-gradient(90deg, transparent 24.8%, var(--border-default) 25%, transparent 25.2%, transparent 49.8%, var(--border-default) 50%, transparent 50.2%, transparent 74.8%, var(--border-default) 75%, transparent 75.2%);border-radius:0;min-height:3rem;position:relative;overflow:hidden}.wsr-bi .trace-timeline-bar{min-width:2px;padding-inline:var(--space-tight);border:1px solid var(--data-series-1);border-radius:var(--shape-control);background:color-mix(in srgb, var(--data-series-1) 45%, var(--surface-panel));color:var(--content-primary);font-size:var(--type-caption-size);text-overflow:ellipsis;white-space:nowrap;transform-origin:0;animation:trace-recorded-reveal var(--motion-finite-duration) ease-out both;display:block;position:absolute;inset-block:.85rem;overflow:hidden}.wsr-bi .trace-timeline-bar.trace-kind-client{border-color:var(--data-series-2);background:color-mix(in srgb, var(--data-series-2) 40%, var(--surface-panel))}.wsr-bi .trace-timeline-bar.trace-status-error{border-color:var(--status-error);background:color-mix(in srgb, var(--status-error) 35%, var(--surface-panel))}.wsr-bi .trace-passport-head{margin-block-end:var(--space-grid)}.wsr-bi .trace-passport-name{font-size:var(--type-heading-size);margin-block-end:var(--space-grid);display:block}.wsr-bi .trace-passport-grid{grid-template-columns:1fr}.wsr-bi .trace-passport-grid dt{font-size:var(--type-caption-size);letter-spacing:.06em;text-transform:uppercase;margin-block-start:var(--space-tight)}.wsr-bi .trace-link-receipt{padding:var(--space-tight);border-inline-start:3px solid var(--status-warning);border-radius:var(--shape-control);background:color-mix(in srgb, var(--status-warning) 16%, var(--surface-panel));color:var(--content-secondary)}.wsr-bi .trace-motion{gap:var(--space-grid);padding:var(--space-tight) var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);grid-template-columns:auto minmax(0,1fr) auto;align-items:center;display:grid}.wsr-bi .trace-motion-copy{gap:var(--space-tight);display:grid}.wsr-bi .trace-motion-copy input{width:100%}.wsr-bi .trace-motion-copy span{color:var(--content-secondary);font-size:var(--type-caption-size)}.wsr-bi .trace-tree-canvas{background-color:var(--surface-inset);background-image:radial-gradient(var(--border-default) 1px, transparent 1px);background-size:1.25rem 1.25rem;min-height:36rem;position:relative;overflow:hidden}.wsr-bi .trace-tree-svg{width:100%;height:100%;position:absolute;inset:0}.wsr-bi .trace-tree-edge{fill:none;stroke:var(--border-strong);stroke-width:2px;marker-end:url(#trace-parent-arrow)}.wsr-bi .trace-tree-link{stroke:var(--status-warning);stroke-dasharray:7 6;marker-end:url(#trace-link-arrow)}.wsr-bi #trace-parent-arrow path{fill:var(--border-strong)}.wsr-bi #trace-link-arrow path{fill:var(--status-warning)}.wsr-bi .trace-tree-node{cursor:pointer;outline:none}.wsr-bi .trace-tree-card{fill:var(--surface-raised);stroke:var(--border-strong);stroke-width:1.2px}.wsr-bi .trace-tree-node.is-selected .trace-tree-card{stroke:var(--data-series-1);stroke-width:2px;filter:drop-shadow(0 0 5px color-mix(in srgb, var(--data-series-1) 45%, transparent))}.wsr-bi .trace-tree-node.trace-status-error .trace-tree-card{stroke:var(--status-error)}.wsr-bi .trace-tree-kind-rail,.wsr-bi .trace-tree-micro{fill:var(--data-series-1)}.wsr-bi .trace-tree-node.trace-kind-client .trace-tree-kind-rail,.wsr-bi .trace-tree-node.trace-kind-client .trace-tree-micro{fill:var(--data-series-2)}.wsr-bi .trace-tree-kind,.wsr-bi .trace-tree-meta,.wsr-bi .trace-tree-status,.wsr-bi .trace-tree-duration{fill:var(--content-secondary);font:var(--type-caption-size) var(--type-code-family)}.wsr-bi .trace-tree-name{fill:var(--content-primary);font-size:var(--type-label-size);font-weight:650}.wsr-bi .trace-tree-micro-bg{fill:var(--border-default)}.wsr-bi .trace-camera-map{width:8.5rem;min-height:5.25rem;padding:var(--space-tight);border:1px solid var(--border-strong);border-radius:var(--shape-control);background:color-mix(in srgb, var(--surface-base) 90%, transparent);position:absolute;inset-block-end:var(--space-grid);inset-inline-end:var(--space-grid)}.wsr-bi .trace-camera-map>strong{color:var(--content-secondary);font-size:var(--type-caption-size);text-transform:uppercase}.wsr-bi .trace-camera-map>div{gap:var(--space-tight);flex-wrap:wrap;margin-block-start:var(--space-tight);display:flex}.wsr-bi .trace-camera-map i{background:var(--data-series-2);border-radius:2px;width:.85rem;height:.45rem}.wsr-bi .trace-tree-outline{clip-path:inset(50%);white-space:nowrap;width:1px;height:1px;position:absolute;overflow:hidden}.wsr-bi .trace-tree-outline>div>button{justify-content:space-between;width:100%;display:flex}.wsr-bi .trace-statistics dl{gap:var(--space-grid);grid-template-columns:repeat(4,minmax(0,1fr));margin:0;display:grid}.wsr-bi .trace-statistics dl>div{min-width:0}.wsr-bi .trace-statistics dt{color:var(--content-secondary)}.wsr-bi .trace-statistics dd{margin:var(--space-grid) 0 0;font-size:var(--type-value-size)}@media (width<=64rem){.wsr-bi .trace-workbench{grid-template-columns:1fr}.wsr-bi .span-passport{display:none}.wsr-bi .trace-summary-dense{grid-template-columns:minmax(12rem,1fr) repeat(2,auto)}.wsr-bi .trace-summary-dense>span:nth-last-child(-n+2){display:none}}@media (width<=40rem){.wsr-bi .trace-summary-dense,.wsr-bi .trace-motion,.wsr-bi .trace-statistics dl{grid-template-columns:1fr}.wsr-bi .trace-minimap,.wsr-bi .trace-waterfall-canvas,.wsr-bi .trace-tree-canvas{display:none}.wsr-bi .trace-tree-outline{clip-path:none;white-space:normal;width:auto;height:auto;position:static;overflow:visible}.wsr-bi .trace-tree-outline>div{min-width:0;min-height:var(--density-row);border-block-end:1px solid var(--border-default)}.wsr-bi .trace-tree-graph,.wsr-bi .trace-tree-canvas-shell,.wsr-bi .trace-tree-outline,.wsr-bi .trace-tree-outline>div>button,.wsr-bi .trace-tree-outline>div>button>span{min-width:0;max-width:100%}.wsr-bi .trace-tree-outline>div>button>span{overflow-wrap:anywhere}.wsr-bi .trace-view-tools input{order:2;width:100%;margin:0}}\n/*$vite$:1*/";
 
 // packages/studio/src/client/evaluate-model.js
 var STORAGE_KEY = "wsr.studio.location@1";
@@ -4968,6 +5295,11 @@ function boundedText(value, maximum) {
 var STUDIO_PAGES = Object.freeze([
   Object.freeze({ id: "evaluate", label: "Evaluate", routePrefix: "/evaluate" })
 ]);
+var STUDIO_TRACE_VIEWS = Object.freeze([
+  Object.freeze({ id: "waterfall", label: "Waterfall", renderer: "TraceWaterfall" }),
+  Object.freeze({ id: "tree", label: "Tree", renderer: "TraceTree" }),
+  Object.freeze({ id: "statistics", label: "Statistics", renderer: "TraceStatistics" })
+]);
 var ACCESSIBILITY = Object.freeze({
   routes: Object.freeze(STUDIO_PAGES.map((page) => page.label)),
   surface: "conversation-view",
@@ -4994,7 +5326,6 @@ var viewStyle = {
   boxSizing: "border-box"
 };
 var controlStyle = { minHeight: "44px", minWidth: "44px" };
-var listStyle = { maxHeight: "min(42vh, 480px)", overflow: "auto", overflowWrap: "anywhere" };
 var DEFAULT_LAYOUT = Object.freeze({
   schemaVersion: "wsr-dsh.studio-layout@1",
   columns: Object.freeze({ desktop: 12, tablet: 6, mobile: 1 }),
@@ -5086,11 +5417,33 @@ function createStudioLayoutStore(storage) {
   });
 }
 var hostStyles = `
+#wsr-studio-view { --studio-surface:color-mix(in srgb,var(--dsw-alias-bg-base) 88%,var(--dsw-alias-label-primary)); --studio-raised:color-mix(in srgb,var(--dsw-alias-bg-base) 82%,var(--dsw-alias-label-primary)); }
+#wsr-studio-view, #wsr-studio-view > *, #wsr-studio-view .studio-page-copy { min-width:0; max-width:100%; }
+#wsr-studio-view [data-wsr-studio-region="header"] { overflow:hidden; border:1px solid var(--dsw-alias-border-l2); border-radius:10px; background:var(--studio-surface); }
+#wsr-studio-view .studio-product-row, #wsr-studio-view .studio-page-row { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; }
+#wsr-studio-view .studio-product-row { min-height:44px; border-bottom:1px solid var(--dsw-alias-border-l2); }
+#wsr-studio-view .studio-breadcrumbs, #wsr-studio-view .studio-controls, #wsr-studio-view .studio-mode { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+#wsr-studio-view .studio-breadcrumbs { color:var(--dsw-alias-label-secondary); font-size:12px; }
+#wsr-studio-view .studio-page-copy h1 { margin:2px 0; font-size:20px; }
+#wsr-studio-view .studio-page-copy p, #wsr-studio-view .studio-selection-copy { margin:2px 0; color:var(--dsw-alias-label-secondary); font-size:12px; }
+#wsr-studio-view .studio-page-copy p { overflow-wrap:anywhere; }
+#wsr-studio-view .studio-eyebrow { display:block; color:var(--dsw-alias-label-secondary); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+#wsr-studio-view .studio-view-link[aria-current="page"] { border-color:var(--dsw-alias-blue-l1); color:var(--dsw-alias-blue-l1); }
+#wsr-studio-view [data-wsr-studio-region="main"] { margin-top:12px; }
+#wsr-studio-view .studio-selection-grid { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(250px,.75fr); gap:12px; }
+#wsr-studio-view .studio-selection-card { overflow:hidden; border:1px solid var(--dsw-alias-border-l2); border-radius:10px; background:var(--studio-surface); }
+#wsr-studio-view .studio-selection-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border-bottom:1px solid var(--dsw-alias-border-l2); }
+#wsr-studio-view .studio-task-list { display:grid; max-height:min(50vh,520px); margin:0; padding:6px 10px; overflow:auto; list-style:none; }
+#wsr-studio-view .studio-task-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; min-height:52px; gap:10px; padding:8px; border-bottom:1px solid var(--dsw-alias-border-l2); }
+#wsr-studio-view .studio-task-row label { display:flex; align-items:center; gap:9px; min-width:0; }
+#wsr-studio-view .studio-task-id { display:block; color:var(--dsw-alias-label-secondary); font:11px ui-monospace,monospace; overflow-wrap:anywhere; }
+#wsr-studio-view .studio-selected-list { display:grid; gap:8px; padding:12px; }
+#wsr-studio-view .studio-selected-item { padding:10px; border:1px solid var(--dsw-alias-border-l2); border-radius:8px; background:var(--studio-raised); }
 #wsr-studio-view [data-wsr-dashboard-layout] { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:12px; }
 #wsr-studio-view [data-wsr-dashboard-panel] { grid-column:span var(--studio-panel-desktop-columns,3); min-width:0; }
-#wsr-studio-view [data-wsr-studio-region="header"], #wsr-studio-view [data-wsr-studio-region="footer"] { border:1px solid var(--dsw-alias-border-l2); padding:12px; }
-#wsr-studio-view .studio-title-row, #wsr-studio-view .studio-controls { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
+#wsr-studio-view [data-wsr-studio-region="footer"] { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; padding:12px 14px; border:1px dashed var(--dsw-alias-border-l2); border-radius:10px; background:var(--studio-surface); }
 @media (max-width:900px) { #wsr-studio-view [data-wsr-dashboard-layout] { grid-template-columns:repeat(6,minmax(0,1fr)); } #wsr-studio-view [data-wsr-dashboard-panel] { grid-column:span var(--studio-panel-tablet-columns,3); } }
+@media (max-width:700px) { #wsr-studio-view .studio-selection-grid { grid-template-columns:1fr; } #wsr-studio-view .studio-product-row, #wsr-studio-view .studio-page-row { align-items:flex-start; flex-direction:column; } }
 @media (max-width:560px) { #wsr-studio-view [data-wsr-dashboard-layout] { grid-template-columns:1fr; } #wsr-studio-view [data-wsr-dashboard-panel] { grid-column:span 1 !important; } }
 `;
 function platformThemeMode(explicitMode) {
@@ -5143,8 +5496,16 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
   return function StudioConversationView() {
     const [technicalDetailsOpen, setTechnicalDetailsOpen] = React2.useState(false);
     const [traceView, setTraceView] = React2.useState("waterfall");
+    const [taskQuery, setTaskQuery] = React2.useState("");
     const [editingDashboard, setEditingDashboard] = React2.useState(false);
     const snapshot = React2.useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
+    const [studioPage, setStudioPage] = React2.useState(() => snapshot.result !== void 0 || ["receipt", "facts", "trace"].includes(snapshot.route.page) ? "dashboard" : "selection");
+    const [selectionRequested, setSelectionRequested] = React2.useState(false);
+    React2.useEffect(() => {
+      if (!selectionRequested && (snapshot.result !== void 0 || ["receipt", "facts", "trace"].includes(snapshot.route.page)) && studioPage !== "dashboard") {
+        setStudioPage("dashboard");
+      }
+    }, [selectionRequested, snapshot.result, snapshot.route.page, studioPage]);
     React2.useEffect(() => {
       if (snapshot.drilldown.phase !== "idle") return;
       if (snapshot.route.page === "facts" && snapshot.result !== void 0) {
@@ -5170,6 +5531,10 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
     const theme = Bi2.createBiTheme(createStudioTheme(platformThemeMode(explicitThemeMode)));
     const json = (data, label) => JsonTree === void 0 ? React2.createElement("pre", { "aria-label": label }, JSON.stringify(data, null, 2)) : React2.createElement(JsonTree, { data, label, copyable: true, expandTopLevel: true });
     const taskItems = snapshot.taskList.items ?? [];
+    const visibleTaskItems = taskItems.filter((task) => {
+      const query = taskQuery.trim().toLocaleLowerCase();
+      return query === "" || task.task_id.toLocaleLowerCase().includes(query) || task.display_name?.toLocaleLowerCase().includes(query);
+    });
     const current = snapshot.selection?.mode === "single" ? snapshot.selection.taskIds : [];
     const before = snapshot.selection?.mode === "compare" ? snapshot.selection.leftTaskIds : [];
     const after = snapshot.selection?.mode === "compare" ? snapshot.selection.rightTaskIds : [];
@@ -5205,6 +5570,14 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
       if (seed === void 0) return;
       controller.setSelection(mode === "single" ? { mode: "single", taskIds: [seed] } : { mode: "compare", leftTaskIds: [seed], rightTaskIds: [seed] });
     };
+    const evaluateSelection = async () => {
+      await controller.evaluate();
+      if (controller.getSnapshot().result !== void 0) {
+        setSelectionRequested(false);
+        setStudioPage("dashboard");
+      }
+    };
+    const pageIdentity = studioPage === "selection" ? { eyebrow: "New evaluation", title: "Select task population", detail: "Choose exact Task identities; display names are recognition only." } : snapshot.route.page === "trace" ? { eyebrow: "Recorded Evidence \xB7 exact identity", title: "Recorded Trace", detail: `${snapshot.route.traceId} \xB7 current evaluation \xB7 no inferred causality` } : snapshot.route.page === "facts" ? { eyebrow: "Evaluation Evidence", title: "Evidence", detail: "Exact recorded Facts and provenance for the current evaluation." } : snapshot.route.page === "receipt" ? { eyebrow: "Resolved evaluation context", title: "Evaluation receipt", detail: "Exact selection and resolved read-set identities." } : { eyebrow: `${snapshot.result?.mode === "COMPARE" ? "Compare" : "Single"} evaluation`, title: "Current evaluation", detail: "Current receipt \xB7 exact selection" };
     return React2.createElement(
       "section",
       {
@@ -5215,26 +5588,73 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
         style: viewStyle
       },
       React2.createElement("style", { "data-wsr-studio-host-styles": "wsr-dsh@1" }, hostStyles),
+      sharedStyles === void 0 ? null : React2.createElement("style", { "data-wsr-bi-styles": "wsr-ui-core@0.1.0-rc.0" }, sharedStyles),
       React2.createElement(
         "header",
         { "data-wsr-studio-region": "header" },
         React2.createElement(
           "div",
-          { className: "studio-title-row" },
+          { className: "studio-product-row" },
           React2.createElement(
             "div",
-            null,
-            React2.createElement("p", null, "Single evaluation \xB7 current receipt"),
-            React2.createElement("h1", { id: "wsr-studio-title" }, "WSR Studio")
+            { className: "studio-breadcrumbs" },
+            React2.createElement("strong", null, "WSR Studio"),
+            React2.createElement("span", null, "/"),
+            React2.createElement("span", null, "Evaluation"),
+            snapshot.route.page === "trace" ? React2.createElement(
+              React2.Fragment,
+              null,
+              React2.createElement("span", null, "/"),
+              React2.createElement("span", null, "Trace")
+            ) : null
+          ),
+          React2.createElement(
+            "nav",
+            { className: "studio-controls", "aria-label": "Studio views" },
+            React2.createElement(Button, { className: "studio-view-link", type: "button", "aria-current": studioPage === "selection" ? "page" : void 0, onClick: () => {
+              setSelectionRequested(true);
+              setStudioPage("selection");
+            } }, "Select"),
+            React2.createElement(Button, { className: "studio-view-link", type: "button", disabled: snapshot.result === void 0 && !["receipt", "facts", "trace"].includes(snapshot.route.page), "aria-current": studioPage === "dashboard" && snapshot.route.page === "results" ? "page" : void 0, onClick: () => {
+              controller.backToResults();
+              setSelectionRequested(false);
+              setStudioPage("dashboard");
+            } }, "Dashboard"),
+            React2.createElement(Button, { className: "studio-view-link", type: "button", disabled: snapshot.route.page !== "facts", "aria-current": snapshot.route.page === "facts" ? "page" : void 0 }, "Evidence"),
+            React2.createElement(Button, { className: "studio-view-link", type: "button", disabled: snapshot.route.page !== "trace", "aria-current": snapshot.route.page === "trace" ? "page" : void 0 }, "Recorded Trace")
+          )
+        ),
+        React2.createElement(
+          "div",
+          { className: "studio-page-row" },
+          React2.createElement(
+            "div",
+            { className: "studio-page-copy" },
+            React2.createElement("span", { className: "studio-eyebrow" }, pageIdentity.eyebrow),
+            React2.createElement("h1", { id: "wsr-studio-title" }, pageIdentity.title),
+            React2.createElement("p", null, pageIdentity.detail)
           ),
           React2.createElement(
             "div",
-            { className: "studio-controls" },
-            React2.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Dashboard"),
-            React2.createElement(Button, { type: "button", disabled: snapshot.route.page !== "facts" }, "Evidence"),
-            React2.createElement(Button, { type: "button", disabled: snapshot.route.page !== "trace" }, "Recorded Trace"),
-            React2.createElement(Button, { type: "button", onClick: () => setDashboardState(reduceStudioDashboardState(expandedDashboardState, { type: "PRESET", preset: "default" })) }, "Default overview"),
-            editingDashboard ? React2.createElement(
+            { className: "studio-controls", "aria-label": "Page actions" },
+            studioPage === "selection" ? React2.createElement(
+              React2.Fragment,
+              null,
+              snapshot.taskList.phase === "idle" ? React2.createElement(Button, { type: "button", onClick: () => controller.loadTasks() }, "Load Tasks") : null,
+              React2.createElement(Button, { type: "button", disabled: snapshot.selection === void 0, onClick: evaluateSelection }, "Evaluate selection")
+            ) : null,
+            studioPage === "dashboard" && snapshot.route.page === "results" ? React2.createElement(
+              React2.Fragment,
+              null,
+              snapshot.result === void 0 ? null : React2.createElement(Button, { type: "button", onClick: () => controller.openReceipt() }, "View receipt"),
+              React2.createElement(Button, { type: "button", onClick: () => setDashboardState(reduceStudioDashboardState(expandedDashboardState, { type: "PRESET", preset: "default" })) }, "Default overview"),
+              React2.createElement(Button, { type: "button", onClick: () => {
+                setSelectionRequested(true);
+                setStudioPage("selection");
+              } }, "Change evaluation")
+            ) : null,
+            studioPage === "dashboard" && snapshot.route.page === "trace" ? React2.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Dashboard") : null,
+            studioPage === "dashboard" && editingDashboard ? React2.createElement(
               React2.Fragment,
               null,
               React2.createElement(Button, { type: "button", onClick: () => setDashboardState(reduceStudioDashboardState(expandedDashboardState, { type: "RESET" })) }, "Reset layout"),
@@ -5247,22 +5667,25 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
                 setDashboardState(savedDashboardState);
                 setEditingDashboard(false);
               } }, "Cancel editing")
-            ) : React2.createElement(Button, { type: "button", "aria-pressed": false, onClick: () => {
+            ) : studioPage === "dashboard" && snapshot.route.page === "results" ? React2.createElement(Button, { type: "button", "aria-pressed": false, onClick: () => {
               setSavedDashboardState(expandedDashboardState);
               setEditingDashboard(true);
-            } }, "Edit dashboard")
+            } }, "Edit dashboard") : null
           )
         ),
-        editingDashboard && metricPanelIds.some((id2) => expandedDashboardState.hidden.includes(id2)) ? React2.createElement(
+        studioPage === "dashboard" && editingDashboard && metricPanelIds.some((id2) => expandedDashboardState.hidden.includes(id2)) ? React2.createElement(
           "div",
           { className: "studio-controls", "aria-label": "Add dashboard panels" },
           ...metricPanelIds.filter((id2) => expandedDashboardState.hidden.includes(id2)).map((panelId) => React2.createElement(Button, { key: panelId, type: "button", onClick: () => updateDashboard({ type: "ADD", panelId }) }, `Add ${panelId}`))
-        ) : null,
-        React2.createElement("nav", { "aria-label": "Studio" }, ...STUDIO_PAGES.map((page) => React2.createElement("span", { key: page.id, "aria-current": page.id === "evaluate" ? "page" : void 0 }, page.label)))
+        ) : null
       ),
       React2.createElement(
         "main",
-        { tabIndex: -1, "data-wsr-studio-region": "main" },
+        {
+          tabIndex: -1,
+          "data-wsr-studio-region": "main",
+          "data-wsr-studio-page": studioPage
+        },
         snapshot.phase === "loading" || snapshot.refreshing ? React2.createElement("p", { role: "status", "aria-live": "polite" }, snapshot.refreshing ? "Refreshing evaluation\u2026" : "Loading evaluation\u2026") : null,
         snapshot.error === void 0 ? null : React2.createElement(
           "section",
@@ -5271,62 +5694,113 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
           React2.createElement("p", null, snapshot.error.message),
           React2.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.refresh() }, "Retry")
         ),
-        React2.createElement(
+        studioPage === "selection" ? React2.createElement(
           "section",
-          { "aria-labelledby": "wsr-task-selection" },
-          React2.createElement("h2", { id: "wsr-task-selection" }, "Task selection"),
+          {
+            "aria-labelledby": "wsr-task-selection",
+            className: "studio-selection-grid"
+          },
           React2.createElement(
-            "fieldset",
-            null,
-            React2.createElement("legend", null, "Evaluation mode"),
+            "section",
+            { className: "studio-selection-card", "data-wsr-selection-browser": "task-population" },
             React2.createElement(
-              "label",
-              null,
-              React2.createElement("input", { type: "radio", name: "wsr-evaluation-mode", value: "single", checked: snapshot.selection?.mode !== "compare", onChange: () => chooseMode("single") }),
-              "Single"
+              "header",
+              { className: "studio-selection-head" },
+              React2.createElement(
+                "div",
+                null,
+                React2.createElement("h2", { id: "wsr-task-selection" }, "Task population"),
+                React2.createElement("p", { className: "studio-selection-copy" }, `${taskItems.length} Tasks \xB7 exact identities retained in the receipt`)
+              ),
+              React2.createElement(
+                "div",
+                { className: "studio-mode", role: "radiogroup", "aria-label": "Evaluation mode" },
+                React2.createElement(
+                  "label",
+                  null,
+                  React2.createElement("input", { type: "radio", name: "wsr-evaluation-mode", value: "single", checked: snapshot.selection?.mode !== "compare", onChange: () => chooseMode("single") }),
+                  "Single"
+                ),
+                React2.createElement(
+                  "label",
+                  null,
+                  React2.createElement("input", { type: "radio", name: "wsr-evaluation-mode", value: "compare", checked: snapshot.selection?.mode === "compare", onChange: () => chooseMode("compare") }),
+                  "Compare"
+                )
+              )
             ),
             React2.createElement(
-              "label",
-              null,
-              React2.createElement("input", { type: "radio", name: "wsr-evaluation-mode", value: "compare", checked: snapshot.selection?.mode === "compare", onChange: () => chooseMode("compare") }),
-              "Compare"
-            )
+              "div",
+              { className: "studio-selection-head" },
+              React2.createElement("input", { type: "search", "aria-label": "Search Tasks", placeholder: "Search name or exact Task ID", value: taskQuery, onChange: (event) => setTaskQuery(event.target.value) }),
+              snapshot.taskList.page?.next_cursor ? React2.createElement(Button, { type: "button", onClick: () => controller.loadTasks(snapshot.taskList.page.next_cursor) }, "Load more Tasks") : null
+            ),
+            snapshot.taskList.phase === "error" ? React2.createElement("p", { role: "alert" }, "Task list unavailable; the current selection remains usable.") : null,
+            snapshot.selection?.mode === "compare" ? React2.createElement("div", { className: "studio-task-list" }, ...[["Before", "left", before], ["After", "right", after]].flatMap(([label, side2, selected]) => [
+              React2.createElement("strong", { key: `${side2}-label` }, label),
+              ...visibleTaskItems.map((task) => React2.createElement(
+                "div",
+                { className: "studio-task-row", "data-wsr-selection-side": side2, "data-wsr-task-id": task.task_id, key: `${side2}-${task.task_id}` },
+                React2.createElement(
+                  "label",
+                  null,
+                  React2.createElement("input", { type: "checkbox", checked: selected.includes(task.task_id), onChange: (event) => setComparedTask(side2, task.task_id, event.target.checked) }),
+                  React2.createElement("span", null, task.display_name ?? task.task_id, React2.createElement("small", { className: "studio-task-id" }, task.task_id))
+                ),
+                React2.createElement("span", null, selected.includes(task.task_id) ? "Selected" : "Available")
+              ))
+            ])) : React2.createElement("div", { className: "studio-task-list", role: "list" }, ...visibleTaskItems.map((task) => React2.createElement(
+              "div",
+              { className: "studio-task-row", "data-wsr-task-id": task.task_id, key: task.task_id, role: "listitem" },
+              React2.createElement(
+                "label",
+                null,
+                React2.createElement("input", { type: "checkbox", checked: current.includes(task.task_id), onChange: (event) => setTask(task.task_id, event.target.checked) }),
+                React2.createElement("span", null, task.display_name ?? task.task_id, React2.createElement("small", { className: "studio-task-id" }, task.task_id))
+              ),
+              React2.createElement("span", null, current.includes(task.task_id) ? "Selected" : "Available")
+            ))),
+            snapshot.taskList.phase === "ready" && taskItems.length === 0 ? React2.createElement("p", { role: "status" }, "No Tasks are available in Evidence.") : null
           ),
-          snapshot.taskList.phase === "idle" ? React2.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.loadTasks() }, "Load Tasks") : null,
-          snapshot.taskList.phase === "error" ? React2.createElement("p", { role: "alert" }, "Task list unavailable; the current selection remains usable.") : null,
-          snapshot.selection?.mode === "compare" ? React2.createElement("div", null, ...[["Before", "left", before], ["After", "right", after]].map(([label, side2, selected]) => React2.createElement(
-            "fieldset",
-            { key: side2 },
-            React2.createElement("legend", null, label),
-            ...taskItems.map((task) => React2.createElement(
-              "label",
-              { key: `${side2}-${task.task_id}` },
-              React2.createElement("input", { type: "checkbox", checked: selected.includes(task.task_id), onChange: (event) => setComparedTask(side2, task.task_id, event.target.checked) }),
-              task.display_name ?? task.task_id
-            ))
-          ))) : React2.createElement("ul", { style: listStyle }, ...taskItems.map((task) => React2.createElement(
-            "li",
-            { key: task.task_id },
+          React2.createElement(
+            "aside",
+            { className: "studio-selection-card", "aria-label": "Current selection" },
             React2.createElement(
-              "label",
-              null,
-              React2.createElement("input", { type: "checkbox", checked: current.includes(task.task_id), onChange: (event) => setTask(task.task_id, event.target.checked) }),
-              task.display_name ?? task.task_id
+              "header",
+              { className: "studio-selection-head" },
+              React2.createElement(
+                "div",
+                null,
+                React2.createElement("h2", null, "Current selection"),
+                React2.createElement("p", { className: "studio-selection-copy" }, snapshot.selection?.mode === "compare" ? `${before.length} Before \xB7 ${after.length} After` : `Single evaluation \xB7 ${current.length} Tasks`)
+              )
+            ),
+            React2.createElement(
+              "div",
+              { className: "studio-selected-list" },
+              ...(snapshot.selection?.mode === "compare" ? [["Before", before], ["After", after]] : [["Selected", current]]).flatMap(([label, ids]) => [
+                React2.createElement("strong", { key: `${label}-heading` }, label),
+                ...ids.map((id2) => {
+                  const task = taskItems.find((candidate) => candidate.task_id === id2);
+                  return React2.createElement(
+                    "div",
+                    { className: "studio-selected-item", key: `${label}-${id2}` },
+                    React2.createElement("strong", null, task?.display_name ?? id2),
+                    React2.createElement("small", { className: "studio-task-id" }, id2)
+                  );
+                })
+              ]),
+              React2.createElement("p", { className: "studio-selection-copy" }, "Evaluation resolves a current receipt. Layout and display names do not enter evaluation identity.")
             )
-          ))),
-          snapshot.taskList.phase === "ready" && taskItems.length === 0 ? React2.createElement("p", { role: "status" }, "No Tasks are available in Evidence.") : null,
-          snapshot.taskList.page?.next_cursor ? React2.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.loadTasks(snapshot.taskList.page.next_cursor) }, "Load more Tasks") : null,
-          React2.createElement(Button, { type: "button", style: controlStyle, disabled: snapshot.selection === void 0, onClick: () => controller.evaluate() }, "Evaluate selection")
-        ),
-        snapshot.result === void 0 ? React2.createElement("p", null, "Choose one or more Tasks to evaluate.") : React2.createElement(
+          )
+        ) : null,
+        studioPage !== "dashboard" || snapshot.route.page !== "results" ? null : snapshot.result === void 0 ? React2.createElement("p", null, "Choose one or more Tasks to evaluate.") : React2.createElement(
           "section",
           { "aria-label": snapshot.result.mode === "COMPARE" ? "Compared Metric Results" : "Metric Results" },
           snapshot.phase === "partial" ? React2.createElement("p", { role: "status" }, "Partial comparison: the available side remains visible.") : null,
-          React2.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.openReceipt() }, "View receipt"),
           React2.createElement(
             Bi2.BiSurface,
             { theme },
-            sharedStyles === void 0 ? null : React2.createElement("style", { "data-wsr-bi-styles": "wsr-ui-core@0.1.0-rc.0" }, sharedStyles),
             React2.createElement("div", {
               "data-wsr-dashboard-layout": DEFAULT_LAYOUT.schemaVersion
             }, ...dashboardMetrics.filter((metric) => snapshot.result.mode !== "COMPARE" || !deltaCoordinates.has(metric.coordinate)).map((metric) => {
@@ -5408,7 +5882,7 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
             `${delta.metric_coordinate}: ${delta.state}${delta.direction === void 0 ? "" : ` \xB7 ${delta.direction}`}`
           ))
         ),
-        snapshot.route.page === "receipt" ? React2.createElement(
+        studioPage === "dashboard" && snapshot.route.page === "receipt" ? React2.createElement(
           "section",
           { "aria-label": "Evaluation receipts" },
           React2.createElement("h2", null, "Receipts"),
@@ -5429,7 +5903,7 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
             technicalDetailsOpen ? json(snapshot.result, "Evaluation receipt JSON") : null
           )
         ) : null,
-        snapshot.route.page === "facts" ? React2.createElement(
+        studioPage === "dashboard" && snapshot.route.page === "facts" ? React2.createElement(
           "section",
           { "aria-label": "Fact drill-down" },
           React2.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Metric Results"),
@@ -5457,11 +5931,9 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
             })
           )
         ) : null,
-        snapshot.route.page === "trace" ? React2.createElement(
+        studioPage === "dashboard" && snapshot.route.page === "trace" ? React2.createElement(
           "section",
           { "aria-label": "Recorded Trace drill-down" },
-          React2.createElement("h2", null, "Recorded Trace"),
-          React2.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Metric Results"),
           presentation.drilldownError === void 0 ? null : React2.createElement("p", { role: "alert" }, presentation.drilldownError.message),
           recorded === void 0 ? React2.createElement(
             "p",
@@ -5474,26 +5946,25 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
             React2.createElement(
               "div",
               { className: "studio-controls", role: "group", "aria-label": "Trace view" },
-              React2.createElement(Button, { type: "button", "aria-pressed": traceView === "waterfall", onClick: () => setTraceView("waterfall") }, "Waterfall"),
-              React2.createElement(Button, { type: "button", "aria-pressed": traceView === "tree", onClick: () => setTraceView("tree") }, "Tree")
+              ...STUDIO_TRACE_VIEWS.map((view) => React2.createElement(Button, { key: view.id, type: "button", "aria-pressed": traceView === view.id, onClick: () => setTraceView(view.id) }, view.label))
             ),
-            traceView === "tree" ? React2.createElement(Bi2.TraceTree, { trace: recorded }) : React2.createElement(Bi2.TraceWaterfall, { trace: recorded })
+            React2.createElement(Bi2[STUDIO_TRACE_VIEWS.find(({ id: id2 }) => id2 === traceView)?.renderer ?? "TraceWaterfall"], { trace: recorded })
           )
         ) : null
       ),
-      React2.createElement(
+      studioPage === "dashboard" && snapshot.route.page === "results" && snapshot.result !== void 0 ? React2.createElement(
         "footer",
         { "data-wsr-studio-region": "footer" },
         React2.createElement("strong", null, presentation.trace.length > 0 ? "Recorded Trace is available" : "Recorded Trace availability follows current Evidence"),
         React2.createElement("span", null, " \xB7 exact recorded identities only; no inferred ordering")
-      )
+      ) : null
     );
   };
 }
 function createStudioClientPlugin({ React: React2, Primitives: Primitives2 = {}, Bi: Bi2, sharedStyles, initialContext, storage, themeMode } = {}) {
   if (React2 === void 0) throw new Error("STUDIO_REACT_REQUIRED");
   const component = (value) => typeof value === "function" || typeof value === "string";
-  if (Bi2 === void 0 || !component(Bi2.BiSurface) || !component(Bi2.MetricPanel) || !component(Bi2.CompareResultFrame) || !component(Bi2.ReceiptView) || !component(Bi2.ScopedError) || !component(Bi2.EvidenceConsoleFoundation) || !component(Bi2.TraceWaterfall) || !component(Bi2.TraceTree) || typeof Bi2.compileTraceView !== "function" || typeof Bi2.selectDefaultVisualizer !== "function" || typeof Bi2.createBiTheme !== "function") {
+  if (Bi2 === void 0 || !component(Bi2.BiSurface) || !component(Bi2.MetricPanel) || !component(Bi2.CompareResultFrame) || !component(Bi2.ReceiptView) || !component(Bi2.ScopedError) || !component(Bi2.EvidenceConsoleFoundation) || !component(Bi2.TraceWaterfall) || !component(Bi2.TraceTree) || !component(Bi2.TraceStatistics) || typeof Bi2.compileTraceView !== "function" || typeof Bi2.selectDefaultVisualizer !== "function" || typeof Bi2.createBiTheme !== "function") {
     throw new Error("STUDIO_BI_REQUIRED");
   }
   return {
@@ -5522,16 +5993,17 @@ function createStudioClientPlugin({ React: React2, Primitives: Primitives2 = {},
 
 // packages/studio/src/client/browser-entry.js
 var Bi = Object.freeze({
-  BiSurface: c,
-  CompareResultFrame: pe,
-  EvidenceConsoleFoundation: ve,
-  MetricPanel: P,
-  ReceiptView: me,
-  ScopedError: k,
-  TraceTree: Te,
-  TraceWaterfall: we,
-  compileTraceView: Oe,
-  createBiTheme: d,
+  BiSurface: u,
+  CompareResultFrame: ge,
+  EvidenceConsoleFoundation: R,
+  MetricPanel: N,
+  ReceiptView: be,
+  ScopedError: O,
+  TraceStatistics: Pe,
+  TraceTree: Ne,
+  TraceWaterfall: je,
+  compileTraceView: Le,
+  createBiTheme: p,
   selectDefaultVisualizer: C
 });
 var plugin = createStudioClientPlugin({ React: import_react2.default, Primitives, Bi, sharedStyles: styles_default });

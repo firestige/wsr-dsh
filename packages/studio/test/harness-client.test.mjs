@@ -12,6 +12,7 @@ import {
   createStudioLayoutStore,
   reduceStudioDashboardState,
   STUDIO_PAGES,
+  STUDIO_TRACE_VIEWS,
   studioAccessibilityModel,
 } from "../src/client/studio.js";
 
@@ -37,6 +38,7 @@ const Bi = Object.freeze({
   MetricPanel: "wsr-metric-panel",
   ReceiptView: "wsr-receipt-view",
   TraceTree: "wsr-trace-tree",
+  TraceStatistics: "wsr-trace-statistics",
   TraceWaterfall: "wsr-trace-waterfall",
   ScopedError: "wsr-scoped-error",
   createBiTheme: (theme) => Object.freeze({ ...theme }),
@@ -190,6 +192,11 @@ test("the Studio shell advertises one Evaluate route and complete keyboard/scree
   assert.equal(model.minimumTargetPixels, 44);
   assert.equal(JSON.stringify(model).includes("Builder"), false);
   assert.equal(JSON.stringify(model).includes("improvement"), false);
+  assert.deepEqual(STUDIO_TRACE_VIEWS, [
+    { id: "waterfall", label: "Waterfall", renderer: "TraceWaterfall" },
+    { id: "tree", label: "Tree", renderer: "TraceTree" },
+    { id: "statistics", label: "Statistics", renderer: "TraceStatistics" },
+  ]);
 });
 
 test("the native Studio tab exposes a non-modal Evidence view without Session repository context", () => {
@@ -211,7 +218,7 @@ test("the native Studio tab exposes a non-modal Evidence view without Session re
     useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot(); },
   };
   const Primitives = { Button: "dsh-button", Input: "dsh-input", DisclosureRow: "dsh-disclosure", JsonTree: "dsh-json-tree", Pill: "dsh-pill", StateDot: "dsh-state-dot" };
-  const runtime = createStudioClientPlugin({ React, Primitives, Bi, initialContext: { taskId: "task-a" } }).apply(ctx);
+  const runtime = createStudioClientPlugin({ React, Primitives, Bi, sharedStyles: ".wsr-bi{}", initialContext: { taskId: "task-a" } }).apply(ctx);
   assert.equal(typeof runtime, "function");
   const rendered = components.get("conversation.view")({ sessionId: "session-a" });
   const text = textOf(rendered);
@@ -227,9 +234,20 @@ test("the native Studio tab exposes a non-modal Evidence view without Session re
   assert.equal(view.props.role, "region");
   assert.equal(view.props["aria-modal"], undefined);
   assert.equal(view.props.id, "wsr-studio-view");
+  const elements = elementsOf(rendered);
+  const coreStyles = elements.filter((element) => element.props?.["data-wsr-bi-styles"] === "wsr-ui-core@0.1.0-rc.0");
+  assert.equal(coreStyles.length, 1);
+  assert.equal(textOf(coreStyles[0]), ".wsr-bi{}");
+  const main = elements.find((element) => element.props?.["data-wsr-studio-region"] === "main");
+  assert.equal(main.props["data-wsr-studio-page"], "selection");
+  assert.equal(elements.some((element) => element.props?.["data-wsr-studio-region"] === "footer"), false);
+  assert.equal(elements.some((element) => element.props?.["data-wsr-selection-browser"] === "task-population"), true);
+  assert.equal(elements.some((element) => element.type === "fieldset"), false);
+  assert.equal(elements.some((element) => element.type === "nav" && element.props?.["aria-label"] === "Studio views"), true);
+  assert.match(text, /Select.*Dashboard.*Evidence.*Recorded Trace/s);
   assert.equal(Object.hasOwn(runtime.controller.getSnapshot(), "repository"), false);
   assert.equal(Object.hasOwn(runtime.controller.getSnapshot(), "workspaceId"), false);
-  assert.ok(elementsOf(rendered).some((element) => element.type === "dsh-button"));
+  assert.ok(elements.some((element) => element.type === "dsh-button"));
   assert.equal(view.props.onKeyDown, undefined);
   assert.equal(components.has("shell.overlay"), false);
   assert.equal(components.has("sidebar.footer.action"), false);
@@ -288,6 +306,11 @@ test("AVAILABLE and UNAVAILABLE results use the shared BI product surface while 
   ]);
   assert.equal(elements.some((element) => element.type === "dsh-json-tree"), false);
   assert.match(textOf(rendered), /Technical JSON details/);
+  assert.equal(elements.some((element) => element.props?.["data-wsr-studio-page"] === "dashboard"), true);
+  assert.equal(elements.some((element) => element.props?.["data-wsr-studio-page"] === "selection"), false);
+  assert.equal(elements.some((element) => element.type === "details" && textOf(element).includes("Change evaluation")), false);
+  assert.equal(elements.some((element) => element.type === "dsh-button" && textOf(element) === "Change evaluation"), true);
+  assert.equal(elements.some((element) => element.type === "nav" && element.props["aria-label"] === "Studio views"), true);
   assert.match(textOf(rendered), /Dashboard/);
   assert.match(textOf(rendered), /Evidence/);
   assert.match(textOf(rendered), /Recorded Trace/);
@@ -380,8 +403,11 @@ test("compare, receipt, Fact and recorded Trace routes use shared BI foundations
   await runtime.controller.loadTrace({ trace_id: traceId, limit: 200 });
   rendered = components.get("conversation.view")();
   assert.equal(elementsOf(rendered).some((element) => element.type === "wsr-trace-waterfall"), true);
+  assert.equal(elementsOf(rendered).some((element) => element.type === "wsr-metric-panel"), false);
+  assert.equal(elementsOf(rendered).some((element) => element.type === "wsr-compare-result"), false);
   assert.match(textOf(rendered), /Waterfall/);
   assert.match(textOf(rendered), /Tree/);
+  assert.match(textOf(rendered), /Statistics/);
 });
 
 test("the browser source has no direct downstream transport, credential, or mutation escape hatch", async () => {
