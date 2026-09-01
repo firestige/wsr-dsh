@@ -622,6 +622,18 @@ try {
     return value !== before.expanded ? value : undefined;
   }, "HARNESS_KEYBOARD_DISCLOSURE_FAILED");
 
+  await cdp.command("Emulation.setDeviceMetricsOverride", {
+    width: 1440,
+    height: 1000,
+    deviceScaleFactor: 1,
+    mobile: false,
+  });
+  await cdp.command("Emulation.setEmulatedMedia", {
+    media: "screen",
+    features: [{ name: "prefers-color-scheme", value: "dark" }],
+  });
+  await cdp.command("Page.reload", { ignoreCache: true });
+  await waitFor(async () => cdp.evaluate(`([...document.querySelectorAll('[role="tab"]')].some((node) => node.textContent.trim() === 'WSR Studio'))`), "HARNESS_STUDIO_DARK_RELOAD_FAILED", 30_000);
   await cdp.evaluate(`(() => { [...document.querySelectorAll('[role="tab"]')].find((node) => node.textContent.trim() === 'WSR Studio').click(); })()`);
   const studio = await waitFor(async () => cdp.evaluate(`(() => {
     const view = document.querySelector('[data-wsr-studio-view="evaluate"]');
@@ -629,14 +641,37 @@ try {
     const style = getComputedStyle(view);
     return { role: view.getAttribute('role'), modal: view.getAttribute('aria-modal'), color: style.color, background: style.backgroundColor,
       landmarks: ['nav', 'main'].every((name) => view.querySelector(name)), labelled: !!view.getAttribute('aria-labelledby'),
+      regions: ['header', 'main', 'footer'].every((name) => view.querySelector('[data-wsr-studio-region="' + name + '"]')),
+      hostTheme: document.body.hasAttribute('data-ds-dark-theme') ? 'dark' : 'light',
       repositoryInput: view.querySelector('input[aria-label="Repository"]') !== null };
   })()`), "HARNESS_STUDIO_UNAVAILABLE");
-  if (studio.role !== "region" || studio.modal !== null || !studio.landmarks || !studio.labelled || studio.repositoryInput || studio.color === studio.background) {
+  if (studio.role !== "region" || studio.modal !== null || !studio.landmarks || !studio.regions || !studio.labelled || studio.hostTheme !== "dark" || studio.repositoryInput || studio.color === studio.background) {
     throw new Error(`HARNESS_THEME_OR_ACCESSIBILITY_FAILED: ${JSON.stringify(studio)}`);
   }
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Load Tasks').click(); })()`);
   await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Alpha Task')`), "HARNESS_STUDIO_TASKS_FAILED");
   await cdp.evaluate(`(() => { const row = [...document.querySelectorAll('li')].find((node) => node.textContent.includes('Alpha Task')); const input = row?.querySelector('input[type="checkbox"]'); if (!input) throw new Error('qualification task checkbox missing'); input.click(); })()`);
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Evaluate selection').click(); })()`);
+  const dashboard = await waitFor(async () => cdp.evaluate(`(() => {
+    const layout = document.querySelector('[data-wsr-dashboard-layout="wsr-dsh.studio-layout@1"]');
+    const panel = layout?.querySelector('[data-wsr-dashboard-panel]');
+    if (!layout || !panel || !panel.querySelector('.metric-frame')) return undefined;
+    return { columns: getComputedStyle(layout).gridTemplateColumns.split(' ').filter(Boolean).length,
+      coreTheme: layout.closest('.wsr-bi')?.getAttribute('data-theme'),
+      panelColumns: getComputedStyle(panel).getPropertyValue('--studio-panel-desktop-columns').trim() };
+  })()`), "HARNESS_STUDIO_DASHBOARD_LAYOUT_FAILED");
+  if (dashboard.columns !== 12 || dashboard.panelColumns !== "3" || dashboard.coreTheme !== "dark") throw new Error(`HARNESS_STUDIO_DASHBOARD_LAYOUT_INVALID: ${JSON.stringify(dashboard)}`);
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Edit dashboard').click(); })()`);
+  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Save layout') && document.body.innerText.includes('Cancel editing') && document.body.innerText.includes('Reset layout')`), "HARNESS_STUDIO_DASHBOARD_EDIT_FAILED");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Resize panel').click(); })()`);
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Save layout').click(); })()`);
+  const savedDashboard = await waitFor(async () => cdp.evaluate(`(() => {
+    const panel = document.querySelector('[data-wsr-dashboard-panel]');
+    const stored = sessionStorage.getItem('wsr.studio.dashboard-layout@1');
+    return panel && stored && getComputedStyle(panel).getPropertyValue('--studio-panel-desktop-columns').trim() === '6'
+      ? { panelColumns: '6', persisted: JSON.parse(stored).sizes }
+      : undefined;
+  })()`), "HARNESS_STUDIO_DASHBOARD_SAVE_FAILED");
   await cdp.evaluate(`document.querySelector('input[type="radio"][value="compare"]').click()`);
   await cdp.evaluate(`(() => { const fieldset = [...document.querySelectorAll('fieldset')].find((node) => node.querySelector('legend')?.textContent === 'After'); const label = [...fieldset.querySelectorAll('label')].find((node) => node.textContent.includes('Beta Task')); label.querySelector('input').click(); })()`);
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Evaluate selection').click(); })()`);
@@ -647,7 +682,20 @@ try {
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'View evidence').click(); })()`);
   await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('EVENT_CONTRIBUTION') && document.body.innerText.includes('fact-1')`), "HARNESS_STUDIO_FACT_FAILED");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.includes(${JSON.stringify(traceId)})).click(); })()`);
-  const trace = await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Recorded structure') && document.body.innerText.includes('Qualification evaluate')`), "HARNESS_STUDIO_TRACE_FAILED");
+  const waterfall = await waitFor(async () => cdp.evaluate(`(() => {
+    const view = document.querySelector('[aria-label="Recorded trace waterfall"]');
+    return view && view.textContent.includes('recorded duration') && view.textContent.includes('Qualification evaluate')
+      ? { motion: view.getAttribute('data-motion'), spans: view.querySelectorAll('.recorded-node').length }
+      : undefined;
+  })()`), "HARNESS_STUDIO_TRACE_WATERFALL_FAILED");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Tree').click(); })()`);
+  const tree = await waitFor(async () => cdp.evaluate(`(() => {
+    const view = document.querySelector('[role="tree"][aria-label="Recorded trace call tree"]');
+    return view && view.textContent.includes('Qualification evaluate')
+      ? { spans: view.querySelectorAll('[role="treeitem"]').length, links: document.querySelectorAll('[aria-label="Recorded span links"] li').length }
+      : undefined;
+  })()`), "HARNESS_STUDIO_TRACE_TREE_FAILED");
+  const trace = { waterfall, tree };
   const storedLocation = await cdp.evaluate(`sessionStorage.getItem('wsr.studio.location@1')`);
   const urlLocation = await cdp.evaluate(`new URL(location.href).searchParams.get('wsr-studio')`);
   if (!storedLocation?.startsWith('/evaluate/trace/') || urlLocation !== null) {
@@ -663,8 +711,15 @@ try {
   await cdp.command("Page.reload", { ignoreCache: true });
   const restored = await waitFor(async () => cdp.evaluate(`(() => {
     const view = document.querySelector('[data-wsr-studio-view="evaluate"]');
-    return Boolean(view && document.body.innerText.includes('Recorded structure') && document.body.innerText.includes('Qualification evaluate'));
+    const waterfall = document.querySelector('[aria-label="Recorded trace waterfall"]');
+    return Boolean(view && waterfall && waterfall.textContent.includes('Qualification evaluate'));
   })()`), "HARNESS_STUDIO_REFRESH_RECOVERY_FAILED", 30_000);
+  await cdp.command("Emulation.setEmulatedMedia", {
+    media: "screen",
+    features: [{ name: "prefers-color-scheme", value: "light" }],
+  });
+  await cdp.command("Page.reload", { ignoreCache: true });
+  const lightTheme = await waitFor(async () => cdp.evaluate(`document.querySelector('.wsr-bi[data-theme="light"]') !== null`), "HARNESS_STUDIO_LIGHT_THEME_FAILED", 30_000);
   fixtureAvailable = false;
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Back to Metric Results').click(); })()`);
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Load Tasks').click(); })()`);
@@ -693,7 +748,8 @@ try {
       activation: ["wsr-execution", "wsr-studio"],
     },
     browser: { deliveryInventory: terminalFixture ? shell.terminalRows : "empty-ready", terminalView: terminalView ?? null, commandDiagnostic, keyboardDisclosure: `${before.expanded}->${after}`, tabOrder: shell.tabOrder, studio,
-      evaluate: "compare-metric-receipt-fact-trace", storedLocation, urlLocation, refreshRecovery: restored,
+      evaluate: "single-adjustable-dashboard-compare-metric-receipt-fact-trace", dashboard, savedDashboard,
+      themes: { dark: dashboard.coreTheme, light: lightTheme ? "light" : "invalid" }, storedLocation, urlLocation, refreshRecovery: restored,
       escapeBehavior: retainedAfterEscape ? "conversation-view-retained" : "invalid", degraded, narrow, trace, errors: 0 },
   }, null, 2)}\n`);
 } catch (error) {
