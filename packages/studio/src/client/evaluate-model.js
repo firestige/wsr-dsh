@@ -180,18 +180,20 @@ function validTaskPage(value) {
     (value.next_cursor === null || typeof value.next_cursor === "string");
 }
 
-function side(value) {
+function side(value, catalogCoordinates) {
   return value?.tag === "SIDE_RESULT"
-    ? Array.isArray(value.metric_results) && value.receipt !== null && typeof value.receipt === "object"
+    ? Array.isArray(value.metric_results) && value.receipt !== null && typeof value.receipt === "object" &&
+      (catalogCoordinates === undefined || (value.metric_results.length === catalogCoordinates.length &&
+        value.metric_results.every((metric, index) => `${metric.metric_id}@${metric.metric_version}` === catalogCoordinates[index])))
     : value?.tag === "SIDE_ERROR" && typeof value.code === "string";
 }
 
-function validComputeResponse(value) {
+function validComputeResponse(value, catalogCoordinates) {
   if (value?.api_version !== 1) return false;
-  if (value.mode === "SINGLE") return side(value.result) && value.result.tag === "SIDE_RESULT";
+  if (value.mode === "SINGLE") return side(value.result, catalogCoordinates) && value.result.tag === "SIDE_RESULT";
   return value.mode === "COMPARE" &&
     ["FULL_COMPARE", "PARTIAL_COMPARE"].includes(value.status) &&
-    side(value.left) && side(value.right) && Array.isArray(value.deltas);
+    side(value.left, catalogCoordinates) && side(value.right, catalogCoordinates) && Array.isArray(value.deltas);
 }
 
 function initialRoute(storage, context) {
@@ -205,13 +207,14 @@ function initialRoute(storage, context) {
     : { page: "select" };
 }
 
-export function createEvaluateController({ gateway, storage, initialContext } = {}) {
+export function createEvaluateController({ gateway, storage, initialContext, catalogCoordinates } = {}) {
   if (gateway === undefined || typeof gateway.call !== "function") throw new Error("STUDIO_GATEWAY_REQUIRED");
   const route = initialRoute(storage, initialContext);
   let snapshot = {
     phase: "idle",
     route,
     selection: route.selection,
+    recentSelection: route.selection,
     taskList: { phase: "idle", items: [] },
     drilldown: { phase: "idle", facts: [], trace: [] },
     result: undefined,
@@ -233,8 +236,23 @@ export function createEvaluateController({ gateway, storage, initialContext } = 
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
     setSelection(selection) {
       bodyFor(selection);
-      publish({ selection, route: { page: "results", selection }, phase: "idle", error: undefined });
+      publish({ selection, recentSelection: selection, route: { page: "results", selection }, phase: "idle", error: undefined });
       storage?.setItem(STORAGE_KEY, serializeStudioLocation({ page: "results", selection }));
+    },
+    clearSelection() {
+      const nextRoute = { page: "select" };
+      snapshot = {
+        ...snapshot,
+        phase: "idle",
+        route: nextRoute,
+        selection: undefined,
+        result: undefined,
+        error: undefined,
+        refreshing: false,
+        drilldown: { phase: "idle", facts: [], trace: [] },
+      };
+      storage?.setItem(STORAGE_KEY, serializeStudioLocation(nextRoute));
+      for (const listener of listeners) listener();
     },
     async loadTasks(cursor) {
       publish({ taskList: { ...snapshot.taskList, phase: "loading", error: undefined } });
@@ -261,7 +279,7 @@ export function createEvaluateController({ gateway, storage, initialContext } = 
         publish({ phase: retaining ? "degraded" : "error", refreshing: false, error: answer.error });
         return;
       }
-      if (!validComputeResponse(answer.value)) {
+      if (!validComputeResponse(answer.value, catalogCoordinates)) {
         publish({ phase: retaining ? "degraded" : "error", refreshing: false, error: incompatibleResponse });
         return;
       }

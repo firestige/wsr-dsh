@@ -57,16 +57,16 @@ function descending(a2, b2) {
 }
 
 // node_modules/d3-array/src/bisector.js
-function bisector(f) {
+function bisector(f2) {
   let compare1, compare2, delta;
-  if (f.length !== 2) {
+  if (f2.length !== 2) {
     compare1 = ascending;
-    compare2 = (d, x2) => ascending(f(d), x2);
-    delta = (d, x2) => f(d) - x2;
+    compare2 = (d2, x2) => ascending(f2(d2), x2);
+    delta = (d2, x2) => f2(d2) - x2;
   } else {
-    compare1 = f === ascending || f === descending ? f : zero;
-    compare2 = f;
-    delta = f;
+    compare1 = f2 === ascending || f2 === descending ? f2 : zero;
+    compare2 = f2;
+    delta = f2;
   }
   function left(a2, x2, lo = 0, hi = a2.length) {
     if (lo < hi) {
@@ -218,14 +218,14 @@ function range(start2, stop, step) {
 var noop = { value: () => {
 } };
 function dispatch() {
-  for (var i = 0, n2 = arguments.length, _2 = {}, t2; i < n2; ++i) {
-    if (!(t2 = arguments[i] + "") || t2 in _2 || /[\s.]/.test(t2)) throw new Error("illegal type: " + t2);
-    _2[t2] = [];
+  for (var i = 0, n2 = arguments.length, _ = {}, t2; i < n2; ++i) {
+    if (!(t2 = arguments[i] + "") || t2 in _ || /[\s.]/.test(t2)) throw new Error("illegal type: " + t2);
+    _[t2] = [];
   }
-  return new Dispatch(_2);
+  return new Dispatch(_);
 }
-function Dispatch(_2) {
-  this._ = _2;
+function Dispatch(_) {
+  this._ = _;
 }
 function parseTypenames(typenames, types) {
   return typenames.trim().split(/^|\s+/).map(function(t2) {
@@ -238,21 +238,21 @@ function parseTypenames(typenames, types) {
 Dispatch.prototype = dispatch.prototype = {
   constructor: Dispatch,
   on: function(typename, callback) {
-    var _2 = this._, T2 = parseTypenames(typename + "", _2), t2, i = -1, n2 = T2.length;
+    var _ = this._, T2 = parseTypenames(typename + "", _), t2, i = -1, n2 = T2.length;
     if (arguments.length < 2) {
-      while (++i < n2) if ((t2 = (typename = T2[i]).type) && (t2 = get(_2[t2], typename.name))) return t2;
+      while (++i < n2) if ((t2 = (typename = T2[i]).type) && (t2 = get(_[t2], typename.name))) return t2;
       return;
     }
     if (callback != null && typeof callback !== "function") throw new Error("invalid callback: " + callback);
     while (++i < n2) {
-      if (t2 = (typename = T2[i]).type) _2[t2] = set(_2[t2], typename.name, callback);
-      else if (callback == null) for (t2 in _2) _2[t2] = set(_2[t2], typename.name, null);
+      if (t2 = (typename = T2[i]).type) _[t2] = set(_[t2], typename.name, callback);
+      else if (callback == null) for (t2 in _) _[t2] = set(_[t2], typename.name, null);
     }
     return this;
   },
   copy: function() {
-    var copy2 = {}, _2 = this._;
-    for (var t2 in _2) copy2[t2] = _2[t2].slice();
+    var copy2 = {}, _ = this._;
+    for (var t2 in _) copy2[t2] = _[t2].slice();
     return new Dispatch(copy2);
   },
   call: function(type2, that) {
@@ -1441,9 +1441,9 @@ function basisClosed_default(values) {
 var constant_default2 = (x2) => () => x2;
 
 // node_modules/d3-interpolate/src/color.js
-function linear(a2, d) {
+function linear(a2, d2) {
   return function(t2) {
-    return a2 + t2 * d;
+    return a2 + t2 * d2;
   };
 }
 function exponential(a2, b2, y2) {
@@ -1457,8 +1457,8 @@ function gamma(y2) {
   };
 }
 function nogamma(a2, b2) {
-  var d = b2 - a2;
-  return d ? linear(a2, d) : constant_default2(isNaN(a2) ? b2 : a2);
+  var d2 = b2 - a2;
+  return d2 ? linear(a2, d2) : constant_default2(isNaN(a2) ? b2 : a2);
 }
 
 // node_modules/d3-interpolate/src/rgb.js
@@ -1527,9 +1527,9 @@ function genericArray(a2, b2) {
 
 // node_modules/d3-interpolate/src/date.js
 function date_default(a2, b2) {
-  var d = /* @__PURE__ */ new Date();
+  var d2 = /* @__PURE__ */ new Date();
   return a2 = +a2, b2 = +b2, function(t2) {
-    return d.setTime(a2 * (1 - t2) + b2 * t2), d;
+    return d2.setTime(a2 * (1 - t2) + b2 * t2), d2;
   };
 }
 
@@ -1623,15 +1623,15 @@ var identity = {
   scaleX: 1,
   scaleY: 1
 };
-function decompose_default(a2, b2, c2, d, e3, f) {
+function decompose_default(a2, b2, c2, d2, e3, f2) {
   var scaleX, scaleY, skewX;
   if (scaleX = Math.sqrt(a2 * a2 + b2 * b2)) a2 /= scaleX, b2 /= scaleX;
-  if (skewX = a2 * c2 + b2 * d) c2 -= a2 * skewX, d -= b2 * skewX;
-  if (scaleY = Math.sqrt(c2 * c2 + d * d)) c2 /= scaleY, d /= scaleY, skewX /= scaleY;
-  if (a2 * d < b2 * c2) a2 = -a2, b2 = -b2, skewX = -skewX, scaleX = -scaleX;
+  if (skewX = a2 * c2 + b2 * d2) c2 -= a2 * skewX, d2 -= b2 * skewX;
+  if (scaleY = Math.sqrt(c2 * c2 + d2 * d2)) c2 /= scaleY, d2 /= scaleY, skewX /= scaleY;
+  if (a2 * d2 < b2 * c2) a2 = -a2, b2 = -b2, skewX = -skewX, scaleX = -scaleX;
   return {
     translateX: e3,
-    translateY: f,
+    translateY: f2,
     rotate: Math.atan2(b2, a2) * degrees,
     skewX: Math.atan(skewX) * degrees,
     scaleX,
@@ -1720,8 +1720,8 @@ var clockLast = 0;
 var clockNow = 0;
 var clockSkew = 0;
 var clock = typeof performance === "object" && performance.now ? performance : Date;
-var setFrame = typeof window === "object" && window.requestAnimationFrame ? window.requestAnimationFrame.bind(window) : function(f) {
-  setTimeout(f, 17);
+var setFrame = typeof window === "object" && window.requestAnimationFrame ? window.requestAnimationFrame.bind(window) : function(f2) {
+  setTimeout(f2, 17);
 };
 function now() {
   return clockNow || (setFrame(clearNow), clockNow = clock.now() + clockSkew);
@@ -2654,17 +2654,17 @@ function formatTrim_default(s2) {
 // node_modules/d3-format/src/formatPrefixAuto.js
 var prefixExponent;
 function formatPrefixAuto_default(x2, p2) {
-  var d = formatDecimalParts(x2, p2);
-  if (!d) return prefixExponent = void 0, x2.toPrecision(p2);
-  var coefficient = d[0], exponent = d[1], i = exponent - (prefixExponent = Math.max(-8, Math.min(8, Math.floor(exponent / 3))) * 3) + 1, n2 = coefficient.length;
+  var d2 = formatDecimalParts(x2, p2);
+  if (!d2) return prefixExponent = void 0, x2.toPrecision(p2);
+  var coefficient = d2[0], exponent = d2[1], i = exponent - (prefixExponent = Math.max(-8, Math.min(8, Math.floor(exponent / 3))) * 3) + 1, n2 = coefficient.length;
   return i === n2 ? coefficient : i > n2 ? coefficient + new Array(i - n2 + 1).join("0") : i > 0 ? coefficient.slice(0, i) + "." + coefficient.slice(i) : "0." + new Array(1 - i).join("0") + formatDecimalParts(x2, Math.max(0, p2 + i - 1))[0];
 }
 
 // node_modules/d3-format/src/formatRounded.js
 function formatRounded_default(x2, p2) {
-  var d = formatDecimalParts(x2, p2);
-  if (!d) return x2 + "";
-  var coefficient = d[0], exponent = d[1];
+  var d2 = formatDecimalParts(x2, p2);
+  if (!d2) return x2 + "";
+  var coefficient = d2[0], exponent = d2[1];
   return exponent < 0 ? "0." + new Array(-exponent).join("0") + coefficient : coefficient.length > exponent + 1 ? coefficient.slice(0, exponent + 1) + "." + coefficient.slice(exponent + 1) : coefficient + new Array(exponent - coefficient.length + 2).join("0");
 }
 
@@ -2753,9 +2753,9 @@ function locale_default(locale2) {
     return format2;
   }
   function formatPrefix2(specifier, value) {
-    var e3 = Math.max(-8, Math.min(8, Math.floor(exponent_default(value) / 3))) * 3, k2 = Math.pow(10, -e3), f = newFormat((specifier = formatSpecifier(specifier), specifier.type = "f", specifier), { suffix: prefixes[8 + e3 / 3] });
+    var e3 = Math.max(-8, Math.min(8, Math.floor(exponent_default(value) / 3))) * 3, k2 = Math.pow(10, -e3), f2 = newFormat((specifier = formatSpecifier(specifier), specifier.type = "f", specifier), { suffix: prefixes[8 + e3 / 3] });
     return function(value2) {
-      return f(k2 * value2);
+      return f2(k2 * value2);
     };
   }
   return {
@@ -2815,28 +2815,28 @@ function initRange(domain, range2) {
 var implicit = Symbol("implicit");
 function ordinal() {
   var index = new InternMap(), domain = [], range2 = [], unknown = implicit;
-  function scale(d) {
-    let i = index.get(d);
+  function scale(d2) {
+    let i = index.get(d2);
     if (i === void 0) {
       if (unknown !== implicit) return unknown;
-      index.set(d, i = domain.push(d) - 1);
+      index.set(d2, i = domain.push(d2) - 1);
     }
     return range2[i % range2.length];
   }
-  scale.domain = function(_2) {
+  scale.domain = function(_) {
     if (!arguments.length) return domain.slice();
     domain = [], index = new InternMap();
-    for (const value of _2) {
+    for (const value of _) {
       if (index.has(value)) continue;
       index.set(value, domain.push(value) - 1);
     }
     return scale;
   };
-  scale.range = function(_2) {
-    return arguments.length ? (range2 = Array.from(_2), scale) : range2.slice();
+  scale.range = function(_) {
+    return arguments.length ? (range2 = Array.from(_), scale) : range2.slice();
   };
-  scale.unknown = function(_2) {
-    return arguments.length ? (unknown = _2, scale) : unknown;
+  scale.unknown = function(_) {
+    return arguments.length ? (unknown = _, scale) : unknown;
   };
   scale.copy = function() {
     return ordinal(domain, range2).unknown(unknown);
@@ -2861,14 +2861,14 @@ function band() {
     });
     return ordinalRange(reverse ? values.reverse() : values);
   }
-  scale.domain = function(_2) {
-    return arguments.length ? (domain(_2), rescale()) : domain();
+  scale.domain = function(_) {
+    return arguments.length ? (domain(_), rescale()) : domain();
   };
-  scale.range = function(_2) {
-    return arguments.length ? ([r0, r1] = _2, r0 = +r0, r1 = +r1, rescale()) : [r0, r1];
+  scale.range = function(_) {
+    return arguments.length ? ([r0, r1] = _, r0 = +r0, r1 = +r1, rescale()) : [r0, r1];
   };
-  scale.rangeRound = function(_2) {
-    return [r0, r1] = _2, r0 = +r0, r1 = +r1, round = true, rescale();
+  scale.rangeRound = function(_) {
+    return [r0, r1] = _, r0 = +r0, r1 = +r1, round = true, rescale();
   };
   scale.bandwidth = function() {
     return bandwidth;
@@ -2876,20 +2876,20 @@ function band() {
   scale.step = function() {
     return step;
   };
-  scale.round = function(_2) {
-    return arguments.length ? (round = !!_2, rescale()) : round;
+  scale.round = function(_) {
+    return arguments.length ? (round = !!_, rescale()) : round;
   };
-  scale.padding = function(_2) {
-    return arguments.length ? (paddingInner = Math.min(1, paddingOuter = +_2), rescale()) : paddingInner;
+  scale.padding = function(_) {
+    return arguments.length ? (paddingInner = Math.min(1, paddingOuter = +_), rescale()) : paddingInner;
   };
-  scale.paddingInner = function(_2) {
-    return arguments.length ? (paddingInner = Math.min(1, _2), rescale()) : paddingInner;
+  scale.paddingInner = function(_) {
+    return arguments.length ? (paddingInner = Math.min(1, _), rescale()) : paddingInner;
   };
-  scale.paddingOuter = function(_2) {
-    return arguments.length ? (paddingOuter = +_2, rescale()) : paddingOuter;
+  scale.paddingOuter = function(_) {
+    return arguments.length ? (paddingOuter = +_, rescale()) : paddingOuter;
   };
-  scale.align = function(_2) {
-    return arguments.length ? (align = Math.max(0, Math.min(1, _2)), rescale()) : align;
+  scale.align = function(_) {
+    return arguments.length ? (align = Math.max(0, Math.min(1, _)), rescale()) : align;
   };
   scale.copy = function() {
     return band(domain(), [r0, r1]).round(round).paddingInner(paddingInner).paddingOuter(paddingOuter).align(align);
@@ -2948,18 +2948,18 @@ function bimap(domain, range2, interpolate) {
   };
 }
 function polymap(domain, range2, interpolate) {
-  var j2 = Math.min(domain.length, range2.length) - 1, d = new Array(j2), r = new Array(j2), i = -1;
+  var j2 = Math.min(domain.length, range2.length) - 1, d2 = new Array(j2), r = new Array(j2), i = -1;
   if (domain[j2] < domain[0]) {
     domain = domain.slice().reverse();
     range2 = range2.slice().reverse();
   }
   while (++i < j2) {
-    d[i] = normalize(domain[i], domain[i + 1]);
+    d2[i] = normalize(domain[i], domain[i + 1]);
     r[i] = interpolate(range2[i], range2[i + 1]);
   }
   return function(x2) {
     var i2 = bisect_default(domain, x2, 1, j2) - 1;
-    return r[i2](d[i2](x2));
+    return r[i2](d2[i2](x2));
   };
 }
 function copy(source, target) {
@@ -2980,23 +2980,23 @@ function transformer() {
   scale.invert = function(y2) {
     return clamp(untransform((input || (input = piecewise(range2, domain.map(transform2), number_default)))(y2)));
   };
-  scale.domain = function(_2) {
-    return arguments.length ? (domain = Array.from(_2, number3), rescale()) : domain.slice();
+  scale.domain = function(_) {
+    return arguments.length ? (domain = Array.from(_, number3), rescale()) : domain.slice();
   };
-  scale.range = function(_2) {
-    return arguments.length ? (range2 = Array.from(_2), rescale()) : range2.slice();
+  scale.range = function(_) {
+    return arguments.length ? (range2 = Array.from(_), rescale()) : range2.slice();
   };
-  scale.rangeRound = function(_2) {
-    return range2 = Array.from(_2), interpolate = round_default, rescale();
+  scale.rangeRound = function(_) {
+    return range2 = Array.from(_), interpolate = round_default, rescale();
   };
-  scale.clamp = function(_2) {
-    return arguments.length ? (clamp = _2 ? true : identity2, rescale()) : clamp !== identity2;
+  scale.clamp = function(_) {
+    return arguments.length ? (clamp = _ ? true : identity2, rescale()) : clamp !== identity2;
   };
-  scale.interpolate = function(_2) {
-    return arguments.length ? (interpolate = _2, rescale()) : interpolate;
+  scale.interpolate = function(_) {
+    return arguments.length ? (interpolate = _, rescale()) : interpolate;
   };
-  scale.unknown = function(_2) {
-    return arguments.length ? (unknown = _2, scale) : unknown;
+  scale.unknown = function(_) {
+    return arguments.length ? (unknown = _, scale) : unknown;
   };
   return function(t2, u2) {
     transform2 = t2, untransform = u2;
@@ -3038,20 +3038,20 @@ function tickFormat(start2, stop, count, specifier) {
 function linearish(scale) {
   var domain = scale.domain;
   scale.ticks = function(count) {
-    var d = domain();
-    return ticks(d[0], d[d.length - 1], count == null ? 10 : count);
+    var d2 = domain();
+    return ticks(d2[0], d2[d2.length - 1], count == null ? 10 : count);
   };
   scale.tickFormat = function(count, specifier) {
-    var d = domain();
-    return tickFormat(d[0], d[d.length - 1], count == null ? 10 : count, specifier);
+    var d2 = domain();
+    return tickFormat(d2[0], d2[d2.length - 1], count == null ? 10 : count, specifier);
   };
   scale.nice = function(count) {
     if (count == null) count = 10;
-    var d = domain();
+    var d2 = domain();
     var i0 = 0;
-    var i1 = d.length - 1;
-    var start2 = d[i0];
-    var stop = d[i1];
+    var i1 = d2.length - 1;
+    var start2 = d2[i0];
+    var stop = d2[i1];
     var prestep;
     var step;
     var maxIter = 10;
@@ -3062,9 +3062,9 @@ function linearish(scale) {
     while (maxIter-- > 0) {
       step = tickIncrement(start2, stop, count);
       if (step === prestep) {
-        d[i0] = start2;
-        d[i1] = stop;
-        return domain(d);
+        d2[i0] = start2;
+        d2[i1] = stop;
+        return domain(d2);
       } else if (step > 0) {
         start2 = Math.floor(start2 / step) * step;
         stop = Math.ceil(stop / step) * step;
@@ -3140,8 +3140,234 @@ function transform(node) {
 
 // node_modules/wsr-ui-core/dist/index.js
 var import_react = require("react");
-function u({ children: e3, className: n2, density: r, theme: i = "system" }) {
-  let a2 = typeof i == "string" ? i : i.mode, o2 = r ?? (typeof i == "string" ? "comfortable" : i.density), s2 = typeof i == "string" ? void 0 : { "--wsr-container-border-style": i.containerBorderStyle };
+function f({ as: e3 = "span", variant: n2, className: r, ...i }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(e3, {
+    className: ["wsr-typography", r].filter(Boolean).join(" "),
+    "data-variant": n2,
+    ...i
+  });
+}
+function p({ appearance: e3 = "outline", tone: n2 = "neutral", size: r = "compact", selected: i, className: a2, ...o2 }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+    "aria-pressed": e3 === "segment" ? i : o2["aria-pressed"],
+    className: ["wsr-button", a2].filter(Boolean).join(" "),
+    "data-appearance": e3,
+    "data-size": r,
+    "data-tone": n2,
+    ...o2
+  });
+}
+function m({ "aria-label": e3, title: n2, children: r, ...i }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(p, {
+    "aria-label": e3,
+    "data-icon-button": "true",
+    title: n2 ?? e3,
+    ...i,
+    children: r
+  });
+}
+function h({ segmented: e3 = false, className: n2, ...r }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+    className: ["wsr-button-group", n2].filter(Boolean).join(" "),
+    "data-segmented": e3 || void 0,
+    role: e3 ? "group" : r.role,
+    ...r
+  });
+}
+function g({ as: e3 = "section", level: n2 = "section", border: r = "solid", className: i, children: a2, ...o2 }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(e3, {
+    className: ["wsr-surface", i].filter(Boolean).join(" "),
+    "data-border": r,
+    "data-level": n2,
+    ...o2,
+    children: a2
+  });
+}
+function v({ inputKind: e3 = "search", className: n2, type: r, ...i }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+    className: ["wsr-input", n2].filter(Boolean).join(" "),
+    "data-input-kind": e3,
+    type: r ?? e3,
+    ...i
+  });
+}
+function y({ status: e3, className: n2, ...r }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+    className: ["wsr-status-badge", n2].filter(Boolean).join(" "),
+    "data-status": e3,
+    ...r
+  });
+}
+var b = Object.freeze({
+  schemaVersion: "wsr.studio-design@1",
+  typography: Object.freeze({
+    pageTitle: Object.freeze({
+      level: "page",
+      family: "sans",
+      emphasis: "strong"
+    }),
+    sectionTitle: Object.freeze({
+      level: "section",
+      family: "sans",
+      emphasis: "strong"
+    }),
+    body: Object.freeze({
+      level: "body",
+      family: "sans",
+      emphasis: "regular"
+    }),
+    label: Object.freeze({
+      level: "label",
+      family: "sans",
+      emphasis: "strong"
+    }),
+    caption: Object.freeze({
+      level: "caption",
+      family: "sans",
+      emphasis: "regular"
+    }),
+    eyebrow: Object.freeze({
+      level: "micro",
+      family: "sans",
+      emphasis: "strong",
+      transform: "uppercase"
+    }),
+    code: Object.freeze({
+      level: "caption",
+      family: "mono",
+      emphasis: "regular"
+    }),
+    value: Object.freeze({
+      level: "value",
+      family: "mono",
+      emphasis: "strong"
+    })
+  }),
+  buttons: Object.freeze({
+    primary: Object.freeze({
+      appearance: "solid",
+      tone: "primary",
+      size: "compact"
+    }),
+    secondary: Object.freeze({
+      appearance: "outline",
+      tone: "neutral",
+      size: "compact"
+    }),
+    ghost: Object.freeze({
+      appearance: "ghost",
+      tone: "neutral",
+      size: "compact"
+    }),
+    danger: Object.freeze({
+      appearance: "solid",
+      tone: "danger",
+      size: "compact"
+    }),
+    segment: Object.freeze({
+      appearance: "segment",
+      tone: "primary",
+      size: "compact"
+    })
+  }),
+  inputs: Object.freeze({ search: Object.freeze({
+    kind: "search",
+    size: "compact",
+    surface: "inset"
+  }) }),
+  statuses: Object.freeze({
+    available: Object.freeze({
+      tone: "primary",
+      emphasis: "soft"
+    }),
+    selected: Object.freeze({
+      tone: "primary",
+      emphasis: "soft"
+    }),
+    partial: Object.freeze({
+      tone: "warning",
+      emphasis: "soft"
+    }),
+    unavailable: Object.freeze({
+      tone: "neutral",
+      emphasis: "soft"
+    }),
+    error: Object.freeze({
+      tone: "danger",
+      emphasis: "soft"
+    })
+  }),
+  surfaces: Object.freeze({
+    header: Object.freeze({
+      level: "section",
+      border: "solid",
+      radius: "panel"
+    }),
+    section: Object.freeze({
+      level: "section",
+      border: "solid",
+      radius: "panel"
+    }),
+    panel: Object.freeze({
+      level: "panel",
+      border: "solid",
+      radius: "panel"
+    }),
+    inset: Object.freeze({
+      level: "inset",
+      border: "solid",
+      radius: "control"
+    }),
+    notice: Object.freeze({
+      level: "raised",
+      border: "dashed",
+      radius: "panel"
+    })
+  }),
+  spacing: Object.freeze([
+    "tight",
+    "control",
+    "cluster",
+    "grid",
+    "section"
+  ]),
+  pages: Object.freeze({
+    select: Object.freeze([
+      "header",
+      "taskPopulation",
+      "currentSelection"
+    ]),
+    dashboard: Object.freeze([
+      "header",
+      "panelCanvas",
+      "traceNotice"
+    ]),
+    evidence: Object.freeze(["header", "evidenceContent"]),
+    trace: Object.freeze([
+      "header",
+      "traceContext",
+      "rendererNavigation",
+      "renderer",
+      "motion"
+    ])
+  })
+});
+function x({ children: e3, className: n2, density: r, theme: i = "system" }) {
+  let a2 = typeof i == "string" ? i : i.mode, o2 = r ?? (typeof i == "string" ? "comfortable" : i.density), s2 = typeof i == "string" ? void 0 : {
+    "--wsr-container-border-style": i.containerBorderStyle,
+    ...i.surfaces === void 0 ? {} : {
+      "--wsr-surface-section": i.surfaces.section,
+      "--wsr-surface-panel": i.surfaces.panel,
+      "--wsr-surface-raised": i.surfaces.raised,
+      "--wsr-surface-inset": i.surfaces.inset
+    },
+    ...i.traceIndentGuides === void 0 ? {} : {
+      "--wsr-trace-indent-0": i.traceIndentGuides[0],
+      "--wsr-trace-indent-1": i.traceIndentGuides[1],
+      "--wsr-trace-indent-2": i.traceIndentGuides[2],
+      "--wsr-trace-indent-3": i.traceIndentGuides[3]
+    }
+  };
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: ["wsr-bi", n2].filter(Boolean).join(" "),
     "data-density": o2,
@@ -3150,44 +3376,145 @@ function u({ children: e3, className: n2, density: r, theme: i = "system" }) {
     children: e3
   });
 }
-function p({ mode: e3, density: t2 = "comfortable", containerBorderStyle: n2 = "solid" }) {
+function w({ mode: e3, density: t2 = "comfortable", containerBorderStyle: n2 = "solid", surfaces: r, traceIndentGuides: i }) {
   return Object.freeze({
     mode: e3,
     density: t2,
-    containerBorderStyle: n2
+    containerBorderStyle: n2,
+    ...r === void 0 ? {} : { surfaces: Object.freeze({ ...r }) },
+    ...i === void 0 ? {} : { traceIndentGuides: Object.freeze([...i]) }
   });
 }
-function m(e3) {
+function T(e3) {
   let t2 = e3.startsWith("-"), n2 = (t2 ? e3.slice(1) : e3).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return t2 ? `-${n2}` : n2;
 }
-function h(e3) {
+function ee(e3) {
   let [t2, n2] = e3.split("/");
   return [BigInt(t2), BigInt(n2 ?? "1")];
 }
-function g(e3) {
-  let [t2, n2] = h(e3), r = t2 < 0n, i = (r ? -t2 : t2) * 10000n, a2 = i / n2;
+function E(e3) {
+  let [t2, n2] = ee(e3), r = t2 < 0n, i = (r ? -t2 : t2) * 10000n, a2 = i / n2;
   i % n2 * 2n >= n2 && (a2 += 1n);
   let o2 = a2 / 100n, s2 = String(a2 % 100n).padStart(2, "0");
   return `${r ? "-" : ""}${o2}.${s2}%`;
 }
-function _(e3) {
+function D(e3) {
   let t2 = `${String(e3.value)} ${e3.unit}`;
   return e3.kind === "RATIO" ? {
-    display: g(e3.value),
+    display: E(e3.value),
     exact: t2
   } : e3.kind === "BOOLEAN" ? {
     display: t2,
     exact: t2
   } : /^-?(?:0|[1-9][0-9]*)$/.test(e3.value) ? {
-    display: `${m(e3.value)} ${e3.unit}`,
+    display: `${T(e3.value)} ${e3.unit}`,
     exact: t2
   } : {
     display: t2,
     exact: t2
   };
 }
-var ee = /* @__PURE__ */ new Set([
+var O = {
+  "role-template-rework-rate@2.0.0": {
+    definition: "Role-template rework rate",
+    valueSemantics: "Ratio of covered terminal Delivery/template exposures with at least one recorded FINDING_FIX relationship.",
+    eligibility: "Terminal Delivery with an accepted Manifest and recorded C30 binding the exercised role template.",
+    exclusions: [
+      "Missing or incompatible Manifest coordinate",
+      "Unavailable repair relationship input",
+      "Expired records outside the current population"
+    ],
+    limits: "Repair association is descriptive. Do not infer template, reviewer, or writer causality; do not merge Deliveries in one Task."
+  },
+  "role-template-trajectory-partial-cost@2.0.0": {
+    definition: "Role-template trajectory partial cost",
+    valueSemantics: "Reported compatible money Usage for terminal Delivery/template exposures.",
+    eligibility: "Terminal Delivery with exact Manifest-bound role template exposure and compatible reported money Usage.",
+    exclusions: ["Incompatible Usage kind, unit, source, or source_id"],
+    limits: "Do not label as total cost; do not estimate, price, or convert Usage."
+  },
+  "role-model-task-outcome-rate@2.0.0": {
+    definition: "Role-model task outcome rate",
+    valueSemantics: "Outcome ratio for eligible attributed terminal Tasks.",
+    eligibility: "Unique terminal Task outcome and complete canonical model-role tuple.",
+    exclusions: ["Open or mixed-outcome Task", "Incomplete attribution"],
+    limits: "Outcome difference is descriptive; do not infer model causality."
+  },
+  "operational-latency-ms@2.0.0": {
+    definition: "Operational latency",
+    valueSemantics: "Native model-call Span duration in milliseconds.",
+    eligibility: "Native host-reported finite nonnegative duration.",
+    exclusions: ["Absent or invalid duration", "Incompatible provider or runtime cohort"],
+    limits: "Operational latency is not Delivery elapsed time. Do not substitute C55 or infer causality."
+  },
+  "trajectory-partial-cost@2.0.0": {
+    definition: "Trajectory partial cost",
+    valueSemantics: "Partial sum of compatible reported money Usage linked to a Delivery.",
+    eligibility: "Exact Delivery linkage and exact Usage kind, unit, source, and source_id.",
+    exclusions: ["Incompatible Usage kind, unit, source, or source_id"],
+    limits: "Do not label as total cost; do not estimate, price, or convert Usage."
+  },
+  "task-cohort-comparison-eligibility@2.0.0": {
+    definition: "Task cohort comparison eligibility",
+    valueSemantics: "Ratio of defined Tasks ready for compatible cohort comparison.",
+    eligibility: "Task passes the Metric Catalog Task eligibility rules.",
+    exclusions: [
+      "Open Delivery",
+      "Mixed Delivery outcomes",
+      "Undefined Task membership",
+      "Missing Task identity or cohort coordinates"
+    ],
+    limits: "Eligibility measures evidence readiness, not outcome quality. Excluded Tasks stay in the denominator."
+  },
+  "delivery-stage-reach@2.0.0": {
+    definition: "Delivery stage reach",
+    valueSemantics: "Per-stage ratio over linked terminal Deliveries with direct C56 readings.",
+    eligibility: "Linked terminal Delivery with a valid direct C56 value.",
+    exclusions: ["Absent or invalid C56 from the reached-stage numerator"],
+    limits: "Stage identity does not prove unobserved traversal; do not infer from Workflow order."
+  },
+  "delivery-terminal-outcome-rate@2.0.0": {
+    definition: "Delivery terminal outcome rate",
+    valueSemantics: "Per-outcome ratio over explicitly terminated Deliveries.",
+    eligibility: "Exact terminal Delivery identity and supported outcome.",
+    exclusions: ["Open or non-terminal Delivery", "Unsupported outcome"],
+    limits: "Delivery outcome is not Task outcome; do not infer a Task-level outcome."
+  },
+  "delivery-cycle-time-ms@2.0.0": {
+    definition: "Delivery cycle time",
+    valueSemantics: "Owner-reported direct C55 Delivery elapsed time in milliseconds.",
+    eligibility: "Terminal Delivery with finite nonnegative C55.",
+    exclusions: ["Absent or invalid C55"],
+    limits: "Do not derive from arrival time or substitute model-call latency or zero."
+  },
+  "operational-token-usage@2.0.0": {
+    definition: "Operational token usage",
+    valueSemantics: "Compatible reported input or output token measurements.",
+    eligibility: "Reported compatible token measurement for an exact model call.",
+    exclusions: ["Absent or incompatible measurement"],
+    limits: "Values are partial attributable Usage; do not synthesize total tokens."
+  },
+  "operational-attributable-cost@2.0.0": {
+    definition: "Operational attributable cost",
+    valueSemantics: "Reported money Usage bound to an exact model call.",
+    eligibility: "Trace/Span context binds Usage to the exact call with compatible kind, unit, source, and source_id.",
+    exclusions: [
+      "Missing call linkage",
+      "Incompatible Usage",
+      "Incomplete attribution"
+    ],
+    limits: "Do not label as total cost; do not estimate, price, or convert Usage."
+  },
+  "operational-usage-availability@2.0.0": {
+    definition: "Operational usage availability",
+    valueSemantics: "Ratio of eligible model calls with reported compatible Usage.",
+    eligibility: "Eligible exact model-call identity.",
+    exclusions: ["Unsupported call identity or compatibility context"],
+    limits: "Availability does not state Usage amount; do not turn missing Usage into zero."
+  }
+};
+var k = /* @__PURE__ */ new Set([
   "AVAILABLE",
   "LOWER_BOUND",
   "NOT_APPLICABLE",
@@ -3195,7 +3522,7 @@ var ee = /* @__PURE__ */ new Set([
   "EXPIRED",
   "INCOMPATIBLE"
 ]);
-var te = /* @__PURE__ */ new Set([
+var A = /* @__PURE__ */ new Set([
   "COUNT",
   "QUANTITY",
   "RATIO",
@@ -3203,7 +3530,7 @@ var te = /* @__PURE__ */ new Set([
   "DURATION_MS",
   "BOOLEAN"
 ]);
-var ne = /* @__PURE__ */ new Set([
+var j = /* @__PURE__ */ new Set([
   "SAMPLE_INSUFFICIENT",
   "MISSING_INPUT",
   "NO_APPLICABLE_POPULATION",
@@ -3212,23 +3539,23 @@ var ne = /* @__PURE__ */ new Set([
   "EXPIRED_INPUT",
   "INCOMPATIBLE_INPUT"
 ]);
-var re2 = /* @__PURE__ */ new Set([
+var M = /* @__PURE__ */ new Set([
   "NO_POPULATION",
   "NO_COVERAGE",
   "PARTIAL",
   "FULL"
 ]);
-var v = (e3) => typeof e3 == "object" && !!e3 && !Array.isArray(e3);
-var y = (e3) => Array.isArray(e3) && e3.every((e4) => typeof e4 == "string");
-function b(e3) {
-  return !v(e3) || typeof e3.metric_id != "string" || e3.metric_id.length === 0 || e3.metric_version !== "2.0.0" || !Array.isArray(e3.slices) ? false : e3.slices.every((e4) => {
-    let t2 = typeof e4 == "object" && !!e4 && (e4.coverage === null || v(e4.coverage) && typeof e4.coverage.numerator == "string" && typeof e4.coverage.denominator == "string" && (e4.coverage.raw_ratio === null || typeof e4.coverage.raw_ratio == "string") && typeof e4.coverage.state == "string" && re2.has(e4.coverage.state) && (e4.coverage.alert === null || e4.coverage.alert === "LOW_COVERAGE"));
-    return !v(e4) || !v(e4.slice_key) || typeof e4.state != "string" || !ee.has(e4.state) || !v(e4.measures) || !v(e4.compatibility) || !y(e4.exclusions) || !y(e4.missing_inputs) || !y(e4.provenance_refs) || !t2 || e4.numerator !== void 0 && typeof e4.numerator != "string" || e4.denominator !== void 0 && typeof e4.denominator != "string" || e4.contributing_count !== void 0 && typeof e4.contributing_count != "string" || e4.reading !== void 0 && typeof e4.reading != "string" ? false : e4.value === void 0 ? typeof e4.withholding_reason == "string" && ne.has(e4.withholding_reason) : !v(e4.value) || typeof e4.value.kind != "string" || !te.has(e4.value.kind) || typeof e4.value.unit != "string" ? false : e4.value.kind === "BOOLEAN" ? typeof e4.value.value == "boolean" : typeof e4.value.value == "string" ? e4.value.kind === "RATIO" ? /^-?(?:0|[1-9][0-9]*)(?:\/[1-9][0-9]*)?$/u.test(e4.value.value) : /^-?(?:0|[1-9][0-9]*)$/u.test(e4.value.value) || e4.value.kind === "MONEY" || e4.value.kind === "QUANTITY" : false;
+var N = (e3) => typeof e3 == "object" && !!e3 && !Array.isArray(e3);
+var P = (e3) => Array.isArray(e3) && e3.every((e4) => typeof e4 == "string");
+function F(e3) {
+  return !N(e3) || typeof e3.metric_id != "string" || e3.metric_id.length === 0 || e3.metric_version !== "2.0.0" || !Array.isArray(e3.slices) ? false : e3.slices.every((e4) => {
+    let t2 = typeof e4 == "object" && !!e4 && (e4.coverage === null || N(e4.coverage) && typeof e4.coverage.numerator == "string" && typeof e4.coverage.denominator == "string" && (e4.coverage.raw_ratio === null || typeof e4.coverage.raw_ratio == "string") && typeof e4.coverage.state == "string" && M.has(e4.coverage.state) && (e4.coverage.alert === null || e4.coverage.alert === "LOW_COVERAGE"));
+    return !N(e4) || !N(e4.slice_key) || typeof e4.state != "string" || !k.has(e4.state) || !N(e4.measures) || !N(e4.compatibility) || !P(e4.exclusions) || !P(e4.missing_inputs) || !P(e4.provenance_refs) || !t2 || e4.numerator !== void 0 && typeof e4.numerator != "string" || e4.denominator !== void 0 && typeof e4.denominator != "string" || e4.contributing_count !== void 0 && typeof e4.contributing_count != "string" || e4.reading !== void 0 && typeof e4.reading != "string" ? false : e4.value === void 0 ? typeof e4.withholding_reason == "string" && j.has(e4.withholding_reason) : !N(e4.value) || typeof e4.value.kind != "string" || !A.has(e4.value.kind) || typeof e4.value.unit != "string" ? false : e4.value.kind === "BOOLEAN" ? typeof e4.value.value == "boolean" : typeof e4.value.value == "string" ? e4.value.kind === "RATIO" ? /^-?(?:0|[1-9][0-9]*)(?:\/[1-9][0-9]*)?$/u.test(e4.value.value) : /^-?(?:0|[1-9][0-9]*)$/u.test(e4.value.value) || e4.value.kind === "MONEY" || e4.value.kind === "QUANTITY" : false;
   });
 }
-var x = (e3) => e3;
-var ie = {
-  "numeric-card@1": x({
+var I = (e3) => e3;
+var te = {
+  "numeric-card@1": I({
     id: "numeric-card@1",
     arity: "ONE_SLICE",
     channels: ["value"],
@@ -3245,7 +3572,7 @@ var ie = {
     fallback: "table@1",
     transforms: ["DISPLAY_ROUNDING", "RATIO_TO_PERCENT"]
   }),
-  "badge@1": x({
+  "badge@1": I({
     id: "badge@1",
     arity: "ONE_SLICE",
     channels: ["value"],
@@ -3256,7 +3583,7 @@ var ie = {
     fallback: "table@1",
     transforms: []
   }),
-  "ratio-bar@1": x({
+  "ratio-bar@1": I({
     id: "ratio-bar@1",
     arity: "ONE_SLICE",
     channels: ["value", "domain"],
@@ -3267,7 +3594,7 @@ var ie = {
     fallback: "table@1",
     transforms: ["RATIO_TO_PERCENT", "SCALE_LAYOUT"]
   }),
-  "table@1": x({
+  "table@1": I({
     id: "table@1",
     arity: "ANY",
     channels: ["published-result"],
@@ -3283,17 +3610,17 @@ var ie = {
     ]
   })
 };
-function S(e3) {
+function ne(e3) {
   if (e3.value === void 0) return ["numeric-card@1", "table@1"];
   let t2 = [];
   return e3.value.kind === "BOOLEAN" ? t2.push("badge@1") : t2.push("numeric-card@1"), e3.value.kind === "RATIO" && e3.value.unit === "ratio" && t2.push("ratio-bar@1"), t2.push("table@1"), t2;
 }
-function C(e3) {
+function L(e3) {
   if (e3.slices.length !== 1) return "table@1";
   let t2 = e3.slices[0]?.value;
   return t2?.kind === "BOOLEAN" ? "badge@1" : t2?.kind === "RATIO" && t2.unit === "ratio" ? "ratio-bar@1" : "numeric-card@1";
 }
-var ae = {
+var re2 = {
   AVAILABLE: {
     label: "Available",
     marker: "\u2713",
@@ -3325,37 +3652,37 @@ var ae = {
     tone: "incompatible"
   }
 };
-function w({ state: e3, withholdingReason: r, reading: i }) {
-  let a2 = ae[e3];
+function R({ state: e3, withholdingReason: r, reading: i, detail: a2 = "full" }) {
+  let o2 = re2[e3];
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "status-stack",
     "data-state": e3,
     children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-        className: `status-label status-${a2.tone}`,
+        className: `status-label status-${o2.tone}`,
         children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           "aria-hidden": "true",
-          children: a2.marker
-        }), a2.label]
+          children: o2.marker
+        }), o2.label]
       }),
-      r === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+      a2 === "label" || r === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
         className: "status-reason",
         children: ["Reason: ", r]
       }),
-      i === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+      a2 === "label" || i === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
         className: "status-reading",
         children: i
       })
     ]
   });
 }
-var oe = {
+var ie = {
   NO_POPULATION: "No applicable population",
   NO_COVERAGE: "No coverage",
   PARTIAL: "Partial coverage",
   FULL: "Full coverage"
 };
-var se = {
+var ae = {
   NO_POPULATION: {
     marker: "\u25CB",
     tone: "unavailable"
@@ -3373,7 +3700,7 @@ var se = {
     tone: "available"
   }
 };
-function T({ coverage: e3 }) {
+function oe({ coverage: e3 }) {
   if (e3 === null) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "coverage-label",
     "data-coverage": "UNAVAILABLE",
@@ -3385,7 +3712,7 @@ function T({ coverage: e3 }) {
       }), "Coverage unavailable"]
     })
   });
-  let r = se[e3.state];
+  let r = ae[e3.state];
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "coverage-label",
     "data-coverage": e3.state,
@@ -3395,7 +3722,7 @@ function T({ coverage: e3 }) {
         children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           "aria-hidden": "true",
           children: r.marker
-        }), oe[e3.state]]
+        }), ie[e3.state]]
       }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
         className: "numeric-exact",
@@ -3412,10 +3739,10 @@ function T({ coverage: e3 }) {
     ]
   });
 }
-var E = (e3) => e3.toLowerCase().replaceAll("_", " ");
-function D(e3) {
+var z = (e3) => e3.toLowerCase().replaceAll("_", " ");
+function B(e3) {
   if (e3.traceState !== void 0) {
-    let r2 = e3.traceState === "PARTIAL" ? "partial recorded data" : E(e3.traceState), i = e3.traceState === "AVAILABLE" ? "available" : e3.traceState === "EXPIRED" ? "expired" : e3.traceState === "PARTIAL" ? "attention" : "unavailable";
+    let r2 = e3.traceState === "PARTIAL" ? "partial recorded data" : z(e3.traceState), i = e3.traceState === "AVAILABLE" ? "available" : e3.traceState === "EXPIRED" ? "expired" : e3.traceState === "PARTIAL" ? "attention" : "unavailable";
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
       className: `status-label status-${i}`,
       children: [
@@ -3432,13 +3759,13 @@ function D(e3) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "lifecycle-grid",
     children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Completeness: ", E(r.completeness ?? "UNSPECIFIED")] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Availability: ", E(r.availability)] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Expiry: ", E(r.expiry)] })
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Completeness: ", z(r.completeness ?? "UNSPECIFIED")] }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Availability: ", z(r.availability)] }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Expiry: ", z(r.expiry)] })
     ]
   });
 }
-function O({ title: e3, detail: r, correlation: i, retryable: a2, onRetry: o2, announce: s2 }) {
+function V({ title: e3, detail: r, correlation: i, retryable: a2, onRetry: o2, announce: s2 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-live": s2,
     className: "scoped-error",
@@ -3465,9 +3792,9 @@ function O({ title: e3, detail: r, correlation: i, retryable: a2, onRetry: o2, a
     ]
   });
 }
-function ce({ slice: e3 }) {
+function se({ slice: e3 }) {
   if (e3.value === void 0) return null;
-  let r = _(e3.value), i = ` ${e3.value.unit}`, a2 = r.display.endsWith(i) ? r.display.slice(0, -i.length) : r.display;
+  let r = D(e3.value), i = ` ${e3.value.unit}`, a2 = r.display.endsWith(i) ? r.display.slice(0, -i.length) : r.display;
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "metric-value",
     children: [
@@ -3486,7 +3813,7 @@ function ce({ slice: e3 }) {
     ]
   });
 }
-function le({ slice: e3 }) {
+function ce({ slice: e3 }) {
   let r = Object.entries(e3.measures), i = [
     ["Numerator", e3.numerator],
     ["Denominator", e3.denominator],
@@ -3503,7 +3830,7 @@ function le({ slice: e3 }) {
     })] }, e4))]
   });
 }
-function ue({ slice: e3 }) {
+function le({ slice: e3 }) {
   let r = Object.entries(e3.compatibility);
   return e3.state !== "INCOMPATIBLE" || r.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Incompatible coordinates",
@@ -3518,7 +3845,7 @@ function ue({ slice: e3 }) {
     }) }, e4)) })]
   });
 }
-function k({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvidence: s2, onRecover: c2, focusEvidenceAction: l2 = false, recoveryLabel: u2 = "Recover result" }) {
+function ue({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvidence: s2, onRecover: c2, focusEvidenceAction: l2 = false, recoveryLabel: u2 = "Recover result" }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
     "aria-label": r,
     className: "metric-frame",
@@ -3527,7 +3854,7 @@ function k({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvid
       children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
         className: "text-heading metric-coordinate",
         children: r
-      }), i.tag === "RESULT" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(w, {
+      }), i.tag === "RESULT" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(R, {
         reading: i.slice.reading,
         state: i.slice.state,
         withholdingReason: i.slice.withholding_reason
@@ -3537,18 +3864,18 @@ function k({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvid
       className: "loading-state",
       role: "status",
       children: "Loading metric\u2026"
-    }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, {
+    }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(V, {
       announce: "assertive",
       detail: i.detail,
       onRetry: i.onRetry,
       retryable: i.retryable,
       title: "Metric request failed"
     }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ce, { slice: i.slice }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(se, { slice: i.slice }),
       i.slice.value === void 0 ? null : a2,
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ce, { slice: i.slice }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(le, { slice: i.slice }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ue, { slice: i.slice }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(T, { coverage: i.slice.coverage }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(oe, { coverage: i.slice.coverage }),
       i.slice.missing_inputs.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
         className: "status-reading",
         children: ["Missing inputs: ", i.slice.missing_inputs.join(", ")]
@@ -3580,7 +3907,7 @@ function k({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvid
     ] })]
   });
 }
-function j({ onExplain: e3, onEvidence: r, focusEvidenceAction: i = false }) {
+function fe({ onExplain: e3, onEvidence: r, focusEvidenceAction: i = false }) {
   return e3 === void 0 && r === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("footer", {
     className: "metric-actions",
     children: [e3 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
@@ -3597,7 +3924,7 @@ function j({ onExplain: e3, onEvidence: r, focusEvidenceAction: i = false }) {
     })]
   });
 }
-function M({ coordinate: e3, slices: r, label: i = "Result data" }) {
+function U({ coordinate: e3, slices: r, label: i = "Result data" }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "bounded-table",
     children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", {
@@ -3651,7 +3978,7 @@ function M({ coordinate: e3, slices: r, label: i = "Result data" }) {
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: e4.state }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
             className: "numeric-exact",
-            children: e4.value === void 0 ? e4.withholding_reason : _(e4.value).exact
+            children: e4.value === void 0 ? e4.withholding_reason : D(e4.value).exact
           }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("td", {
             className: "numeric-exact",
@@ -3683,7 +4010,7 @@ function M({ coordinate: e3, slices: r, label: i = "Result data" }) {
     })
   });
 }
-function fe(e3) {
+function pe(e3) {
   let [t2, n2 = "1"] = e3.split("/");
   try {
     let e4 = BigInt(t2), r = BigInt(n2);
@@ -3692,9 +4019,9 @@ function fe(e3) {
     return false;
   }
 }
-function pe({ slice: e3 }) {
+function me({ slice: e3 }) {
   if (e3.value?.kind !== "RATIO") return null;
-  let [i, a2] = e3.value.value.split("/"), o2 = BigInt(a2 ?? "1"), s2 = Number(BigInt(i) * 10000n / o2), c2 = linear2().domain([0, 1e4]).range([8, 198])(s2), l2 = _(e3.value);
+  let [i, a2] = e3.value.value.split("/"), o2 = BigInt(a2 ?? "1"), s2 = Number(BigInt(i) * 10000n / o2), c2 = linear2().domain([0, 1e4]).range([8, 198])(s2), l2 = D(e3.value);
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "visual-with-fallback",
     children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
@@ -3733,7 +4060,7 @@ function pe({ slice: e3 }) {
     })]
   });
 }
-function me({ slice: e3 }) {
+function he({ slice: e3 }) {
   return e3.value?.kind === "BOOLEAN" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
     "aria-label": "Boolean result",
     className: "status-label",
@@ -3748,28 +4075,164 @@ function me({ slice: e3 }) {
     ]
   }) : null;
 }
-function N({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvidenceAction: o2 = false }) {
-  if (!b(e3)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
+function ge({ coordinate: e3, slices: r }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+    className: "bounded-table",
+    children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", {
+      "aria-label": `Dashboard result preview: ${e3}`,
+      className: "visual-data-table dashboard-result-table",
+      children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("thead", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("tr", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", {
+          scope: "col",
+          children: "Slice"
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", {
+          scope: "col",
+          children: "State"
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", {
+          scope: "col",
+          children: "Exact value"
+        })
+      ] }) }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("tbody", { children: r.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("tr", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
+          className: "numeric-exact",
+          children: JSON.stringify(e4.slice_key)
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: e4.state }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
+          className: "numeric-exact",
+          children: e4.value === void 0 ? e4.withholding_reason : D(e4.value).exact
+        })
+      ] }, JSON.stringify(e4.slice_key))) })]
+    })
+  });
+}
+function _e({ result: e3, visualizer: r, size: i, onEvidence: a2 }) {
+  if (!F(e3)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
     className: "panel-card",
-    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, {
+    "data-presentation": "dashboard",
+    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(V, {
       announce: "assertive",
       detail: "The supplied value does not satisfy the formal Metric Result 2.0.0 contract.",
       retryable: false,
       title: "Metric Result incompatible"
     })
   });
-  let s2 = r ?? C(e3), c2 = `${e3.metric_id}@${e3.metric_version}`;
-  return e3.slices.every((e4) => e4.value === void 0 || S(e4).includes(s2) && (s2 !== "ratio-bar@1" || e4.value.kind === "RATIO" && fe(e4.value.value))) ? s2 === "table@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+  let o2 = `${e3.metric_id}@${e3.metric_version}`, s2 = Object.hasOwn(O, o2) ? O[o2].definition : o2, c2 = r ?? L(e3), l2 = e3.slices[0];
+  if (c2 === "table@1" || e3.slices.length !== 1) return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
+    "aria-label": s2,
+    className: "dashboard-metric-panel",
+    "data-metric-coordinate": o2,
+    "data-panel-size": i,
+    "data-presentation": "dashboard",
+    "data-visualizer": c2,
+    children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("header", {
+        className: "dashboard-panel-head",
+        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", { children: s2 })
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ge, {
+        coordinate: o2,
+        slices: e3.slices
+      }),
+      a2 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("footer", {
+        className: "dashboard-panel-actions",
+        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(p, {
+          onClick: (e4) => a2(e4.currentTarget),
+          type: "button",
+          children: "View evidence"
+        })
+      })
+    ]
+  });
+  if (l2 === void 0) return null;
+  let u2 = l2.value === void 0 ? void 0 : D(l2.value), d2 = l2.value?.kind === "RATIO" && pe(l2.value.value) ? Number(BigInt(l2.value.value.split("/")[0]) * 10000n / BigInt(l2.value.value.split("/")[1] ?? "1")) / 100 : void 0;
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
+    "aria-label": s2,
+    className: "dashboard-metric-panel",
+    "data-metric-coordinate": o2,
+    "data-panel-size": i,
+    "data-presentation": "dashboard",
+    "data-visualizer": c2,
+    children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+        className: "dashboard-panel-head",
+        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", { children: s2 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(R, {
+          detail: "label",
+          reading: l2.reading,
+          state: l2.state,
+          withholdingReason: l2.withholding_reason
+        })]
+      }),
+      l2.value === void 0 ? l2.coverage === null ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+        className: "dashboard-panel-meta",
+        children: [
+          l2.coverage.state === "NO_POPULATION" ? "No applicable population" : l2.coverage.state.toLowerCase().replaceAll("_", " "),
+          " ",
+          "\xB7 ",
+          l2.coverage.numerator,
+          " / ",
+          l2.coverage.denominator
+        ]
+      }) : c2 === "badge@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(he, { slice: l2 }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+        className: "metric-value",
+        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+          className: "metric-number",
+          children: u2?.display
+        }), c2 === "ratio-bar@1" ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+          className: "numeric-exact",
+          children: ["Exact value: ", u2?.exact]
+        })]
+      }),
+      c2 === "ratio-bar@1" && d2 !== void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+        "aria-label": `${s2}: ${u2?.display}; exact ${u2?.exact}`,
+        className: "dashboard-ratio",
+        role: "img",
+        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", { style: { width: `${d2}%` } })
+      }) : null,
+      l2.numerator === void 0 || l2.denominator === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+        className: "dashboard-panel-meta",
+        children: [
+          l2.numerator,
+          " / ",
+          l2.denominator,
+          " exact"
+        ]
+      }),
+      i === "SMALL" || a2 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("footer", {
+        className: "dashboard-panel-actions",
+        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(p, {
+          onClick: (e4) => a2(e4.currentTarget),
+          type: "button",
+          children: "View evidence"
+        })
+      })
+    ]
+  });
+}
+function ve({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvidenceAction: o2 = false }) {
+  if (!F(e3)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
     className: "panel-card",
-    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(M, {
+    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(V, {
+      announce: "assertive",
+      detail: "The supplied value does not satisfy the formal Metric Result 2.0.0 contract.",
+      retryable: false,
+      title: "Metric Result incompatible"
+    })
+  });
+  let s2 = r ?? L(e3), c2 = `${e3.metric_id}@${e3.metric_version}`;
+  return e3.slices.every((e4) => e4.value === void 0 || ne(e4).includes(s2) && (s2 !== "ratio-bar@1" || e4.value.kind === "RATIO" && pe(e4.value.value))) ? s2 === "table@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+    className: "panel-card",
+    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(U, {
       coordinate: c2,
       slices: e3.slices
-    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(j, {
+    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(fe, {
       focusEvidenceAction: o2,
       onEvidence: a2,
       onExplain: i
     })]
-  }) : e3.slices.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(k, {
+  }) : e3.slices.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ue, {
     content: {
       tag: "RESULT",
       slice: e4
@@ -3778,22 +4241,22 @@ function N({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvide
     onEvidence: a2,
     onExplain: i,
     focusEvidenceAction: o2,
-    visualization: s2 === "ratio-bar@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(pe, { slice: e4 }) : s2 === "badge@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(me, { slice: e4 }) : void 0
+    visualization: s2 === "ratio-bar@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(me, { slice: e4 }) : s2 === "badge@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(he, { slice: e4 }) : void 0
   }, JSON.stringify(e4.slice_key))) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     className: "panel-card",
     children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(V, {
         announce: "polite",
         detail: `${s2} cannot consume the published Result shape without inventing a domain or value.`,
         retryable: false,
         title: "Visualizer binding incompatible"
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(M, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(U, {
         coordinate: c2,
         label: "Fallback result data",
         slices: e3.slices
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(j, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(fe, {
         focusEvidenceAction: o2,
         onEvidence: a2,
         onExplain: i
@@ -3801,9 +4264,9 @@ function N({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvide
     ]
   });
 }
-function P({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRetry: s2, onExplain: c2, onEvidence: l2, focusEvidenceAction: u2, visualizer: d }) {
-  let f = r.lastIndexOf("@"), p2 = i === void 0 ? void 0 : {
-    metric_id: r.slice(0, f),
+function ye({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRetry: s2, onExplain: c2, onEvidence: l2, focusEvidenceAction: u2, visualizer: d2 }) {
+  let f2 = r.lastIndexOf("@"), p2 = i === void 0 ? void 0 : {
+    metric_id: r.slice(0, f2),
     metric_version: "2.0.0",
     slices: [i]
   };
@@ -3813,7 +4276,7 @@ function P({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRet
     children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
       className: "text-label",
       children: e3
-    }), p2 === void 0 ? a2 !== void 0 && o2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, {
+    }), p2 === void 0 ? a2 !== void 0 && o2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(V, {
       announce: "assertive",
       detail: `${a2.code}: ${a2.detail}`,
       onRetry: s2,
@@ -3829,16 +4292,16 @@ function P({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRet
         " side unresolved: ",
         a2.code
       ]
-    }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(N, {
+    }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ve, {
       result: p2,
-      visualizer: d,
+      visualizer: d2,
       focusEvidenceAction: u2,
       onEvidence: l2,
       onExplain: c2
     })]
   });
 }
-function he({ delta: e3 }) {
+function be({ delta: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Delta result",
     className: "compare-delta",
@@ -3850,7 +4313,7 @@ function he({ delta: e3 }) {
       children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           className: "metric-number",
-          children: _(e3.value).display
+          children: D(e3.value).display
         }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           className: "status-reading",
@@ -3858,7 +4321,7 @@ function he({ delta: e3 }) {
         }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
           className: "numeric-exact",
-          children: ["Exact delta: ", _(e3.value).exact]
+          children: ["Exact delta: ", D(e3.value).exact]
         })
       ]
     }) : e3.state === "SIDE_UNRESOLVED" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -3870,44 +4333,44 @@ function he({ delta: e3 }) {
     })]
   });
 }
-function ge({ coordinate: e3, before: r, after: i, beforeError: a2, afterError: o2, delta: s2, onRetryFailedSide: c2, ownsFailedSide: l2 = true, focusEvidenceSide: u2, onExplain: d, onEvidence: f, visualizer: p2 = "numeric-card@1" }) {
+function xe({ coordinate: e3, before: r, after: i, beforeError: a2, afterError: o2, delta: s2, onRetryFailedSide: c2, ownsFailedSide: l2 = true, focusEvidenceSide: u2, onExplain: d2, onEvidence: f2, visualizer: p2 = "numeric-card@1" }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
     "aria-label": `Compare ${e3}`,
     className: "compare-result",
     children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(P, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ye, {
         coordinate: e3,
         error: a2,
         focusEvidenceAction: u2 === "left",
         label: "Before",
         ownsError: l2,
-        onEvidence: f === void 0 ? void 0 : (e4) => f("left", e4),
-        onExplain: d === void 0 ? void 0 : (e4) => d("left", e4),
+        onEvidence: f2 === void 0 ? void 0 : (e4) => f2("left", e4),
+        onExplain: d2 === void 0 ? void 0 : (e4) => d2("left", e4),
         onRetry: a2 === void 0 ? void 0 : c2,
         slice: r,
         visualizer: p2
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(P, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ye, {
         coordinate: e3,
         error: o2,
         focusEvidenceAction: u2 === "right",
         label: "After",
         ownsError: l2,
-        onEvidence: f === void 0 ? void 0 : (e4) => f("right", e4),
-        onExplain: d === void 0 ? void 0 : (e4) => d("right", e4),
+        onEvidence: f2 === void 0 ? void 0 : (e4) => f2("right", e4),
+        onExplain: d2 === void 0 ? void 0 : (e4) => d2("right", e4),
         onRetry: o2 === void 0 ? void 0 : c2,
         slice: i,
         visualizer: p2
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(he, { delta: s2 })
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(be, { delta: s2 })
     ]
   });
 }
-function F({ values: e3 }) {
+function Se({ values: e3 }) {
   let n2 = Object.entries(e3);
   return n2.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "None" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: n2.map(([e4, t2]) => `${e4}=${t2}`).join(", ") });
 }
-function _e({ membership: e3 }) {
+function Ce({ membership: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
       className: "text-code",
@@ -3929,7 +4392,7 @@ function _e({ membership: e3 }) {
     })
   ] });
 }
-function ve({ population: e3 }) {
+function Te({ population: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
     className: "text-heading",
     children: "Task population"
@@ -3944,18 +4407,18 @@ function ve({ population: e3 }) {
           children: e4.task_id
         }) : null,
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [e4.memberships.length, " Delivery memberships"] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Cohort: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(F, { values: e4.cohort_coordinates })] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Cohort: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Se, { values: e4.cohort_coordinates })] }),
         e4.terminal_reading === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Terminal reading: ", e4.terminal_reading] }),
         e4.exclusions.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Exclusions: ", e4.exclusions.join(", ")] }),
         e4.memberships.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
           className: "detail-rows",
-          children: e4.memberships.map((e6) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(_e, { membership: e6 }, e6.delivery_id))
+          children: e4.memberships.map((e6) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ce, { membership: e6 }, e6.delivery_id))
         })
       ] }, e4.task_id);
     })
   })] });
 }
-function ye({ resolution: e3 }) {
+function Ee({ resolution: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: e3.state }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
@@ -4028,7 +4491,7 @@ function ye({ resolution: e3 }) {
     })
   ] });
 }
-function be({ receipt: e3, side: r }) {
+function De({ receipt: e3, side: r }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     className: "detail-view",
     children: [
@@ -4082,7 +4545,7 @@ function be({ receipt: e3, side: r }) {
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Catalog observation profile" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: e3.catalog.observation_profile })] })
         ]
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ve, { population: e3.task_population }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Te, { population: e3.task_population }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
         className: "text-heading",
         children: "Evidence bindings"
@@ -4093,7 +4556,7 @@ function be({ receipt: e3, side: r }) {
             className: "text-code",
             children: e4.route
           }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Filter: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(F, { values: e4.canonical_filter })] }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Filter: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Se, { values: e4.canonical_filter })] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Contract revision ", e4.contract_revision] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Observation profile ", e4.observation_profile] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Read model revision ", e4.read_model_revision] }),
@@ -4133,12 +4596,12 @@ function be({ receipt: e3, side: r }) {
         children: "No Workflow resolutions."
       }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
         className: "detail-rows",
-        children: e3.workflow_resolutions.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ye, { resolution: e4 }, e4.manifest_digest))
+        children: e3.workflow_resolutions.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ee, { resolution: e4 }, e4.manifest_digest))
       })] })
     ]
   });
 }
-var L = [
+var Oe = [
   {
     id: "result",
     label: "Result evidence"
@@ -4152,12 +4615,12 @@ var L = [
     label: "Resolved read set"
   }
 ];
-var xe = {
+var ke = {
   result: "Exact provenance identities cited by this Metric Result; non-Fact detail may remain unresolved.",
   related: "Related Facts match the context but are not claimed as calculation contributors.",
   "read-set": "Every bounded identity recorded by this receipt; this view only hydrates matching Fact rows."
 };
-function Se({ rows: e3 }) {
+function Ae({ rows: e3 }) {
   return e3.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "table-scroll",
     children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", {
@@ -4199,8 +4662,8 @@ function Se({ rows: e3 }) {
     })
   });
 }
-function Ce({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
-  let s2 = L.find((e3) => e3.id === r).label;
+function je({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
+  let s2 = Oe.find((e3) => e3.id === r).label;
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "table-scroll",
     children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", {
@@ -4243,8 +4706,8 @@ function Ce({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("td", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
               className: "text-code",
               children: r2.provenance
-            }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(D, { truth: r2.truth })] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: r2.trace === void 0 ? "No Trace reference" : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [r2.trace.state === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Trace lifecycle not loaded" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(D, { traceState: r2.trace.state }), o2 === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
+            }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(B, { truth: r2.truth })] }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: r2.trace === void 0 ? "No Trace reference" : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [r2.trace.state === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Trace lifecycle not loaded" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(B, { traceState: r2.trace.state }), o2 === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
               className: "text-code",
               children: [r2.trace.traceId, r2.trace.spanId === void 0 ? "" : ` / ${r2.trace.spanId}`]
             }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
@@ -4263,7 +4726,7 @@ function Ce({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
     })
   });
 }
-function R({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: s2, onScopeChange: c2, onOpenTrace: l2 }) {
+function Me({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: s2, onScopeChange: c2, onOpenTrace: l2 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     className: "evidence-console",
     children: [
@@ -4277,7 +4740,7 @@ function R({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: s
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", {
         "aria-label": "Evidence scope",
         className: "scope-tabs",
-        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { children: L.map((e3) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { children: Oe.map((e3) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
           "aria-current": r === e3.id ? "page" : void 0,
           className: "scope-tab",
           onClick: () => c2?.(e3.id),
@@ -4287,13 +4750,13 @@ function R({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: s
       }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
         className: "scope-note",
-        children: xe[r]
+        children: ke[r]
       }),
       i.tag === "LOADING" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
         "aria-live": "polite",
         role: "status",
         children: "Loading Evidence\u2026"
-      }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, {
+      }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(V, {
         announce: "assertive",
         detail: i.detail,
         onRetry: i.onRetry,
@@ -4312,18 +4775,18 @@ function R({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: s
           className: "status-banner status-expired",
           children: "Evidence detail expired"
         }) : null,
-        a2.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ce, {
+        a2.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(je, {
           focusedFactId: s2,
           onOpenTrace: l2,
           rows: a2,
           scope: r
         }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Se, { rows: o2 })
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ae, { rows: o2 })
       ] })
     ]
   });
 }
-var we = (0, import_react.memo)(function({ model: e3 }) {
+var Pe = (0, import_react.memo)(function({ model: e3 }) {
   let r = /* @__PURE__ */ new Map();
   for (let t2 of e3.depthGroups) {
     let e4 = t2.nodes.map((e6) => e6.endpointId ?? e6.id), n2 = point().domain(e4).range([80, 880]);
@@ -4375,95 +4838,144 @@ var we = (0, import_react.memo)(function({ model: e3 }) {
       ]
     })
   });
-}, Te);
-function Te(e3, t2) {
+}, Fe);
+function Fe(e3, t2) {
   return e3.model.depthGroups === t2.model.depthGroups && e3.model.parentEdges === t2.model.parentEdges && e3.model.links === t2.model.links;
 }
-var V = (e3, t2) => e3 < t2 ? -1 : +(e3 > t2);
-function H(e3, t2) {
+var Be = (e3, t2) => e3 < t2 ? -1 : +(e3 > t2);
+function W(e3, t2) {
   let n2 = BigInt(t2);
   return n2 <= 0n ? 0 : Number(BigInt(e3) * 10000n / n2) / 100;
 }
-function U(e3) {
+function G(e3) {
   let t2 = BigInt(e3);
   return t2 >= 1000000000n ? `${Number(t2 / 1000000n) / 1e3} s` : t2 >= 1000000n ? `${Number(t2 / 1000n) / 1e3} ms` : t2 >= 1000n ? `${Number(t2) / 1e3} \u03BCs` : `${e3} ns`;
 }
-function ke(e3, t2) {
+function K(e3, t2) {
+  return String(BigInt(e3) * BigInt(Math.round(t2 * 100)) / 10000n);
+}
+function Ve(e3) {
+  let t2 = BigInt(e3) / 1000000n;
+  return t2 < 86400000n ? G(e3) : new Date(Number(t2)).toISOString().slice(11, 23);
+}
+function He(e3, t2, n2, r) {
+  let i = Math.max(e3, n2), a2 = Math.min(e3 + t2, r), o2 = r - n2;
+  return a2 <= i || o2 <= 0 ? {
+    visible: false,
+    start: 0,
+    width: 0
+  } : {
+    visible: true,
+    start: (i - n2) / o2 * 100,
+    width: (a2 - i) / o2 * 100
+  };
+}
+function Ue(e3) {
+  return e3.length <= 12 ? e3 : `${e3.slice(0, 8)}\u2026${e3.slice(-4)}`;
+}
+function We(e3, t2) {
   return e3.nodes.filter((e4) => e4.parentId === t2.id);
 }
-function W({ node: e3, trace: r }) {
-  let i = Object.fromEntries(e3.fields.map(({ field: e4, value: t2 }) => [e4, t2])), a2 = r === void 0 ? [] : ke(r, e3), o2 = r === void 0 ? [] : r.links.filter((t2) => t2.from.span_id === e3.id || t2.to.span_id === e3.id);
+function Ge(e3) {
+  let t2 = new Set(e3.map(({ id: e4 }) => e4)), n2 = [];
+  return e3.forEach((r, i) => {
+    let a2 = i;
+    for (; a2 + 1 < e3.length && e3[a2 + 1].depth > r.depth; ) a2 += 1;
+    (r.parentId === void 0 || !t2.has(r.parentId)) && n2.push({
+      depth: r.depth,
+      start: i,
+      end: a2,
+      key: `${r.id}:root`
+    }), a2 > i && n2.push({
+      depth: r.depth + 1,
+      start: i + 1,
+      end: a2,
+      key: `${r.id}:children`
+    });
+  }), n2;
+}
+function Ke() {
+  let e3 = "(max-width: 40rem)", [t2, n2] = (0, import_react.useState)(() => typeof matchMedia == "function" && matchMedia(e3).matches);
+  return (0, import_react.useEffect)(() => {
+    if (typeof matchMedia != "function") return;
+    let t3 = matchMedia(e3), r = () => n2(t3.matches);
+    return r(), t3.addEventListener("change", r), () => t3.removeEventListener("change", r);
+  }, []), t2;
+}
+function q({ node: e3, trace: r, children: i }) {
+  let a2 = Object.fromEntries(e3.fields.map(({ field: e4, value: t2 }) => [e4, t2])), o2 = r === void 0 ? [] : We(r, e3), s2 = r === void 0 ? [] : r.links.filter((t2) => t2.from.span_id === e3.id || t2.to.span_id === e3.id);
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Span passport",
-    className: "span-passport panel-card",
-    children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
-        className: "trace-passport-head",
-        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-          className: "trace-eyebrow",
-          children: "Exact focus"
-        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-          className: "text-heading",
-          children: "Span Passport"
-        })] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-          className: `trace-kind trace-kind-${e3.kind.toLowerCase()}`,
-          children: e3.kind
-        })]
-      }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
-        className: "trace-passport-name",
-        children: e3.label
-      }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dl", {
-        className: "trace-passport-grid",
-        children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Identity" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-            className: "text-code",
-            children: `${e3.endpoint.trace_id} / ${e3.endpoint.span_id}`
-          }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded start / end" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-            className: "numeric-exact",
-            children: `${e3.startTimeUnixNano} \u2192 ${e3.endTimeUnixNano} ns`
-          }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded duration" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-            className: "numeric-exact",
-            children: `${U(e3.durationNano)} \xB7 ${e3.durationNano} ns exact`
-          }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Status / truth" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: `${e3.status} \xB7 ${e3.truth.completeness ?? "UNKNOWN"} \xB7 ${e3.truth.availability}` }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Parent / children" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: `${e3.parentId ?? "root"} \u2192 ${a2.map(({ label: e4 }) => e4).join(", ") || "no recorded child"}` }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Flags / trace state" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-            className: "text-code",
-            children: `${e3.flags} \xB7 ${e3.traceState ?? "none"}`
-          }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded fields" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-            className: "text-code",
-            children: JSON.stringify(i)
-          })
-        ]
-      }),
-      o2.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-        className: "trace-link-receipt",
-        children: `${o2.length} independent recorded LINK${o2.length === 1 ? "" : "s"}. LINK does not change tree depth.`
-      })
-    ]
+    className: "span-passport",
+    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+      className: "trace-passport-head",
+      children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Span Passport" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Exact focus" })]
+    }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+      className: "trace-passport-body",
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+          className: "trace-passport-title",
+          children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+            "aria-hidden": "true",
+            className: `trace-passport-sigil trace-kind-${e3.kind.toLowerCase()}`,
+            children: e3.kind === "CLIENT" ? "\u2197" : "\u25C6"
+          }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
+            className: "trace-passport-name",
+            children: e3.label
+          }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: `${e3.kind} \xB7 depth ${e3.depth}` })] })]
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dl", {
+          className: "trace-passport-grid",
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Identity" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+              className: "text-code",
+              children: `${e3.endpoint.trace_id} / ${e3.endpoint.span_id}`
+            }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded start / end" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+              className: "numeric-exact",
+              children: `${e3.startTimeUnixNano} \u2192 ${e3.endTimeUnixNano} ns`
+            }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded duration" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+              className: "numeric-exact",
+              children: `${G(e3.durationNano)} \xB7 ${e3.durationNano} ns exact`
+            }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Status / truth" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: `${e3.status} \xB7 ${e3.truth.completeness ?? "UNKNOWN"} \xB7 ${e3.truth.availability}` }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Parent / children" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: `${e3.parentId ?? "root"} \u2192 ${o2.map(({ label: e4 }) => e4).join(", ") || "no recorded child"}` }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Flags / trace state" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+              className: "text-code",
+              children: `${e3.flags} \xB7 ${e3.traceState ?? "none"}`
+            }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded fields" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+              className: "text-code",
+              children: JSON.stringify(a2)
+            })
+          ]
+        }),
+        s2.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+          className: "trace-link-receipt",
+          children: `${s2.length} independent recorded LINK${s2.length === 1 ? "" : "s"}. LINK does not change tree depth.`
+        }),
+        i
+      ]
+    })]
   });
 }
-function G({ trace: e3 }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, {
+function J({ trace: e3 }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(V, {
     announce: "polite",
     detail: e3.errors.join(" \xB7 ") || "Recorded Trace IR is invalid.",
     retryable: false,
     title: "Recorded Trace unavailable"
   });
 }
-function K({ trace: e3, node: n2 }) {
+function Y2({ trace: e3, node: n2 }) {
   let r = n2 ? e3.links.filter((e4) => e4.from.span_id === n2.id || e4.to.span_id === n2.id) : e3.links;
   return r.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
     "aria-label": "Recorded span links",
@@ -4474,7 +4986,7 @@ function K({ trace: e3, node: n2 }) {
     }, e4.id))
   });
 }
-function Ae({ durationNano: e3, position: r, playing: i, reducedMotion: a2, onPlayingChange: o2, onPositionChange: s2 }) {
+function qe({ durationNano: e3, position: r, playing: i, reducedMotion: a2, onPlayingChange: o2, onPositionChange: s2 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("footer", {
     className: "trace-motion",
     children: [
@@ -4510,367 +5022,860 @@ function Ae({ durationNano: e3, position: r, playing: i, reducedMotion: a2, onPl
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Finite reader-controlled visualization; not a running execution." })
         ]
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: `${Math.round(r)}% / ${U(e3)}` })
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: `${Math.round(r)}% / ${G(e3)}` })
     ]
   });
 }
-function je({ trace: e3, reducedMotion: r = false }) {
-  let [i, a2] = (0, import_react.useState)(), [s2, c2] = (0, import_react.useState)(""), [u2, d] = (0, import_react.useState)(0), [f, p2] = (0, import_react.useState)(false);
+var Je = (0, import_react.memo)(function({ node: e3, selected: r, current: i, playing: a2, start: o2, width: s2, visible: c2, row: l2, hasChildren: u2, collapsed: d2, onToggle: f2, onSelect: p2 }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+    "aria-level": e3.depth + 1,
+    className: `trace-waterfall-row${r ? " is-selected" : ""}${i && a2 ? " is-current" : ""}`,
+    "data-timeline-span-id": e3.id,
+    role: "treeitem",
+    style: { gridRow: l2 },
+    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+      className: "trace-node-label",
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+          "aria-hidden": "true",
+          className: "trace-indent-spacer",
+          "data-indent-depth": e3.depth + 1,
+          style: { "--trace-indent-columns": e3.depth + 1 }
+        }),
+        u2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+          "aria-label": `${d2 ? "Expand" : "Collapse"} ${e3.label} descendants`,
+          className: "trace-collapse-control",
+          onClick: () => f2(e3.id),
+          type: "button",
+          children: d2 ? "\u25B8" : "\u25BE"
+        }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+          "aria-hidden": "true",
+          className: "trace-collapse-placeholder"
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+          "aria-label": `${e3.label}, ${e3.durationNano} nanoseconds`,
+          className: "recorded-node trace-node-main",
+          "data-trace-node-id": e3.id,
+          onClick: () => p2(e3.id),
+          type: "button",
+          children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+            className: "trace-node-title-line",
+            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+              className: `trace-glyph trace-kind-${e3.kind.toLowerCase()}`,
+              children: e3.kind === "CLIENT" ? "\u2197" : "\u25C6"
+            }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: e3.label })]
+          }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: `${e3.kind} \xB7 ${Ue(e3.id)}` })]
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+          className: e3.status === "ERROR" ? "trace-error" : "numeric-exact",
+          children: G(e3.durationNano)
+        })
+      ]
+    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+      "aria-hidden": "true",
+      className: "trace-timeline-track",
+      children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+        className: `trace-timeline-bar trace-kind-${e3.kind.toLowerCase()}${e3.status === "ERROR" ? " trace-status-error" : ""}`,
+        style: {
+          display: c2 ? void 0 : "none",
+          insetInlineStart: `${o2}%`,
+          width: `${s2}%`
+        },
+        children: e3.label
+      })
+    })]
+  });
+});
+function Ye({ trace: e3, reducedMotion: r = false, viewNavigation: i }) {
+  let [a2, c2] = (0, import_react.useState)(), [l2, p2] = (0, import_react.useState)(""), [g2, _] = (0, import_react.useState)(0), [y2, b2] = (0, import_react.useState)(false), [x2, S] = (0, import_react.useState)(() => /* @__PURE__ */ new Set()), [C, w2] = (0, import_react.useState)([0, 100]), T2 = (0, import_react.useRef)(void 0), ee2 = Ke(), E2 = (0, import_react.useCallback)((e4) => c2(e4), []);
   if ((0, import_react.useEffect)(() => {
-    if (!f || r) return;
+    if (!y2 || r) return;
     let e4 = window.setInterval(() => {
-      d((e6) => e6 >= 100 ? (p2(false), 100) : Math.min(100, e6 + 2));
+      _((e6) => e6 >= 100 ? (b2(false), 100) : Math.min(100, e6 + 2));
     }, 100);
     return () => window.clearInterval(e4);
-  }, [f, r]), e3.status !== "READY" || e3.durationNano === void 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(G, { trace: e3 });
-  let m2 = s2.trim().toLocaleLowerCase(), h2 = e3.nodes.filter((e4) => m2 === "" || e4.label.toLocaleLowerCase().includes(m2) || e4.id.toLocaleLowerCase().includes(m2)), g2 = e3.nodes.find((e4) => e4.id === i) ?? e3.nodes[0], _2 = e3.nodes.filter(({ status: e4 }) => e4 === "ERROR").length;
+  }, [y2, r]), e3.status !== "READY" || e3.durationNano === void 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(J, { trace: e3 });
+  let D2 = l2.trim().toLocaleLowerCase(), O2 = e3.nodes.filter((e4) => D2 === "" || e4.label.toLocaleLowerCase().includes(D2) || e4.id.toLocaleLowerCase().includes(D2)).filter((t2) => {
+    if (D2 !== "") return true;
+    let n2 = t2.parentId;
+    for (; n2 !== void 0; ) {
+      if (x2.has(n2)) return false;
+      n2 = e3.nodes.find(({ id: e4 }) => e4 === n2)?.parentId;
+    }
+    return true;
+  }), k2 = e3.nodes.find((e4) => e4.id === a2) ?? e3.nodes[0], A2 = e3.nodes.filter(({ status: e4 }) => e4 === "ERROR").length, j2 = new Set(e3.nodes.filter((t2) => We(e3, t2).length > 0).map(({ id: e4 }) => e4)), M2 = (e4, t2) => {
+    if (T2.current === void 0) return;
+    let n2 = e4.currentTarget.getBoundingClientRect(), r2 = Math.max(0, Math.min(100, (e4.clientX - n2.left) / n2.width * 100)), i2 = [Math.min(T2.current, r2), Math.max(T2.current, r2)];
+    i2[1] - i2[0] >= 1 && w2(i2), t2 && (T2.current = void 0);
+  }, N2 = [
+    0,
+    25,
+    50,
+    75,
+    100
+  ], P2 = Ge(O2);
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Recorded trace waterfall",
     className: "trace-view trace-waterfall",
     "data-motion": r ? "off" : "finite-recorded-time",
     "data-trace-renderer": "waterfall",
     children: [
+      i,
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
         className: "trace-summary trace-summary-dense",
-        children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-            className: "trace-eyebrow",
-            children: "Exact recorded timeline"
-          }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: e3.nodes[0]?.label ?? e3.traceId })] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: `${e3.durationNano} ns recorded duration` }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: `Recorded spans: ${e3.nodes.length}` }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: `Recorded links: ${e3.links.length}` }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: `ERROR spans: ${_2}` })
-        ]
-      }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-        className: "trace-view-tools",
-        children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-            type: "button",
-            children: "Expand all"
-          }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-            onClick: () => a2(e3.nodes[0]?.id),
-            type: "button",
-            children: "Reset focus"
-          }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-            "aria-label": "Search recorded spans",
-            onChange: (e4) => c2(e4.currentTarget.value),
-            placeholder: "Search span name or exact identity",
-            type: "search",
-            value: s2
-          })
-        ]
+        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+          className: "trace-summary-identity",
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+              variant: "eyebrow",
+              children: "Exact recorded timeline"
+            }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+              as: "strong",
+              variant: "sectionTitle",
+              children: e3.nodes[0]?.label ?? e3.traceId
+            }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+              as: "code",
+              variant: "code",
+              children: e3.traceId
+            })
+          ]
+        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+          className: "trace-summary-metrics",
+          children: [
+            [
+              "Duration",
+              G(e3.durationNano),
+              "default"
+            ],
+            [
+              "Start",
+              Ve(e3.startTimeUnixNano),
+              "default"
+            ],
+            [
+              "Spans",
+              String(e3.nodes.length),
+              "default"
+            ],
+            [
+              "Errors",
+              String(A2),
+              A2 > 0 ? "error" : "success"
+            ]
+          ].map(([e4, r2, i2]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+            className: "trace-summary-stat",
+            "data-tone": i2,
+            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+              as: "small",
+              variant: "caption",
+              children: e4
+            }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+              as: "strong",
+              className: "numeric-exact",
+              variant: "sectionTitle",
+              children: r2
+            })]
+          }, e4))
+        })]
       }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
         "aria-label": "Recorded trace minimap",
         className: "trace-minimap",
-        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-          className: "trace-eyebrow",
-          children: "Trace minimap \xB7 shared recorded-time domain"
-        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+          className: "trace-minimap-copy",
+          children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+            as: "strong",
+            variant: "label",
+            children: "Trace minimap"
+          }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+            as: "small",
+            variant: "caption",
+            children: "Drag to zoom"
+          })]
+        }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+          "aria-label": "Trace minimap zoom window",
+          "aria-valuemax": 100,
+          "aria-valuemin": 0,
+          "aria-valuetext": `${G(K(e3.durationNano, C[0]))} to ${G(K(e3.durationNano, C[1]))}`,
           className: "trace-minimap-track",
-          children: e3.nodes.map((n2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", { style: {
-            insetInlineStart: `${H(n2.startOffsetNano, e3.durationNano)}%`,
-            width: `${H(n2.durationNano, e3.durationNano)}%`
-          } }, n2.id))
+          onPointerDown: (e4) => {
+            let t2 = e4.currentTarget.getBoundingClientRect();
+            T2.current = Math.max(0, Math.min(100, (e4.clientX - t2.left) / t2.width * 100)), w2([T2.current, T2.current]);
+          },
+          onPointerMove: (e4) => M2(e4, false),
+          onPointerUp: (e4) => M2(e4, true),
+          role: "slider",
+          tabIndex: 0,
+          children: [e3.nodes.map((n2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {
+            className: "trace-minimap-span",
+            style: {
+              insetInlineStart: `${W(n2.startOffsetNano, e3.durationNano)}%`,
+              insetBlockStart: `${0.58 + n2.depth * 0.42}rem`,
+              width: `${W(n2.durationNano, e3.durationNano)}%`
+            }
+          }, n2.id)), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+            className: "trace-minimap-window",
+            "data-full": C[0] === 0 && C[1] === 100 ? "true" : "false",
+            style: {
+              insetInlineStart: `${C[0]}%`,
+              width: `${C[1] - C[0]}%`
+            }
+          })]
         })]
       }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
         className: "trace-workbench",
-        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+        children: [ee2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+          className: "trace-waterfall-mobile",
+          children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("header", { children: "Span tree \xB7 exact duration" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+            "aria-label": "Recorded waterfall span outline",
+            role: "tree",
+            children: O2.map((n2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)($e, {
+              node: n2,
+              onSelect: E2,
+              trace: e3
+            }, n2.id))
+          })]
+        }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
           className: "trace-waterfall-canvas",
           children: [
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+              className: "trace-waterfall-toolbar",
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+                  className: "trace-waterfall-heading",
+                  children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+                    as: "strong",
+                    variant: "label",
+                    children: "Span tree"
+                  })
+                }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(v, {
+                  "aria-label": "Search recorded spans",
+                  onChange: (e4) => p2(e4.currentTarget.value),
+                  placeholder: "Search span name or exact identity",
+                  value: l2
+                }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(h, {
+                  "aria-label": "Span tree actions",
+                  className: "trace-waterfall-actions",
+                  role: "group",
+                  children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                      appearance: "ghost",
+                      "aria-label": "Expand all spans",
+                      onClick: () => S(/* @__PURE__ */ new Set()),
+                      type: "button",
+                      children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+                        "aria-hidden": "true",
+                        viewBox: "0 0 16 16",
+                        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M4 6 8 2l4 4M4 10l4 4 4-4" })
+                      })
+                    }),
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                      appearance: "ghost",
+                      "aria-label": "Collapse all spans",
+                      onClick: () => S(new Set(j2)),
+                      type: "button",
+                      children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+                        "aria-hidden": "true",
+                        viewBox: "0 0 16 16",
+                        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m4 2 4 4 4-4M4 14l4-4 4 4" })
+                      })
+                    }),
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                      appearance: "ghost",
+                      "aria-label": "Reset focus",
+                      onClick: () => {
+                        c2(e3.nodes[0]?.id), w2([0, 100]);
+                      },
+                      type: "button",
+                      children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+                        "aria-hidden": "true",
+                        viewBox: "0 0 16 16",
+                        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M13 5V2l-2 2A5 5 0 1 0 13 9" })
+                      })
+                    })
+                  ]
+                })
+              ]
+            }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
               className: "trace-timeline-head",
-              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Span tree" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Span / exact identity" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
                 className: "trace-ruler",
-                children: "0 \xB7 25% \xB7 50% \xB7 75% \xB7 100%"
+                children: N2.map((n2) => {
+                  let r2 = C[0] + (C[1] - C[0]) * n2 / 100;
+                  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {
+                    style: { insetInlineStart: `${n2}%` },
+                    children: G(K(e3.durationNano, r2))
+                  }, n2);
+                })
               })]
             }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
               "aria-label": "Recorded waterfall span outline",
               className: "trace-timeline",
               role: "tree",
-              children: h2.map((r2) => {
-                let i2 = H(r2.startOffsetNano, e3.durationNano), o2 = i2 + H(r2.durationNano, e3.durationNano), s3 = u2 >= i2 && u2 <= o2;
-                return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-                  "aria-level": r2.depth + 1,
-                  className: `trace-waterfall-row${g2.id === r2.id ? " is-selected" : ""}${s3 && f ? " is-current" : ""}`,
-                  role: "treeitem",
-                  children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-                    "aria-label": `${r2.label}, ${r2.durationNano} nanoseconds`,
-                    className: "recorded-node trace-node-label",
-                    onClick: () => a2(r2.id),
-                    style: { paddingInlineStart: `${0.75 + r2.depth * 1.15}rem` },
-                    type: "button",
-                    children: [
-                      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-                        className: `trace-glyph trace-kind-${r2.kind.toLowerCase()}`,
-                        children: r2.kind === "CLIENT" ? "\u2197" : "\u25C6"
-                      }),
-                      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-                        className: "trace-node-copy",
-                        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: r2.label }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: `${r2.kind} \xB7 ${r2.id}` })]
-                      }),
-                      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-                        className: r2.status === "ERROR" ? "trace-error" : "numeric-exact",
-                        children: U(r2.durationNano)
-                      })
-                    ]
-                  }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-                    "aria-hidden": "true",
-                    className: "trace-timeline-track",
-                    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-                      className: `trace-timeline-bar trace-kind-${r2.kind.toLowerCase()}${r2.status === "ERROR" ? " trace-status-error" : ""}`,
-                      style: {
-                        insetInlineStart: `${i2}%`,
-                        width: `${H(r2.durationNano, e3.durationNano)}%`
-                      },
-                      children: r2.label
-                    })
-                  })]
-                }, r2.id);
-              })
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+                  "aria-hidden": "true",
+                  className: "trace-timeline-grid"
+                }),
+                P2.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {
+                  "aria-hidden": "true",
+                  className: "trace-indent-segment",
+                  "data-guide-depth": e4.depth % 4,
+                  style: {
+                    "--trace-indent-column": e4.depth,
+                    gridRow: `${e4.start + 1} / ${e4.end + 2}`
+                  }
+                }, e4.key)),
+                O2.map((n2, r2) => {
+                  let i2 = W(n2.startOffsetNano, e3.durationNano), a3 = i2 + W(n2.durationNano, e3.durationNano), o2 = He(i2, W(n2.durationNano, e3.durationNano), C[0], C[1]);
+                  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Je, {
+                    collapsed: x2.has(n2.id),
+                    current: g2 >= i2 && g2 <= a3,
+                    hasChildren: j2.has(n2.id),
+                    node: n2,
+                    onSelect: E2,
+                    onToggle: (e4) => S((t2) => {
+                      let n3 = new Set(t2);
+                      return n3.has(e4) ? n3.delete(e4) : n3.add(e4), n3;
+                    }),
+                    playing: y2,
+                    row: r2 + 1,
+                    selected: k2.id === n2.id,
+                    start: o2.start,
+                    width: o2.width,
+                    visible: o2.visible
+                  }, n2.id);
+                })
+              ]
             }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(K, { trace: e3 })
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Y2, { trace: e3 })
           ]
-        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(W, {
-          node: g2,
+        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(q, {
+          node: k2,
           trace: e3
         })]
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ae, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(qe, {
         durationNano: e3.durationNano,
-        onPlayingChange: p2,
-        onPositionChange: d,
-        playing: f,
-        position: u2,
+        onPlayingChange: b2,
+        onPositionChange: _,
+        playing: y2,
+        position: g2,
         reducedMotion: r
       })
     ]
   });
 }
-function Me(e3) {
+function Xe(e3) {
   let t2 = /* @__PURE__ */ new Map();
   for (let n2 of e3.nodes) {
     let e4 = t2.get(n2.depth) ?? [];
     e4.push(n2), t2.set(n2.depth, e4);
   }
-  return [...t2.entries()].flatMap(([e4, t3]) => [...t3].sort((e6, t4) => V(e6.startTimeUnixNano, t4.startTimeUnixNano) || V(e6.id, t4.id)).map((n2, r) => ({
+  return [...t2.entries()].flatMap(([e4, t3]) => [...t3].sort((e6, t4) => Be(e6.startTimeUnixNano, t4.startTimeUnixNano) || Be(e6.id, t4.id)).map((n2, r) => ({
     node: n2,
-    x: 35 + e4 * 300,
-    y: 55 + r * (460 / Math.max(1, t3.length))
+    x: 60 + e4 * 330,
+    y: t3.length === 1 ? 240 : t3.length === 2 ? 110 + r * 245 : 47 + r * (368 / (t3.length - 1))
   })));
 }
-function q(e3, t2) {
+function Ze(e3, t2) {
   let n2 = e3.x + 190, r = e3.y + 35, i = t2.x, a2 = t2.y + 35, o2 = (n2 + i) / 2;
   return `M${n2} ${r} C${o2} ${r} ${o2} ${a2} ${i} ${a2}`;
 }
-function Ne({ trace: e3 }) {
-  let [r, i] = (0, import_react.useState)(), a2 = (0, import_react.useMemo)(() => e3.status === "READY" ? Me(e3) : [], [e3]);
-  if (e3.status !== "READY") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(G, { trace: e3 });
-  let o2 = new Map(a2.map((e4) => [e4.node.id, e4])), s2 = e3.nodes.find((e4) => e4.id === r) ?? e3.nodes[0];
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
+var Qe = (0, import_react.memo)(function({ node: r, x: i, y: a2, selected: o2, lensHit: s2, current: c2, playing: l2, summary: u2, traceDurationNano: d2, onSelect: f2 }) {
+  let p2 = () => f2(r.id);
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("g", {
+    "aria-label": `${r.label}, ${r.kind}, ${r.status}, ${G(r.durationNano)}`,
+    "aria-level": r.depth + 1,
+    className: `trace-tree-node trace-kind-${r.kind.toLowerCase()}${o2 ? " is-selected" : ""}${s2 ? " is-lens-hit" : " is-lens-muted"}${c2 && l2 ? " is-time-current" : ""}${r.status === "ERROR" ? " trace-status-error" : ""}`,
+    "data-render-detail": u2 ? "summary" : "complete",
+    "data-trace-node-id": r.id,
+    onClick: p2,
+    onKeyDown: (e3) => {
+      (e3.key === "Enter" || e3.key === " ") && (e3.preventDefault(), p2());
+    },
+    role: "treeitem",
+    tabIndex: 0,
+    transform: `translate(${i} ${a2})`,
+    children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+        className: "trace-tree-card",
+        height: "70",
+        rx: "9",
+        width: "190"
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+        className: "trace-tree-kind-rail",
+        height: "70",
+        rx: "3",
+        width: "4"
+      }),
+      u2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+        className: "trace-tree-name",
+        x: "14",
+        y: "31",
+        children: r.label
+      }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+        className: "trace-tree-duration",
+        textAnchor: "end",
+        x: "176",
+        y: "50",
+        children: G(r.durationNano)
+      })] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+          className: "trace-tree-kind",
+          x: "14",
+          y: "17",
+          children: r.kind
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+          className: "trace-tree-status",
+          textAnchor: "end",
+          x: "176",
+          y: "17",
+          children: r.status
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+          className: "trace-tree-name",
+          x: "14",
+          y: "37",
+          children: r.label
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+          className: "trace-tree-meta",
+          x: "14",
+          y: "53",
+          children: `+${G(r.startOffsetNano)} \xB7 ${Ue(r.id)}`
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+          className: "trace-tree-duration",
+          textAnchor: "end",
+          x: "176",
+          y: "53",
+          children: G(r.durationNano)
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+          className: "trace-tree-micro-bg",
+          height: "3",
+          rx: "2",
+          width: "160",
+          x: "14",
+          y: "61"
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+          className: "trace-tree-micro",
+          height: "3",
+          rx: "2",
+          width: Math.max(2, W(r.durationNano, d2) * 1.6),
+          x: 14 + W(r.startOffsetNano, d2) * 1.6,
+          y: "61"
+        })
+      ] })
+    ]
+  });
+});
+var $e = (0, import_react.memo)(function({ node: e3, trace: r, onSelect: i }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+    "aria-level": e3.depth + 1,
+    role: "treeitem",
+    style: { paddingInlineStart: `${e3.depth * 1.5}rem` },
+    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+      "data-trace-node-id": e3.id,
+      onClick: () => i(e3.id),
+      type: "button",
+      children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: e3.label }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: G(e3.durationNano) })]
+    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Y2, {
+      node: e3,
+      trace: r
+    })]
+  });
+});
+var et = (0, import_react.memo)(function({ trace: e3, viewNavigation: r }) {
+  let [i, a2] = (0, import_react.useState)(), [c2, u2] = (0, import_react.useState)("none"), [f2, p2] = (0, import_react.useState)(0), [m2, h2] = (0, import_react.useState)(false), g2 = (0, import_react.useCallback)((e4) => a2(e4), []), _ = Ke(), v2 = (0, import_react.useMemo)(() => e3.status === "READY" ? Xe(e3) : [], [e3]);
+  if ((0, import_react.useEffect)(() => {
+    if (!m2) return;
+    let e4 = window.setInterval(() => {
+      p2((e6) => e6 >= 100 ? (h2(false), 100) : Math.min(100, e6 + 2));
+    }, 100);
+    return () => window.clearInterval(e4);
+  }, [m2]), e3.status !== "READY") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(J, { trace: e3 });
+  let y2 = new Map(v2.map((e4) => [e4.node.id, e4])), b2 = e3.nodes.find((e4) => e4.id === i) ?? e3.nodes[0], x2 = (() => {
+    let t2 = /* @__PURE__ */ new Set([b2.id]);
+    if (c2 === "ancestors") {
+      let n2 = b2;
+      for (; n2.parentId !== void 0; ) {
+        t2.add(n2.parentId);
+        let r2 = e3.nodes.find(({ id: e4 }) => e4 === n2.parentId);
+        if (r2 === void 0) break;
+        n2 = r2;
+      }
+    }
+    if (c2 === "descendants") {
+      let n2 = [b2.id];
+      for (; n2.length > 0; ) {
+        let r2 = n2.shift();
+        for (let i2 of e3.nodes.filter(({ parentId: e4 }) => e4 === r2)) t2.add(i2.id), n2.push(i2.id);
+      }
+    }
+    return t2;
+  })(), S = c2 === "none" ? "Focus receipt \xB7 exact PARENT_EDGE identity; choose a lens to inspect." : `${c2 === "ancestors" ? "Ancestors" : "Descendants"} receipt \xB7 ${x2.size} exact Span ${x2.size === 1 ? "identity" : "identities"} \xB7 recorded PARENT_EDGE only.`, C = e3.durationNano ?? "0", w2 = v2.flatMap((e4) => {
+    if (e4.node.parentId === void 0) return [];
+    let t2 = y2.get(e4.node.parentId);
+    return t2 === void 0 ? [] : [{
+      child: e4,
+      parent: t2,
+      path: Ze(t2, e4)
+    }];
+  }), T2 = w2.length > 128;
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Recorded trace tree",
     className: "trace-view trace-tree-graph",
+    "data-lens": c2,
     "data-trace-renderer": "tree",
-    children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-      className: "trace-workbench",
-      children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-        className: "trace-tree-canvas-shell",
-        children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
-            className: "trace-timeline-head",
-            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Span call tree" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Deterministic depth \xB7 recorded time \xB7 exact identity" })]
-          }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-            className: "trace-tree-canvas",
-            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
-              "aria-label": "Recorded span call tree graph",
-              className: "trace-tree-svg",
-              role: "img",
-              viewBox: "0 0 980 560",
-              children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("defs", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("marker", {
-                  id: "trace-parent-arrow",
-                  markerHeight: "7",
-                  markerWidth: "7",
-                  orient: "auto",
-                  refX: "7",
-                  refY: "4",
-                  viewBox: "0 0 8 8",
-                  children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M0 0L8 4L0 8Z" })
-                }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("marker", {
-                  id: "trace-link-arrow",
-                  markerHeight: "7",
-                  markerWidth: "7",
-                  orient: "auto",
-                  refX: "7",
-                  refY: "4",
-                  viewBox: "0 0 8 8",
-                  children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M0 0L8 4L0 8Z" })
-                })] }),
-                a2.flatMap((e4) => {
-                  if (e4.node.parentId === void 0) return [];
-                  let n2 = o2.get(e4.node.parentId);
-                  return n2 === void 0 ? [] : [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
-                    className: "trace-tree-edge",
-                    d: q(n2, e4),
-                    "data-relationship": "PARENT_EDGE"
-                  }, `parent-${e4.node.id}`)];
-                }),
-                e3.links.map((e4) => {
-                  let n2 = o2.get(e4.from.span_id), r2 = o2.get(e4.to.span_id), i2 = n2 === void 0 ? "" : r2 === void 0 ? `M${n2.x + 95} ${n2.y + 70} C${n2.x + 150} ${n2.y + 115} 900 ${n2.y + 115} 950 ${n2.y + 80}` : q(n2, r2);
-                  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
-                    className: "trace-tree-edge trace-tree-link",
-                    d: i2,
-                    "data-relationship": "LINK"
-                  }, `link-${e4.id}`);
-                }),
-                a2.map(({ node: r2, x: a3, y: o3 }) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("g", {
-                  className: `trace-tree-node trace-kind-${r2.kind.toLowerCase()}${s2.id === r2.id ? " is-selected" : ""}${r2.status === "ERROR" ? " trace-status-error" : ""}`,
-                  onClick: () => i(r2.id),
-                  role: "button",
-                  tabIndex: 0,
-                  transform: `translate(${a3} ${o3})`,
-                  children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
-                      className: "trace-tree-card",
-                      height: "70",
-                      rx: "9",
-                      width: "190"
-                    }),
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
-                      className: "trace-tree-kind-rail",
-                      height: "70",
-                      rx: "3",
-                      width: "4"
-                    }),
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
-                      className: "trace-tree-kind",
-                      x: "14",
-                      y: "17",
-                      children: r2.kind
-                    }),
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
-                      className: "trace-tree-status",
-                      textAnchor: "end",
-                      x: "176",
-                      y: "17",
-                      children: r2.status
-                    }),
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
-                      className: "trace-tree-name",
-                      x: "14",
-                      y: "37",
-                      children: r2.label
-                    }),
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
-                      className: "trace-tree-meta",
-                      x: "14",
-                      y: "53",
-                      children: `+${U(r2.startOffsetNano)} \xB7 ${r2.id}`
-                    }),
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
-                      className: "trace-tree-duration",
-                      textAnchor: "end",
-                      x: "176",
-                      y: "53",
-                      children: U(r2.durationNano)
-                    }),
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
-                      className: "trace-tree-micro-bg",
-                      height: "3",
-                      rx: "2",
-                      width: "160",
-                      x: "14",
-                      y: "61"
-                    }),
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
-                      className: "trace-tree-micro",
-                      height: "3",
-                      rx: "2",
-                      width: Math.max(2, H(r2.durationNano, e3.durationNano ?? "0") * 1.6),
-                      x: 14 + H(r2.startOffsetNano, e3.durationNano ?? "0") * 1.6,
-                      y: "61"
-                    })
-                  ]
-                }, r2.id))
-              ]
-            }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", {
-              "aria-label": "Semantic camera map",
-              className: "trace-camera-map",
-              role: "region",
-              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Semantic camera map" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: a2.map(({ node: e4 }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {}, e4.id)) })]
-            })]
-          }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-            "aria-label": "Recorded trace call tree",
-            className: "trace-tree-outline",
-            role: "tree",
-            children: e3.nodes.map((r2) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-              "aria-level": r2.depth + 1,
-              role: "treeitem",
-              style: { paddingInlineStart: `${r2.depth * 1.5}rem` },
-              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-                onClick: () => i(r2.id),
-                type: "button",
-                children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: r2.label }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: U(r2.durationNano) })]
-              }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(K, {
-                node: r2,
+    children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+        className: "trace-tree-context",
+        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: e3.nodes[0]?.label ?? e3.traceId }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: `trace ${e3.traceId} \xB7 ${e3.nodes.length} exact Spans \xB7 ${e3.parentEdges.length} PARENT_EDGE \xB7 ${e3.links.length} LINK` })] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+          className: "trace-tree-toolbar",
+          children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+            onClick: () => u2("none"),
+            type: "button",
+            children: "Fit tree"
+          }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+            "aria-pressed": m2,
+            onClick: () => h2((e4) => !e4),
+            type: "button",
+            children: m2 ? "Motion: Live" : "Motion: Still"
+          })]
+        })]
+      }),
+      r,
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+        className: "trace-workbench",
+        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+          className: "trace-tree-canvas-shell",
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+              className: "trace-timeline-head",
+              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Span call tree" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Click a Span or exact relationship \xB7 deterministic geometry" })]
+            }),
+            _ ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+              "aria-label": "Recorded trace call tree",
+              className: "trace-tree-outline",
+              role: "tree",
+              children: e3.nodes.map((n2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)($e, {
+                node: n2,
+                onSelect: g2,
                 trace: e3
-              })]
-            }, r2.id))
-          })
-        ]
-      }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(W, {
-        node: s2,
-        trace: e3
-      })]
-    })
+              }, n2.id))
+            }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+              "aria-label": "Recorded trace call tree",
+              className: "trace-tree-canvas",
+              role: "tree",
+              children: [
+                [
+                  0,
+                  1,
+                  2
+                ].map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+                  "aria-hidden": "true",
+                  className: `trace-depth-label trace-depth-${e4}`,
+                  children: `Depth ${e4}${e4 === 0 ? " \xB7 root" : e4 === 1 ? " \xB7 calls" : " \xB7 operations"}`
+                }, e4)),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {
+                  "aria-hidden": "true",
+                  className: "trace-depth-divider trace-depth-divider-1"
+                }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {
+                  "aria-hidden": "true",
+                  className: "trace-depth-divider trace-depth-divider-2"
+                }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
+                  "aria-label": "Recorded span call tree graph",
+                  className: "trace-tree-svg",
+                  role: "img",
+                  viewBox: "0 0 980 560",
+                  children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("defs", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("marker", {
+                      id: "trace-parent-arrow",
+                      markerHeight: "7",
+                      markerWidth: "7",
+                      orient: "auto",
+                      refX: "7",
+                      refY: "4",
+                      viewBox: "0 0 8 8",
+                      children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M0 0L8 4L0 8Z" })
+                    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("marker", {
+                      id: "trace-link-arrow",
+                      markerHeight: "7",
+                      markerWidth: "7",
+                      orient: "auto",
+                      refX: "7",
+                      refY: "4",
+                      viewBox: "0 0 8 8",
+                      children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M0 0L8 4L0 8Z" })
+                    })] }),
+                    T2 ? [{
+                      key: "default",
+                      items: w2.filter(({ child: e4, parent: t2 }) => c2 === "none" || x2.has(t2.node.id) && x2.has(e4.node.id)),
+                      className: c2 === "none" ? "" : " is-focused"
+                    }, {
+                      key: "muted",
+                      items: c2 === "none" ? [] : w2.filter(({ child: e4, parent: t2 }) => !(x2.has(t2.node.id) && x2.has(e4.node.id))),
+                      className: " is-muted"
+                    }].flatMap(({ key: e4, items: n2, className: r2 }) => n2.length === 0 ? [] : [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+                      className: `trace-tree-edge${r2}`,
+                      d: n2.map(({ path: e6 }) => e6).join(" "),
+                      "data-relationship": "PARENT_EDGE",
+                      "data-relationship-count": n2.length
+                    }, `parent-coalesced-${e4}`)]) : w2.map(({ child: e4, parent: n2, path: r2 }) => {
+                      let i2 = c2 !== "none" && x2.has(n2.node.id) && x2.has(e4.node.id);
+                      return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+                        className: `trace-tree-edge${i2 ? " is-focused" : c2 === "none" ? "" : " is-muted"}`,
+                        d: r2,
+                        "data-relationship": "PARENT_EDGE",
+                        "data-relationship-count": "1",
+                        "data-source": n2.node.id,
+                        "data-target": e4.node.id
+                      }, `parent-${e4.node.id}`);
+                    }),
+                    e3.links.map((e4) => {
+                      let n2 = y2.get(e4.from.span_id), r2 = y2.get(e4.to.span_id), i2 = n2 === void 0 ? "" : r2 === void 0 ? `M${n2.x + 95} ${n2.y + 70} C${n2.x + 150} ${n2.y + 115} 900 ${n2.y + 115} 950 ${n2.y + 80}` : Ze(n2, r2);
+                      return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+                        className: `trace-tree-edge trace-tree-link${c2 === "none" ? "" : " is-muted"}`,
+                        d: i2,
+                        "data-relationship": "LINK",
+                        "data-source": e4.from.span_id,
+                        "data-target": e4.to.span_id
+                      }, `link-${e4.id}`);
+                    }),
+                    v2.map(({ node: e4, x: n2, y: r2 }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Qe, {
+                      current: f2 >= W(e4.startOffsetNano, C) && f2 <= W(e4.startOffsetNano, C) + W(e4.durationNano, C),
+                      lensHit: c2 === "none" || x2.has(e4.id),
+                      node: e4,
+                      onSelect: g2,
+                      playing: m2,
+                      selected: b2.id === e4.id,
+                      summary: T2,
+                      traceDurationNano: C,
+                      x: n2,
+                      y: r2
+                    }, e4.id))
+                  ]
+                }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", {
+                  "aria-label": "Semantic camera map",
+                  className: "trace-camera-map",
+                  role: "region",
+                  children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Semantic camera map" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: v2.map(({ node: e4 }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {}, e4.id)) })]
+                })
+              ]
+            }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Y2, { trace: e3 })
+          ]
+        }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(q, {
+          node: b2,
+          trace: e3,
+          children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+            className: "trace-focus-receipt",
+            children: S
+          }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+            className: "trace-passport-actions",
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+                onClick: () => u2("ancestors"),
+                type: "button",
+                children: "Ancestors"
+              }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+                onClick: () => u2("descendants"),
+                type: "button",
+                children: "Descendants"
+              }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+                onClick: () => u2("none"),
+                type: "button",
+                children: "Clear lens"
+              })
+            ]
+          })]
+        })]
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(qe, {
+        durationNano: C,
+        onPlayingChange: h2,
+        onPositionChange: p2,
+        playing: m2,
+        position: f2,
+        reducedMotion: false
+      })
+    ]
   });
-}
-function Pe({ trace: e3 }) {
-  if (e3.status !== "READY" || e3.durationNano === void 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(G, { trace: e3 });
-  let r = e3.nodes.filter(({ status: e4 }) => e4 === "ERROR").length, i = e3.nodes.reduce((e4, t2) => BigInt(t2.durationNano) > BigInt(e4) ? t2.durationNano : e4, "0"), a2 = [
+});
+function tt({ trace: e3, viewNavigation: r }) {
+  if (e3.status !== "READY" || e3.durationNano === void 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(J, { trace: e3 });
+  let i = e3.nodes.filter(({ status: e4 }) => e4 === "ERROR").length, a2 = e3.nodes.reduce((e4, t2) => BigInt(t2.durationNano) > BigInt(e4) ? t2.durationNano : e4, "0"), o2 = [
     ["Recorded spans", String(e3.nodes.length)],
     ["Recorded links", String(e3.links.length)],
-    ["ERROR spans", String(r)],
-    ["Maximum recorded duration", `${i} ns`]
-  ];
+    ["ERROR spans", String(i)],
+    ["Maximum recorded duration", `${a2} ns`]
+  ], s2 = Object.entries(e3.nodes.reduce((e4, t2) => (e4[t2.status] = (e4[t2.status] ?? 0) + 1, e4), {})), c2 = Object.entries(e3.nodes.reduce((e4, t2) => (e4[t2.kind] = (e4[t2.kind] ?? 0) + 1, e4), {}));
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Recorded trace statistics",
     className: "trace-view trace-statistics",
     "data-trace-renderer": "statistics",
-    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Exact inventory and recorded-time aggregates only; no inferred causality." }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dl", { children: a2.map(([e4, r2]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-      className: "panel-card",
-      children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: e4 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-        className: "numeric-exact",
-        children: r2
-      })]
-    }, e4)) })]
+    children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+        className: "trace-statistics-intro",
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+            as: "span",
+            className: "trace-eyebrow",
+            variant: "eyebrow",
+            children: "Exact recorded inventory"
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+            as: "h2",
+            variant: "sectionTitle",
+            children: "Trace statistics"
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+            as: "p",
+            variant: "caption",
+            children: "Exact inventory and recorded-time aggregates only; no inferred causality."
+          })
+        ]
+      }),
+      r,
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dl", {
+        className: "trace-statistics-summary",
+        children: o2.map(([e4, r2]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+          className: "panel-card",
+          children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+            as: "dt",
+            variant: "label",
+            children: e4
+          }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+            as: "dd",
+            className: "numeric-exact",
+            variant: "value",
+            children: r2
+          })]
+        }, e4))
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+        className: "trace-statistics-grid",
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+            className: "panel-card",
+            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+              as: "h3",
+              variant: "sectionTitle",
+              children: "Recorded status inventory"
+            }), s2.map(([r2, i2]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+              className: "trace-stat-row",
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+                  variant: "body",
+                  children: r2
+                }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+                  as: "strong",
+                  variant: "label",
+                  children: i2
+                }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", { style: { width: `${i2 / e3.nodes.length * 100}%` } })
+              ]
+            }, r2))]
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+            className: "panel-card",
+            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+              as: "h3",
+              variant: "sectionTitle",
+              children: "Recorded kind inventory"
+            }), c2.map(([r2, i2]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+              className: "trace-stat-row",
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+                  variant: "body",
+                  children: r2
+                }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+                  as: "strong",
+                  variant: "label",
+                  children: i2
+                }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", { style: { width: `${i2 / e3.nodes.length * 100}%` } })
+              ]
+            }, r2))]
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+            className: "panel-card trace-duration-distribution",
+            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+              as: "h3",
+              variant: "sectionTitle",
+              children: "Recorded duration distribution"
+            }), e3.nodes.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+              className: "trace-duration-row",
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+                  variant: "body",
+                  children: e4.label
+                }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", { style: { width: `${W(e4.durationNano, a2)}%` } }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+                  as: "code",
+                  variant: "code",
+                  children: G(e4.durationNano)
+                })
+              ]
+            }, e4.id))]
+          })
+        ]
+      })
+    ]
   });
 }
-var Z = ({ trace_id: e3, span_id: t2 }) => `${e3}:${t2}`;
-var Q = (e3, t2) => e3 < t2 ? -1 : +(e3 > t2);
-function $(e3) {
+var nt = [
+  "role-template-rework-rate@2.0.0",
+  "role-template-trajectory-partial-cost@2.0.0",
+  "role-model-task-outcome-rate@2.0.0",
+  "operational-latency-ms@2.0.0",
+  "trajectory-partial-cost@2.0.0",
+  "task-cohort-comparison-eligibility@2.0.0",
+  "delivery-stage-reach@2.0.0",
+  "delivery-terminal-outcome-rate@2.0.0",
+  "delivery-cycle-time-ms@2.0.0",
+  "operational-token-usage@2.0.0",
+  "operational-attributable-cost@2.0.0",
+  "operational-usage-availability@2.0.0"
+];
+new TextEncoder();
+var Q = ({ trace_id: e3, span_id: t2 }) => `${e3}:${t2}`;
+var $ = (e3, t2) => e3 < t2 ? -1 : +(e3 > t2);
+function ot(e3) {
   return {
     schemaVersion: "wsr.trace-view@1",
     status: "INVALID",
     nodes: [],
     parentEdges: [],
     links: [],
-    errors: [...new Set(e3)].sort(Q)
+    errors: [...new Set(e3)].sort($)
   };
 }
-function Le(e3) {
+function st(e3) {
   let t2 = [], n2 = /* @__PURE__ */ new Map(), r = /* @__PURE__ */ new Map(), i = [], a2 = [], o2 = /* @__PURE__ */ new Set();
   for (let s3 of e3) {
     if (s3.kind === "NODE") {
-      let e4 = Z({
+      let e4 = Q({
         trace_id: s3.trace_id,
         span_id: s3.node.span_id
       });
@@ -4883,7 +5888,7 @@ function Le(e3) {
       continue;
     }
     if (s3.kind === "PARENT_EDGE") {
-      let e4 = Z(s3.edge.from), n3 = Z(s3.edge.to), a3 = r.get(e4);
+      let e4 = Q(s3.edge.from), n3 = Q(s3.edge.to), a3 = r.get(e4);
       a3 !== void 0 && a3 !== n3 ? t2.push(`multiple recorded parents for ${e4}`) : r.set(e4, n3), i.push({
         id: s3.id,
         from: { ...s3.edge.from },
@@ -4923,26 +5928,26 @@ function Le(e3) {
     let o3 = l2(a3);
     if (c2.delete(e4), o3 !== void 0) return s2.set(e4, o3 + 1), o3 + 1;
   };
-  for (let e4 of [...n2.keys()].sort(Q)) l2(e4);
-  if (t2.length > 0) return $(t2);
+  for (let e4 of [...n2.keys()].sort($)) l2(e4);
+  if (t2.length > 0) return ot(t2);
   let u2 = [...n2.values()].sort((e4, t3) => {
     let n3 = BigInt(e4.node.start_time_unix_nano) - BigInt(t3.node.start_time_unix_nano);
-    return n3 === 0n ? Q(e4.recorded_at, t3.recorded_at) || Q(e4.id, t3.id) : n3 < 0n ? -1 : 1;
+    return n3 === 0n ? $(e4.recorded_at, t3.recorded_at) || $(e4.id, t3.id) : n3 < 0n ? -1 : 1;
   });
-  if (u2.length === 0) return $(["recorded trace has no NODE"]);
-  let d = u2.reduce((e4, t3) => BigInt(t3.node.start_time_unix_nano) < e4 ? BigInt(t3.node.start_time_unix_nano) : e4, BigInt(u2[0].node.start_time_unix_nano)), f = u2.reduce((e4, t3) => BigInt(t3.node.end_time_unix_nano) > e4 ? BigInt(t3.node.end_time_unix_nano) : e4, BigInt(u2[0].node.end_time_unix_nano));
+  if (u2.length === 0) return ot(["recorded trace has no NODE"]);
+  let d2 = u2.reduce((e4, t3) => BigInt(t3.node.start_time_unix_nano) < e4 ? BigInt(t3.node.start_time_unix_nano) : e4, BigInt(u2[0].node.start_time_unix_nano)), f2 = u2.reduce((e4, t3) => BigInt(t3.node.end_time_unix_nano) > e4 ? BigInt(t3.node.end_time_unix_nano) : e4, BigInt(u2[0].node.end_time_unix_nano));
   return {
     schemaVersion: "wsr.trace-view@1",
     status: "READY",
     traceId: [...o2][0],
-    startTimeUnixNano: d.toString(),
-    endTimeUnixNano: f.toString(),
-    durationNano: (f - d).toString(),
+    startTimeUnixNano: d2.toString(),
+    endTimeUnixNano: f2.toString(),
+    durationNano: (f2 - d2).toString(),
     nodes: u2.map((e4) => {
       let t3 = {
         trace_id: e4.trace_id,
         span_id: e4.node.span_id
-      }, i2 = r.get(Z(t3));
+      }, i2 = r.get(Q(t3));
       return {
         id: e4.node.span_id,
         endpoint: t3,
@@ -4952,26 +5957,26 @@ function Le(e3) {
         startTimeUnixNano: e4.node.start_time_unix_nano,
         endTimeUnixNano: e4.node.end_time_unix_nano,
         durationNano: (BigInt(e4.node.end_time_unix_nano) - BigInt(e4.node.start_time_unix_nano)).toString(),
-        startOffsetNano: (BigInt(e4.node.start_time_unix_nano) - d).toString(),
+        startOffsetNano: (BigInt(e4.node.start_time_unix_nano) - d2).toString(),
         flags: e4.node.span_flags,
         traceState: e4.node.trace_state,
         fields: e4.node.fields.map((e6) => ({ ...e6 })),
         truth: { ...e4.truth },
-        depth: s2.get(Z(t3)),
+        depth: s2.get(Q(t3)),
         ...i2 === void 0 ? {} : { parentId: n2.get(i2).node.span_id },
         evidenceId: e4.id,
         recordedAt: e4.recorded_at,
         source: { ...e4.source }
       };
     }),
-    parentEdges: i.sort((e4, t3) => Q(e4.id, t3.id)),
-    links: a2.sort((e4, t3) => Q(e4.id, t3.id)),
+    parentEdges: i.sort((e4, t3) => $(e4.id, t3.id)),
+    links: a2.sort((e4, t3) => $(e4.id, t3.id)),
     errors: []
   };
 }
 
 // node_modules/wsr-ui-core/dist/styles.css
-var styles_default = ".wsr-bi{--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light;--surface-canvas:oklch(97.5% .006 250);--surface-base:var(--surface-canvas);--surface-panel:oklch(100% 0 0);--surface-raised:oklch(99% .004 250);--surface-inset:oklch(94.5% .01 250);--content-primary:oklch(23% .025 255);--content-secondary:oklch(42% .025 255);--content-muted:oklch(54% .02 255);--border-default:oklch(86% .015 250);--border-strong:oklch(67% .025 250);--interaction-accent:oklch(49% .18 244);--interaction-selection:oklch(90% .05 244);--interaction-disabled:oklch(70% .01 250);--focus-ring:oklch(57% .17 244);--status-available:oklch(42% .12 155);--status-available-surface:oklch(94% .05 155);--status-attention:oklch(50% .13 75);--status-warning:var(--status-attention);--status-attention-surface:oklch(95% .055 85);--status-unavailable:oklch(45% .025 255);--status-unavailable-surface:oklch(94% .012 250);--status-expired:oklch(48% .1 305);--status-expired-surface:oklch(95% .035 305);--status-incompatible:oklch(48% .13 28);--status-incompatible-surface:oklch(95% .045 28);--status-error:oklch(47% .17 25);--status-error-surface:oklch(95% .05 25);--data-series-1:oklch(50% .17 244);--data-series-2:oklch(58% .15 185);--space-page:1.5rem;--space-grid:1rem;--space-cluster:.75rem;--space-control:.625rem;--space-tight:.375rem;--density-row:2.75rem;--density-control:2.5rem;--shape-panel:.75rem;--shape-control:.5rem;--shape-pill:999px;--type-heading-size:1rem;--type-body-size:.9375rem;--type-caption-size:.75rem;--type-label-size:.6875rem;--type-code-size:.8125rem;--type-code-family:ui-monospace, SFMono-Regular, Consolas, monospace;--type-value-size:1.5rem;--type-numeric-size:1.5rem;--layout-table-max-height:32rem;--layout-visual-preview-height:6rem;--motion-finite-duration:.32s;--wsr-container-border-style:solid;box-sizing:border-box;min-width:0;color:var(--content-primary);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}.wsr-bi[data-theme=dark]{--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;--surface-canvas:oklch(18% .02 255);--surface-panel:oklch(22.5% .025 255);--surface-raised:oklch(25.5% .025 255);--surface-inset:oklch(16% .02 255);--content-primary:oklch(94% .01 250);--content-secondary:oklch(76% .018 250);--content-muted:oklch(64% .02 250);--border-default:oklch(34% .025 250);--border-strong:oklch(49% .03 250);--interaction-accent:oklch(76% .13 235);--interaction-selection:oklch(32% .07 244);--interaction-disabled:oklch(48% .018 250);--focus-ring:oklch(73% .14 235);--status-available:oklch(79% .12 153);--status-available-surface:oklch(31% .07 155);--status-attention:oklch(84% .12 82);--status-attention-surface:oklch(32% .06 76);--status-unavailable:oklch(72% .025 250);--status-unavailable-surface:oklch(28% .02 250);--status-expired:oklch(79% .1 305);--status-expired-surface:oklch(31% .06 305);--status-incompatible:oklch(82% .13 35);--status-incompatible-surface:oklch(31% .07 28);--status-error:oklch(80% .14 25);--status-error-surface:oklch(31% .08 25);--data-series-1:oklch(75% .14 235);--data-series-2:oklch(77% .12 185)}.wsr-bi[data-density=compact]{--space-page:1rem;--space-grid:.75rem;--space-cluster:.5rem;--space-control:.375rem;--space-tight:.25rem;--density-control:2.75rem}.wsr-bi *,.wsr-bi :before,.wsr-bi :after{box-sizing:inherit}.wsr-bi :focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}.wsr-bi .panel-card,.wsr-bi .metric-frame,.wsr-bi .bi-card{gap:var(--space-grid);min-width:0;padding:var(--space-page);border:1px var(--wsr-container-border-style) var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);flex-direction:column;display:flex}.wsr-bi .bi-section{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .metric-frame-header,.wsr-bi .metric-actions{justify-content:space-between;align-items:center;gap:var(--space-cluster);flex-wrap:wrap;display:flex}.wsr-bi .metric-value,.wsr-bi .status-stack{gap:var(--space-tight);display:grid}.wsr-bi .metric-number{font-size:var(--type-numeric-size);font-variant-numeric:tabular-nums;font-weight:650}.wsr-bi .numeric-exact,.wsr-bi .text-code{overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--type-code-size);font-variant-numeric:tabular-nums}.wsr-bi .text-heading{font-size:var(--type-heading-size);margin:0;font-weight:650}.wsr-bi .text-label{font-size:var(--type-label-size);letter-spacing:.08em;text-transform:uppercase;font-weight:700}.wsr-bi .status-label{align-items:center;gap:var(--space-tight);width:fit-content;padding:var(--space-tight) var(--space-cluster);border-radius:var(--shape-pill);font-size:var(--type-label-size);border:1px solid;font-weight:700;display:inline-flex}.wsr-bi .status-available{background:var(--status-available-surface);color:var(--status-available)}.wsr-bi .status-attention{background:var(--status-attention-surface);color:var(--status-attention)}.wsr-bi .status-unavailable{background:var(--status-unavailable-surface);color:var(--status-unavailable)}.wsr-bi .status-expired{background:var(--status-expired-surface);color:var(--status-expired)}.wsr-bi .status-incompatible{background:var(--status-incompatible-surface);color:var(--status-incompatible)}.wsr-bi .status-error{background:var(--status-error-surface);color:var(--status-error)}.wsr-bi .action-control,.wsr-bi .recorded-node,.wsr-bi .recorded-relation{min-height:var(--density-control);padding:var(--space-control);border:1px solid var(--border-strong);border-radius:var(--shape-control);background:var(--surface-raised);color:var(--content-primary);font:inherit;cursor:pointer}.wsr-bi .visual-with-fallback,.wsr-bi .compare-result,.wsr-bi .recorded-structure{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .compare-result{grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr))}.wsr-bi .visual-preview{width:100%;height:var(--layout-visual-preview-height)}.wsr-bi .fill-current{fill:currentColor}.wsr-bi .text-data-series-1{color:var(--data-series-1)}.wsr-bi .stroke-border-default{stroke:var(--border-default)}.wsr-bi .visual-data-table{table-layout:fixed;border-collapse:collapse;width:100%;max-width:100%;font-size:var(--type-label-size)}.wsr-bi .visual-data-table th,.wsr-bi .visual-data-table td{padding:var(--space-tight);border-block-end:1px solid var(--border-default);overflow-wrap:anywhere;text-align:start}.wsr-bi .bounded-table,.wsr-bi .recorded-graph-frame{max-width:100%;overflow:auto}.wsr-bi .recorded-graph{width:100%;min-width:40rem}.wsr-bi .recorded-graph-parent{stroke:var(--border-strong)}.wsr-bi .recorded-graph-link{stroke:var(--interaction-accent);stroke-dasharray:5 4}.wsr-bi .recorded-graph-node{fill:var(--surface-panel);stroke:var(--interaction-accent)}.wsr-bi .recorded-graph-label{fill:var(--content-primary);font-size:var(--type-label-size)}.wsr-bi .trace-view,.wsr-bi .trace-timeline,.wsr-bi .trace-tree,.wsr-bi .trace-tree-row{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .trace-summary,.wsr-bi .trace-waterfall-row,.wsr-bi .trace-node-label,.wsr-bi .trace-tree-row>.recorded-node{justify-content:space-between;align-items:center;gap:var(--space-cluster);min-width:0;display:flex}.wsr-bi .trace-waterfall-row{grid-template-columns:minmax(10rem,.35fr) minmax(16rem,1fr);display:grid}.wsr-bi .trace-timeline-track{min-height:var(--density-row);border:1px solid var(--border-default);border-radius:var(--shape-control);background:var(--surface-inset);position:relative;overflow:hidden}.wsr-bi .trace-timeline-bar{inset-block:var(--space-tight);border-radius:var(--shape-control);background:var(--data-series-1);transform-origin:0;min-width:2px;animation:trace-recorded-reveal var(--motion-finite-duration) ease-out both;position:absolute}.wsr-bi [data-motion=off] .trace-timeline-bar{animation:none}.wsr-bi .trace-passport-grid{gap:var(--space-tight) var(--space-grid);grid-template-columns:minmax(9rem,auto) minmax(0,1fr);margin:0;display:grid}.wsr-bi .trace-passport-grid dt{color:var(--content-secondary);font-weight:650}.wsr-bi .trace-passport-grid dd{overflow-wrap:anywhere;min-width:0;margin:0}.wsr-bi .trace-link-list{color:var(--content-secondary);margin:0}@keyframes trace-recorded-reveal{0%{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}@media (width<=40rem){.wsr-bi .trace-waterfall-row{grid-template-columns:1fr}}@media (prefers-reduced-motion:reduce){.wsr-bi{--motion-finite-duration:0s}}.wsr-bi .trace-view{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .trace-summary-dense{align-items:center;gap:var(--space-grid);padding:var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);grid-template-columns:minmax(12rem,1fr) repeat(4,auto);display:grid}.wsr-bi .trace-summary-dense>span{color:var(--content-secondary);font:var(--type-code-size) var(--type-code-family)}.wsr-bi .trace-eyebrow{color:var(--content-secondary);font-size:var(--type-caption-size);letter-spacing:.08em;text-transform:uppercase;font-weight:700;display:block}.wsr-bi .trace-view-tools,.wsr-bi .trace-motion-actions,.wsr-bi .trace-passport-head{justify-content:space-between;align-items:center;gap:var(--space-cluster);flex-wrap:wrap;display:flex}.wsr-bi .trace-view-tools input{min-width:min(100%,18rem);margin-inline-start:auto}.wsr-bi .trace-minimap{gap:var(--space-tight);min-height:3.75rem;padding:var(--space-tight) var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-inset);display:grid;overflow:hidden}.wsr-bi .trace-minimap-track{border:1px solid var(--interaction-accent);border-radius:var(--shape-control);min-height:1.75rem;position:relative}.wsr-bi .trace-minimap-track i{background:var(--data-series-1);border-radius:99px;height:.22rem;position:absolute}.wsr-bi .trace-minimap-track i:nth-child(3n+1){inset-block-start:.35rem}.wsr-bi .trace-minimap-track i:nth-child(3n+2){background:var(--data-series-2);inset-block-start:.8rem}.wsr-bi .trace-minimap-track i:nth-child(3n){background:var(--status-warning);inset-block-start:1.25rem}.wsr-bi .trace-workbench{gap:var(--space-grid);grid-template-columns:minmax(0,1fr) minmax(16rem,19rem);min-width:0;display:grid}.wsr-bi .trace-waterfall-canvas,.wsr-bi .trace-tree-canvas-shell,.wsr-bi .span-passport{border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);min-width:0;overflow:hidden}.wsr-bi .trace-timeline-head{justify-content:space-between;align-items:center;gap:var(--space-grid);min-height:2.75rem;padding:0 var(--space-grid);border-block-end:1px solid var(--border-default);color:var(--content-secondary);font-size:var(--type-caption-size);text-transform:uppercase;font-weight:700;display:flex}.wsr-bi .trace-waterfall-row{border-block-end:1px solid var(--border-default);grid-template-columns:minmax(16rem,19rem) minmax(25rem,1fr);gap:0;min-height:3rem;display:grid}.wsr-bi .trace-waterfall-row.is-selected{background:var(--interaction-selection)}.wsr-bi .trace-waterfall-row.is-current{filter:brightness(1.18)}.wsr-bi .trace-node-label{gap:var(--space-tight);text-align:start;background:0 0;border:0;border-radius:0;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;display:grid}.wsr-bi .trace-node-copy{min-width:0}.wsr-bi .trace-node-copy strong,.wsr-bi .trace-node-copy small{text-overflow:ellipsis;white-space:nowrap;display:block;overflow:hidden}.wsr-bi .trace-node-copy small{color:var(--content-secondary);font:var(--type-caption-size) var(--type-code-family)}.wsr-bi .trace-glyph{border-radius:var(--shape-control);width:1.4rem;height:1.4rem;color:var(--data-series-1);border:1px solid;place-items:center;display:grid}.wsr-bi .trace-kind-client{color:var(--data-series-2)}.wsr-bi .trace-error{color:var(--status-error)}.wsr-bi .trace-timeline-track{border:0;border-inline-start:1px solid var(--border-default);background-color:var(--surface-inset);background-image:linear-gradient(90deg, transparent 24.8%, var(--border-default) 25%, transparent 25.2%, transparent 49.8%, var(--border-default) 50%, transparent 50.2%, transparent 74.8%, var(--border-default) 75%, transparent 75.2%);border-radius:0;min-height:3rem;position:relative;overflow:hidden}.wsr-bi .trace-timeline-bar{min-width:2px;padding-inline:var(--space-tight);border:1px solid var(--data-series-1);border-radius:var(--shape-control);background:color-mix(in srgb, var(--data-series-1) 45%, var(--surface-panel));color:var(--content-primary);font-size:var(--type-caption-size);text-overflow:ellipsis;white-space:nowrap;transform-origin:0;animation:trace-recorded-reveal var(--motion-finite-duration) ease-out both;display:block;position:absolute;inset-block:.85rem;overflow:hidden}.wsr-bi .trace-timeline-bar.trace-kind-client{border-color:var(--data-series-2);background:color-mix(in srgb, var(--data-series-2) 40%, var(--surface-panel))}.wsr-bi .trace-timeline-bar.trace-status-error{border-color:var(--status-error);background:color-mix(in srgb, var(--status-error) 35%, var(--surface-panel))}.wsr-bi .trace-passport-head{margin-block-end:var(--space-grid)}.wsr-bi .trace-passport-name{font-size:var(--type-heading-size);margin-block-end:var(--space-grid);display:block}.wsr-bi .trace-passport-grid{grid-template-columns:1fr}.wsr-bi .trace-passport-grid dt{font-size:var(--type-caption-size);letter-spacing:.06em;text-transform:uppercase;margin-block-start:var(--space-tight)}.wsr-bi .trace-link-receipt{padding:var(--space-tight);border-inline-start:3px solid var(--status-warning);border-radius:var(--shape-control);background:color-mix(in srgb, var(--status-warning) 16%, var(--surface-panel));color:var(--content-secondary)}.wsr-bi .trace-motion{gap:var(--space-grid);padding:var(--space-tight) var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);grid-template-columns:auto minmax(0,1fr) auto;align-items:center;display:grid}.wsr-bi .trace-motion-copy{gap:var(--space-tight);display:grid}.wsr-bi .trace-motion-copy input{width:100%}.wsr-bi .trace-motion-copy span{color:var(--content-secondary);font-size:var(--type-caption-size)}.wsr-bi .trace-tree-canvas{background-color:var(--surface-inset);background-image:radial-gradient(var(--border-default) 1px, transparent 1px);background-size:1.25rem 1.25rem;min-height:36rem;position:relative;overflow:hidden}.wsr-bi .trace-tree-svg{width:100%;height:100%;position:absolute;inset:0}.wsr-bi .trace-tree-edge{fill:none;stroke:var(--border-strong);stroke-width:2px;marker-end:url(#trace-parent-arrow)}.wsr-bi .trace-tree-link{stroke:var(--status-warning);stroke-dasharray:7 6;marker-end:url(#trace-link-arrow)}.wsr-bi #trace-parent-arrow path{fill:var(--border-strong)}.wsr-bi #trace-link-arrow path{fill:var(--status-warning)}.wsr-bi .trace-tree-node{cursor:pointer;outline:none}.wsr-bi .trace-tree-card{fill:var(--surface-raised);stroke:var(--border-strong);stroke-width:1.2px}.wsr-bi .trace-tree-node.is-selected .trace-tree-card{stroke:var(--data-series-1);stroke-width:2px;filter:drop-shadow(0 0 5px color-mix(in srgb, var(--data-series-1) 45%, transparent))}.wsr-bi .trace-tree-node.trace-status-error .trace-tree-card{stroke:var(--status-error)}.wsr-bi .trace-tree-kind-rail,.wsr-bi .trace-tree-micro{fill:var(--data-series-1)}.wsr-bi .trace-tree-node.trace-kind-client .trace-tree-kind-rail,.wsr-bi .trace-tree-node.trace-kind-client .trace-tree-micro{fill:var(--data-series-2)}.wsr-bi .trace-tree-kind,.wsr-bi .trace-tree-meta,.wsr-bi .trace-tree-status,.wsr-bi .trace-tree-duration{fill:var(--content-secondary);font:var(--type-caption-size) var(--type-code-family)}.wsr-bi .trace-tree-name{fill:var(--content-primary);font-size:var(--type-label-size);font-weight:650}.wsr-bi .trace-tree-micro-bg{fill:var(--border-default)}.wsr-bi .trace-camera-map{width:8.5rem;min-height:5.25rem;padding:var(--space-tight);border:1px solid var(--border-strong);border-radius:var(--shape-control);background:color-mix(in srgb, var(--surface-base) 90%, transparent);position:absolute;inset-block-end:var(--space-grid);inset-inline-end:var(--space-grid)}.wsr-bi .trace-camera-map>strong{color:var(--content-secondary);font-size:var(--type-caption-size);text-transform:uppercase}.wsr-bi .trace-camera-map>div{gap:var(--space-tight);flex-wrap:wrap;margin-block-start:var(--space-tight);display:flex}.wsr-bi .trace-camera-map i{background:var(--data-series-2);border-radius:2px;width:.85rem;height:.45rem}.wsr-bi .trace-tree-outline{clip-path:inset(50%);white-space:nowrap;width:1px;height:1px;position:absolute;overflow:hidden}.wsr-bi .trace-tree-outline>div>button{justify-content:space-between;width:100%;display:flex}.wsr-bi .trace-statistics dl{gap:var(--space-grid);grid-template-columns:repeat(4,minmax(0,1fr));margin:0;display:grid}.wsr-bi .trace-statistics dl>div{min-width:0}.wsr-bi .trace-statistics dt{color:var(--content-secondary)}.wsr-bi .trace-statistics dd{margin:var(--space-grid) 0 0;font-size:var(--type-value-size)}@media (width<=64rem){.wsr-bi .trace-workbench{grid-template-columns:1fr}.wsr-bi .span-passport{display:none}.wsr-bi .trace-summary-dense{grid-template-columns:minmax(12rem,1fr) repeat(2,auto)}.wsr-bi .trace-summary-dense>span:nth-last-child(-n+2){display:none}}@media (width<=40rem){.wsr-bi .trace-summary-dense,.wsr-bi .trace-motion,.wsr-bi .trace-statistics dl{grid-template-columns:1fr}.wsr-bi .trace-minimap,.wsr-bi .trace-waterfall-canvas,.wsr-bi .trace-tree-canvas{display:none}.wsr-bi .trace-tree-outline{clip-path:none;white-space:normal;width:auto;height:auto;position:static;overflow:visible}.wsr-bi .trace-tree-outline>div{min-width:0;min-height:var(--density-row);border-block-end:1px solid var(--border-default)}.wsr-bi .trace-tree-graph,.wsr-bi .trace-tree-canvas-shell,.wsr-bi .trace-tree-outline,.wsr-bi .trace-tree-outline>div>button,.wsr-bi .trace-tree-outline>div>button>span{min-width:0;max-width:100%}.wsr-bi .trace-tree-outline>div>button>span{overflow-wrap:anywhere}.wsr-bi .trace-view-tools input{order:2;width:100%;margin:0}}\n/*$vite$:1*/";
+var styles_default = '.wsr-bi{--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light;--wsr-surface-panel:oklch(100% 0 0);--wsr-surface-section:var(--wsr-surface-panel);--wsr-surface-raised:oklch(99% .004 250);--wsr-surface-inset:oklch(94.5% .01 250);--wsr-shape-panel:.625rem;--wsr-shape-control:.4375rem;--wsr-type-section-title:.8125rem;--wsr-type-body:.6875rem;--wsr-type-caption:.5625rem;--wsr-type-label:.625rem;--wsr-type-code:.5625rem;--wsr-trace-indent-0:var(--content-muted);--wsr-trace-indent-1:var(--status-available);--wsr-trace-indent-2:var(--status-warning);--wsr-trace-indent-3:var(--status-error);--trace-indent-column:0;--trace-indent-columns:1;--surface-canvas:oklch(97.5% .006 250);--surface-base:var(--surface-canvas);--surface-section:var(--wsr-surface-section,var(--wsr-surface-panel));--surface-panel:var(--wsr-surface-panel,oklch(100% 0 0));--surface-raised:var(--wsr-surface-raised,oklch(99% .004 250));--surface-inset:var(--wsr-surface-inset,oklch(94.5% .01 250));--content-primary:oklch(23% .025 255);--content-secondary:oklch(42% .025 255);--content-muted:oklch(54% .02 255);--border-default:oklch(86% .015 250);--border-strong:oklch(67% .025 250);--interaction-accent:oklch(49% .18 244);--interaction-selection:oklch(90% .05 244);--interaction-disabled:oklch(70% .01 250);--focus-ring:oklch(57% .17 244);--status-available:oklch(42% .12 155);--status-available-surface:oklch(94% .05 155);--status-attention:oklch(50% .13 75);--status-warning:var(--status-attention);--status-attention-surface:oklch(95% .055 85);--status-unavailable:oklch(45% .025 255);--status-unavailable-surface:oklch(94% .012 250);--status-expired:oklch(48% .1 305);--status-expired-surface:oklch(95% .035 305);--status-incompatible:oklch(48% .13 28);--status-incompatible-surface:oklch(95% .045 28);--status-error:oklch(47% .17 25);--status-error-surface:oklch(95% .05 25);--data-series-1:oklch(50% .17 244);--data-series-2:oklch(58% .15 185);--space-page:1.5rem;--space-grid:1rem;--space-cluster:.75rem;--space-control:.625rem;--space-tight:.375rem;--density-row:2.75rem;--density-control:2.5rem;--shape-panel:var(--wsr-shape-panel,.625rem);--shape-control:var(--wsr-shape-control,.4375rem);--shape-pill:999px;--type-heading-size:var(--wsr-type-section-title,.8125rem);--type-body-size:var(--wsr-type-body,.6875rem);--type-caption-size:var(--wsr-type-caption,.5625rem);--type-label-size:var(--wsr-type-label,.625rem);--type-code-size:var(--wsr-type-code,.5625rem);--type-code-family:ui-monospace, SFMono-Regular, Consolas, monospace;--type-value-size:1.5rem;--type-numeric-size:1.5rem;--layout-table-max-height:32rem;--layout-visual-preview-height:6rem;--motion-finite-duration:.32s;--wsr-container-border-style:solid;box-sizing:border-box;min-width:0;color:var(--content-primary);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}.wsr-bi[data-theme=dark]{--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;--wsr-surface-panel:oklch(22.5% .025 255);--wsr-surface-section:var(--wsr-surface-panel);--wsr-surface-raised:oklch(25.5% .025 255);--wsr-surface-inset:oklch(16% .02 255);--surface-canvas:oklch(18% .02 255);--surface-section:var(--wsr-surface-section,var(--wsr-surface-panel));--surface-panel:var(--wsr-surface-panel,oklch(22.5% .025 255));--surface-raised:var(--wsr-surface-raised,oklch(25.5% .025 255));--surface-inset:var(--wsr-surface-inset,oklch(16% .02 255));--content-primary:oklch(94% .01 250);--content-secondary:oklch(76% .018 250);--content-muted:oklch(64% .02 250);--border-default:oklch(34% .025 250);--border-strong:oklch(49% .03 250);--interaction-accent:oklch(76% .13 235);--interaction-selection:oklch(32% .07 244);--interaction-disabled:oklch(48% .018 250);--focus-ring:oklch(73% .14 235);--status-available:oklch(79% .12 153);--status-available-surface:oklch(31% .07 155);--status-attention:oklch(84% .12 82);--status-attention-surface:oklch(32% .06 76);--status-unavailable:oklch(72% .025 250);--status-unavailable-surface:oklch(28% .02 250);--status-expired:oklch(79% .1 305);--status-expired-surface:oklch(31% .06 305);--status-incompatible:oklch(82% .13 35);--status-incompatible-surface:oklch(31% .07 28);--status-error:oklch(80% .14 25);--status-error-surface:oklch(31% .08 25);--data-series-1:oklch(75% .14 235);--data-series-2:oklch(77% .12 185)}.wsr-bi[data-density=compact]{--space-page:1rem;--space-grid:.75rem;--space-cluster:.5rem;--space-control:.375rem;--space-tight:.25rem;--density-control:2.75rem}.wsr-bi *,.wsr-bi :before,.wsr-bi :after{box-sizing:inherit}.wsr-bi :focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}.wsr-bi .panel-card,.wsr-bi .metric-frame,.wsr-bi .dashboard-metric-panel,.wsr-bi .bi-card{gap:var(--space-grid);min-width:0;padding:var(--space-page);border:1px var(--wsr-container-border-style) var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);flex-direction:column;display:flex}.wsr-bi .dashboard-metric-panel{gap:var(--space-cluster);padding:var(--space-cluster)}.wsr-bi .dashboard-panel-head{justify-content:space-between;align-items:flex-start;gap:var(--space-control);display:flex}.wsr-bi .dashboard-panel-head h3,.wsr-bi .dashboard-panel-meta{margin:0}.wsr-bi .dashboard-panel-actions{justify-content:flex-end;margin-top:auto;display:flex}.wsr-bi .dashboard-panel-head h3{font-size:var(--type-label-size);line-height:1.35}.wsr-bi .dashboard-panel-meta{color:var(--content-secondary);font-size:var(--type-caption-size)}.wsr-bi .dashboard-ratio{border-radius:var(--shape-pill);background:var(--surface-inset);height:.5rem;overflow:hidden}.wsr-bi .dashboard-ratio i{background:var(--interaction-accent);height:100%;display:block}.wsr-bi .bi-section{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .metric-frame-header,.wsr-bi .metric-actions{justify-content:space-between;align-items:center;gap:var(--space-cluster);flex-wrap:wrap;display:flex}.wsr-bi .metric-value,.wsr-bi .status-stack{gap:var(--space-tight);display:grid}.wsr-bi .metric-number{font-size:var(--type-numeric-size);font-variant-numeric:tabular-nums;font-weight:650}.wsr-bi .numeric-exact,.wsr-bi .text-code{overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--type-code-size);font-variant-numeric:tabular-nums}.wsr-bi .text-heading{font-size:var(--type-heading-size);margin:0;font-weight:650}.wsr-bi .text-label{font-size:var(--type-label-size);letter-spacing:.08em;text-transform:uppercase;font-weight:700}.wsr-bi .status-label{align-items:center;gap:var(--space-tight);width:fit-content;padding:var(--space-tight) var(--space-cluster);border-radius:var(--shape-pill);font-size:var(--type-label-size);border:1px solid;font-weight:700;display:inline-flex}.wsr-bi .status-available{background:var(--status-available-surface);color:var(--status-available)}.wsr-bi .status-attention{background:var(--status-attention-surface);color:var(--status-attention)}.wsr-bi .status-unavailable{background:var(--status-unavailable-surface);color:var(--status-unavailable)}.wsr-bi .status-expired{background:var(--status-expired-surface);color:var(--status-expired)}.wsr-bi .status-incompatible{background:var(--status-incompatible-surface);color:var(--status-incompatible)}.wsr-bi .status-error{background:var(--status-error-surface);color:var(--status-error)}.wsr-bi .action-control,.wsr-bi .recorded-node,.wsr-bi .recorded-relation{min-height:var(--density-control);padding:var(--space-control);border:1px solid var(--border-strong);border-radius:var(--shape-control);background:var(--surface-raised);color:var(--content-primary);font:inherit;cursor:pointer}.wsr-bi .visual-with-fallback,.wsr-bi .compare-result,.wsr-bi .recorded-structure{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .compare-result{grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr))}.wsr-bi .visual-preview{width:100%;height:var(--layout-visual-preview-height)}.wsr-bi .fill-current{fill:currentColor}.wsr-bi .text-data-series-1{color:var(--data-series-1)}.wsr-bi .stroke-border-default{stroke:var(--border-default)}.wsr-bi .visual-data-table{table-layout:fixed;border-collapse:collapse;width:100%;max-width:100%;font-size:var(--type-label-size)}.wsr-bi .visual-data-table th,.wsr-bi .visual-data-table td{padding:var(--space-tight);border-block-end:1px solid var(--border-default);overflow-wrap:anywhere;text-align:start}.wsr-bi .bounded-table,.wsr-bi .recorded-graph-frame{max-width:100%;overflow:auto}.wsr-bi .recorded-graph{width:100%;min-width:40rem}.wsr-bi .recorded-graph-parent{stroke:var(--border-strong)}.wsr-bi .recorded-graph-link{stroke:var(--interaction-accent);stroke-dasharray:5 4}.wsr-bi .recorded-graph-node{fill:var(--surface-panel);stroke:var(--interaction-accent)}.wsr-bi .recorded-graph-label{fill:var(--content-primary);font-size:var(--type-label-size)}.wsr-bi .trace-view,.wsr-bi .trace-tree,.wsr-bi .trace-tree-row{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .trace-summary,.wsr-bi .trace-waterfall-row,.wsr-bi .trace-node-label,.wsr-bi .trace-tree-row>.recorded-node{justify-content:space-between;align-items:center;gap:var(--space-cluster);min-width:0;display:flex}.wsr-bi .trace-waterfall-row{grid-template-columns:minmax(10rem,.35fr) minmax(16rem,1fr);display:grid}.wsr-bi .trace-timeline-track{min-height:var(--density-row);border:1px solid var(--border-default);border-radius:var(--shape-control);background:var(--surface-inset);position:relative;overflow:hidden}.wsr-bi .trace-timeline-bar{inset-block:var(--space-tight);border-radius:var(--shape-control);background:var(--data-series-1);transform-origin:0;min-width:2px;animation:trace-recorded-reveal var(--motion-finite-duration) ease-out both;position:absolute}.wsr-bi [data-motion=off] .trace-timeline-bar{animation:none}.wsr-bi .trace-passport-grid{gap:var(--space-tight) var(--space-grid);grid-template-columns:minmax(9rem,auto) minmax(0,1fr);margin:0;display:grid}.wsr-bi .trace-passport-grid dt{color:var(--content-secondary);font-weight:650}.wsr-bi .trace-passport-grid dd{overflow-wrap:anywhere;min-width:0;margin:0}.wsr-bi .trace-link-list{color:var(--content-secondary);margin:0}@keyframes trace-recorded-reveal{0%{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}@media (width<=40rem){.wsr-bi .trace-waterfall-row{grid-template-columns:1fr}}@media (prefers-reduced-motion:reduce){.wsr-bi{--motion-finite-duration:0s}}.wsr-bi .trace-view{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .trace-summary-dense{align-items:center;gap:var(--space-grid);padding:var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);grid-template-columns:minmax(12rem,1fr) repeat(4,auto);display:grid}.wsr-bi .trace-summary-dense>span{color:var(--content-secondary);font:var(--type-code-size) var(--type-code-family)}.wsr-bi .trace-eyebrow{color:var(--content-secondary);font-size:var(--type-caption-size);letter-spacing:.08em;text-transform:uppercase;font-weight:700;display:block}.wsr-bi .trace-view-tools,.wsr-bi .trace-motion-actions,.wsr-bi .trace-passport-head{justify-content:space-between;align-items:center;gap:var(--space-cluster);flex-wrap:wrap;display:flex}.wsr-bi .trace-view-tools input{min-width:min(100%,18rem);margin-inline-start:auto}.wsr-bi .trace-minimap{gap:var(--space-tight);min-height:3.75rem;padding:var(--space-tight) var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-inset);display:grid;overflow:hidden}.wsr-bi .trace-minimap-track{border:1px solid var(--interaction-accent);border-radius:var(--shape-control);min-height:1.75rem;position:relative}.wsr-bi .trace-minimap-track i{background:var(--data-series-1);border-radius:99px;height:.22rem;position:absolute}.wsr-bi .trace-minimap-track i:nth-child(3n+1){inset-block-start:.35rem}.wsr-bi .trace-minimap-track i:nth-child(3n+2){background:var(--data-series-2);inset-block-start:.8rem}.wsr-bi .trace-minimap-track i:nth-child(3n){background:var(--status-warning);inset-block-start:1.25rem}.wsr-bi .trace-workbench{gap:var(--space-grid);grid-template-columns:minmax(0,1fr) minmax(16rem,19rem);min-width:0;display:grid}.wsr-bi .trace-waterfall-canvas,.wsr-bi .trace-tree-canvas-shell,.wsr-bi .span-passport{border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);min-width:0;overflow:hidden}.wsr-bi .trace-timeline-head{justify-content:space-between;align-items:center;gap:var(--space-grid);min-height:2.75rem;padding:0 var(--space-grid);border-block-end:1px solid var(--border-default);color:var(--content-secondary);font-size:var(--type-caption-size);text-transform:uppercase;font-weight:700;display:flex}.wsr-bi .trace-waterfall-row{border-block-end:1px solid var(--border-default);grid-template-columns:minmax(16rem,19rem) minmax(25rem,1fr);gap:0;min-height:3rem;display:grid}.wsr-bi .trace-waterfall-row.is-current{filter:brightness(1.18)}.wsr-bi .trace-node-label{gap:var(--space-tight);text-align:start;background:0 0;border:0;border-radius:0;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;display:grid}.wsr-bi .trace-node-copy{min-width:0}.wsr-bi .trace-node-copy strong,.wsr-bi .trace-node-copy small{text-overflow:ellipsis;white-space:nowrap;display:block;overflow:hidden}.wsr-bi .trace-node-copy small{color:var(--content-secondary);font:var(--type-caption-size) var(--type-code-family)}.wsr-bi .trace-glyph{border-radius:var(--shape-control);width:1.4rem;height:1.4rem;color:var(--data-series-1);border:1px solid;place-items:center;display:grid}.wsr-bi .trace-kind-client{color:var(--data-series-2)}.wsr-bi .trace-error{color:var(--status-error)}.wsr-bi .trace-timeline-track{border:0;border-inline-start:1px solid var(--border-default);background-color:var(--surface-inset);background-image:linear-gradient(90deg, transparent 24.8%, var(--border-default) 25%, transparent 25.2%, transparent 49.8%, var(--border-default) 50%, transparent 50.2%, transparent 74.8%, var(--border-default) 75%, transparent 75.2%);border-radius:0;min-height:3rem;position:relative;overflow:hidden}.wsr-bi .trace-timeline-bar{min-width:2px;padding-inline:var(--space-tight);border:1px solid var(--data-series-1);border-radius:var(--shape-control);background:color-mix(in srgb, var(--data-series-1) 45%, var(--surface-panel));color:var(--content-primary);font-size:var(--type-caption-size);text-overflow:ellipsis;white-space:nowrap;transform-origin:0;animation:trace-recorded-reveal var(--motion-finite-duration) ease-out both;display:block;position:absolute;inset-block:.85rem;overflow:hidden}.wsr-bi .trace-timeline-bar.trace-kind-client{border-color:var(--data-series-2);background:color-mix(in srgb, var(--data-series-2) 40%, var(--surface-panel))}.wsr-bi .trace-timeline-bar.trace-status-error{border-color:var(--status-error);background:color-mix(in srgb, var(--status-error) 35%, var(--surface-panel))}.wsr-bi .trace-passport-head{justify-content:space-between;align-items:center;gap:var(--space-cluster);border-block-end:1px solid var(--border-default);min-height:2.75rem;padding:0 .75rem;display:flex}.wsr-bi .trace-passport-head strong{font-size:.625rem}.wsr-bi .trace-passport-head span{color:var(--content-muted);letter-spacing:.08em;text-transform:uppercase;font-size:.5rem}.wsr-bi .trace-passport-body{padding:.8125rem}.wsr-bi .trace-passport-title{align-items:center;gap:.5625rem;margin-block-end:.875rem;display:flex}.wsr-bi .trace-passport-title>div{min-width:0}.wsr-bi .trace-passport-name{font-size:var(--type-body-size);display:block}.wsr-bi .trace-passport-title small{color:var(--content-muted);margin-block-start:.1875rem;font-size:.5rem;display:block}.wsr-bi .trace-passport-sigil{border:1px solid var(--data-series-1);background:color-mix(in srgb, var(--data-series-1) 16%, var(--surface-panel));width:1.8125rem;height:1.8125rem;color:var(--data-series-1);border-radius:.4375rem;flex:none;place-items:center;font-size:.5rem;font-weight:800;display:grid}.wsr-bi .trace-passport-sigil.trace-kind-client{border-color:var(--data-series-2);background:color-mix(in srgb, var(--data-series-2) 16%, var(--surface-panel));color:var(--data-series-2)}.wsr-bi .trace-passport-grid{grid-template-columns:1fr;gap:.6875rem;display:grid}.wsr-bi .trace-passport-grid dt{color:var(--content-muted);letter-spacing:.1em;text-transform:uppercase;margin:0;font-size:.5rem}.wsr-bi .trace-passport-grid dd{font-size:var(--type-caption-size);margin-block-start:.1875rem;line-height:1.45}.wsr-bi .trace-passport-grid .text-code,.wsr-bi .trace-passport-grid .numeric-exact{font-size:.5rem}.wsr-bi .trace-link-receipt{padding:var(--space-tight);border-inline-start:3px solid var(--status-warning);border-radius:var(--shape-control);background:color-mix(in srgb, var(--status-warning) 16%, var(--surface-panel));color:var(--content-secondary)}.wsr-bi .trace-motion{gap:var(--space-grid);padding:var(--space-tight) var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);grid-template-columns:auto minmax(0,1fr) auto;align-items:center;display:grid}.wsr-bi .trace-motion-copy{gap:var(--space-tight);display:grid}.wsr-bi .trace-motion-copy input{width:100%}.wsr-bi .trace-motion-copy span{color:var(--content-secondary);font-size:var(--type-caption-size)}.wsr-bi .trace-tree-canvas{background-color:var(--surface-inset);background-image:radial-gradient(var(--border-default) 1px, transparent 1px);background-size:1.25rem 1.25rem;min-height:36rem;position:relative;overflow:hidden}.wsr-bi .trace-tree-svg{width:100%;height:100%;position:absolute;inset:0}.wsr-bi .trace-tree-edge{fill:none;stroke:var(--border-strong);stroke-width:2px;marker-end:url(#trace-parent-arrow)}.wsr-bi .trace-tree-link{stroke:var(--status-warning);stroke-dasharray:7 6;marker-end:url(#trace-link-arrow)}.wsr-bi #trace-parent-arrow path{fill:var(--border-strong)}.wsr-bi #trace-link-arrow path{fill:var(--status-warning)}.wsr-bi .trace-tree-node{cursor:pointer;outline:none}.wsr-bi .trace-tree-card{fill:var(--surface-raised);stroke:var(--border-strong);stroke-width:1.2px}.wsr-bi .trace-tree-node.is-selected .trace-tree-card{stroke:var(--data-series-1);stroke-width:2px;filter:drop-shadow(0 0 5px color-mix(in srgb, var(--data-series-1) 45%, transparent))}.wsr-bi .trace-tree-node.trace-status-error .trace-tree-card{stroke:var(--status-error)}.wsr-bi .trace-tree-kind-rail,.wsr-bi .trace-tree-micro{fill:var(--data-series-1)}.wsr-bi .trace-tree-node.trace-kind-client .trace-tree-kind-rail,.wsr-bi .trace-tree-node.trace-kind-client .trace-tree-micro{fill:var(--data-series-2)}.wsr-bi .trace-tree-kind,.wsr-bi .trace-tree-meta,.wsr-bi .trace-tree-status,.wsr-bi .trace-tree-duration{fill:var(--content-secondary);font:var(--type-caption-size) var(--type-code-family)}.wsr-bi .trace-tree-name{fill:var(--content-primary);font-size:var(--type-label-size);font-weight:650}.wsr-bi .trace-tree-micro-bg{fill:var(--border-default)}.wsr-bi .trace-camera-map{width:8.5rem;min-height:5.25rem;padding:var(--space-tight);border:1px solid var(--border-strong);border-radius:var(--shape-control);background:color-mix(in srgb, var(--surface-base) 90%, transparent);position:absolute;inset-block-end:var(--space-grid);inset-inline-end:var(--space-grid)}.wsr-bi .trace-camera-map>strong{color:var(--content-secondary);font-size:var(--type-caption-size);text-transform:uppercase}.wsr-bi .trace-camera-map>div{gap:var(--space-tight);flex-wrap:wrap;margin-block-start:var(--space-tight);display:flex}.wsr-bi .trace-camera-map i{background:var(--data-series-2);border-radius:2px;width:.85rem;height:.45rem}.wsr-bi .trace-tree-outline{clip-path:inset(50%);white-space:nowrap;width:1px;height:1px;position:absolute;overflow:hidden}.wsr-bi .trace-tree-outline>div>button{justify-content:space-between;width:100%;display:flex}.wsr-bi .trace-statistics dl{gap:var(--space-grid);grid-template-columns:repeat(4,minmax(0,1fr));margin:0;display:grid}.wsr-bi .trace-statistics dl>div{min-width:0}.wsr-bi .trace-statistics dt{color:var(--content-secondary)}.wsr-bi .trace-statistics dd{margin:var(--space-grid) 0 0;font-size:var(--type-value-size)}@media (width<=64rem){.wsr-bi .trace-workbench{grid-template-columns:1fr}.wsr-bi .span-passport{display:none}.wsr-bi .trace-summary-dense{grid-template-columns:minmax(12rem,1fr) repeat(2,auto)}.wsr-bi .trace-summary-dense>span:nth-last-child(-n+2){display:none}}@media (width<=40rem){.wsr-bi .trace-summary-dense,.wsr-bi .trace-motion,.wsr-bi .trace-statistics dl{grid-template-columns:1fr}.wsr-bi .trace-minimap,.wsr-bi .trace-waterfall-canvas,.wsr-bi .trace-tree-canvas{display:none}.wsr-bi .trace-tree-outline{clip-path:none;white-space:normal;width:auto;height:auto;position:static;overflow:visible}.wsr-bi .trace-tree-outline>div{min-width:0;min-height:var(--density-row);border-block-end:1px solid var(--border-default)}.wsr-bi .trace-tree-graph,.wsr-bi .trace-tree-canvas-shell,.wsr-bi .trace-tree-outline,.wsr-bi .trace-tree-outline>div>button,.wsr-bi .trace-tree-outline>div>button>span{min-width:0;max-width:100%}.wsr-bi .trace-tree-outline>div>button>span{overflow-wrap:anywhere}.wsr-bi .trace-view-tools input{order:2;width:100%;margin:0}}.wsr-bi .trace-view{gap:.75rem}.wsr-bi .trace-view button,.wsr-bi .trace-view input[type=search]{border:1px solid var(--border-strong);border-radius:var(--shape-control);background:var(--surface-raised);min-height:2rem;color:var(--content-primary);font:inherit;font-size:var(--type-label-size);padding:0 .7rem}.wsr-bi .trace-view button{cursor:pointer}.wsr-bi .trace-view button[aria-pressed=true]{border-color:var(--interaction-accent);background:var(--interaction-selection)}.wsr-bi .trace-summary-dense{padding:.75rem .9rem}.wsr-bi .trace-summary-dense>div>strong{font-size:var(--type-heading-size);margin-block-start:.2rem;display:block}.wsr-bi .trace-node-label{padding-block:.35rem}.wsr-bi .trace-workbench{grid-template-columns:minmax(0,1fr) minmax(17rem,18.75rem);gap:.75rem}.wsr-bi .trace-timeline-head{grid-template-columns:minmax(16rem,19rem) minmax(25rem,1fr);display:grid}.wsr-bi .trace-timeline-head>:last-child{text-align:end;padding-inline-start:var(--space-grid)}.wsr-bi .trace-focus-receipt{margin-block:var(--space-grid);border-inline-start:3px solid var(--data-series-2);border-radius:var(--shape-control);background:color-mix(in srgb, var(--data-series-2) 14%, var(--surface-panel));color:var(--content-secondary);font-size:var(--type-caption-size);padding:.65rem}.wsr-bi .trace-passport-actions,.wsr-bi .trace-tree-toolbar{gap:var(--space-tight);flex-wrap:wrap;display:flex}.wsr-bi .trace-waterfall-mobile{border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);overflow:hidden}.wsr-bi .trace-waterfall-mobile>header{border-block-end:1px solid var(--border-default);font-size:var(--type-label-size);text-transform:uppercase;padding:.65rem .75rem;font-weight:700}.wsr-bi .trace-waterfall-mobile [role=treeitem]{border-block-end:1px solid var(--border-default);min-width:0}.wsr-bi .trace-waterfall-mobile [role=treeitem]>button{text-align:start;background:0 0;border:0;border-radius:0;grid-template-columns:minmax(0,1fr) auto;width:100%;min-height:3rem;display:grid}.wsr-bi .trace-tree-context{gap:var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);grid-template-columns:minmax(0,1fr) auto;align-items:center;padding:.7rem .85rem;display:grid}.wsr-bi .trace-tree-context strong,.wsr-bi .trace-tree-context code{display:block}.wsr-bi .trace-tree-context strong{font-size:var(--type-heading-size)}.wsr-bi .trace-tree-context code{color:var(--content-secondary);font:var(--type-caption-size) var(--type-code-family);text-overflow:ellipsis;white-space:nowrap;margin-block-start:.3rem;overflow:hidden}.wsr-bi .trace-depth-label{z-index:1;color:var(--content-muted);letter-spacing:.08em;text-transform:uppercase;font-size:.65rem;font-weight:700;position:absolute;inset-block-start:.8rem}.wsr-bi .trace-depth-0{inset-inline-start:5%}.wsr-bi .trace-depth-1{inset-inline-start:37%}.wsr-bi .trace-depth-2{inset-inline-start:70%}.wsr-bi .trace-depth-divider{z-index:0;border-inline-start:1px dashed var(--border-default);position:absolute;inset-block:2.1rem 1.25rem}.wsr-bi .trace-depth-divider-1{inset-inline-start:32%}.wsr-bi .trace-depth-divider-2{inset-inline-start:65%}.wsr-bi .trace-tree-edge.is-muted,.wsr-bi .trace-tree-node.is-lens-muted{opacity:.16}.wsr-bi .trace-tree-edge.is-focused{stroke:var(--data-series-2);filter:drop-shadow(0 0 4px color-mix(in srgb, var(--data-series-2) 50%, transparent))}.wsr-bi .trace-tree-node.is-time-current .trace-tree-card{filter:brightness(1.3) drop-shadow(0 0 5px color-mix(in srgb, var(--data-series-1) 45%, transparent))}.wsr-bi .trace-statistics-intro{border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);padding:.8rem .9rem}.wsr-bi .trace-statistics-intro h2,.wsr-bi .trace-statistics-intro p,.wsr-bi .trace-statistics-grid h3{margin:0}.wsr-bi .trace-statistics-intro h2{font-size:var(--type-heading-size);margin-block-start:.2rem}.wsr-bi .trace-statistics-intro p{color:var(--content-secondary);font-size:var(--type-caption-size);margin-block-start:.3rem}.wsr-bi .trace-statistics-grid{gap:var(--space-grid);grid-template-columns:repeat(2,minmax(0,1fr));display:grid}.wsr-bi .trace-duration-distribution{grid-column:1/-1}.wsr-bi .trace-stat-row,.wsr-bi .trace-duration-row{gap:var(--space-tight);grid-template-columns:minmax(0,1fr) auto;align-items:center;display:grid}.wsr-bi .trace-stat-row i,.wsr-bi .trace-duration-row i{background:var(--data-series-1);border-radius:99px;grid-column:1/-1;height:.35rem;display:block}.wsr-bi .trace-duration-row{grid-template-columns:minmax(9rem,.35fr) minmax(8rem,1fr) auto}.wsr-bi .trace-duration-row i{grid-column:auto}@media (width<=64rem){.wsr-bi .trace-workbench{grid-template-columns:1fr}}@media (width<=40rem){.wsr-bi,.wsr-bi .trace-view,.wsr-bi .trace-view>*{inline-size:100%;min-inline-size:0;max-inline-size:100%}.wsr-bi .trace-view,.wsr-bi .trace-motion-copy{overflow:hidden}.wsr-bi .trace-motion-copy span{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.wsr-bi .trace-tree-context{grid-template-columns:1fr}.wsr-bi .trace-timeline-head{min-height:auto;padding:.65rem .75rem;display:flex}.wsr-bi .trace-timeline-head>:last-child{display:none}.wsr-bi .trace-tree-outline>div>button{gap:var(--space-tight);background:0 0;border:0;border-radius:0;grid-template-columns:minmax(0,1fr) auto;min-height:3rem;display:grid}.wsr-bi .trace-statistics-grid{grid-template-columns:1fr}.wsr-bi .trace-duration-distribution{grid-column:auto}.wsr-bi .trace-duration-row{grid-template-columns:minmax(0,1fr) auto}.wsr-bi .trace-duration-row i{grid-column:1/-1}}.wsr-bi .trace-summary-dense{grid-template-columns:minmax(16rem,1fr) auto;padding:.75rem .9rem}.wsr-bi .trace-summary-identity{gap:.18rem;min-width:0;display:grid}.wsr-bi .trace-summary-identity>strong{font-size:var(--type-heading-size)}.wsr-bi .trace-summary-identity>code{color:var(--content-muted);font:var(--type-caption-size) var(--type-code-family);text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.wsr-bi .trace-summary-metrics{justify-content:flex-end;align-items:center;gap:clamp(1rem,2.4vw,2.25rem);display:flex}.wsr-bi .trace-summary-stat{gap:.2rem;min-width:4rem;display:grid}.wsr-bi .trace-summary-stat small{color:var(--content-muted);font-size:var(--type-caption-size)}.wsr-bi .trace-summary-stat strong{color:var(--content-primary);font:650 var(--type-heading-size) var(--type-code-family)}.wsr-bi .trace-summary-stat>.wsr-typography{font-size:var(--type-heading-size)}.wsr-bi .trace-summary-stat[data-tone=error] strong{color:var(--status-error)}.wsr-bi .trace-summary-stat[data-tone=success] strong{color:var(--status-available)}.wsr-bi .trace-minimap{grid-template-columns:minmax(16rem,19rem) minmax(25rem,1fr);align-items:stretch;gap:0;min-height:3.25rem;padding:0}.wsr-bi .trace-minimap-copy{align-content:center;gap:.15rem;padding-inline:.85rem;display:grid}.wsr-bi .trace-minimap-copy>strong{font-size:var(--type-label-size)}.wsr-bi .trace-minimap-copy>small{color:var(--content-muted);font-size:var(--type-caption-size)}.wsr-bi .trace-minimap-track{background:var(--surface-inset);cursor:crosshair;touch-action:none;border:0;border-radius:0;min-height:3.25rem;overflow:hidden}.wsr-bi .trace-minimap-track .trace-minimap-span{z-index:1;height:.22rem}.wsr-bi .trace-minimap-window{z-index:2;border-block:1px solid color-mix(in srgb, var(--interaction-accent) 65%, transparent);background:color-mix(in srgb, var(--interaction-accent) 8%, transparent);pointer-events:none;min-width:2px;position:absolute;inset-block:.25rem}.wsr-bi .trace-minimap-window:before,.wsr-bi .trace-minimap-window:after{background:var(--interaction-accent);content:"";border-radius:99px;width:2px;position:absolute;inset-block:28%}.wsr-bi .trace-minimap-window:before{inset-inline-start:2px}.wsr-bi .trace-minimap-window:after{inset-inline-end:2px}.wsr-bi .trace-minimap-window[data-full=true]{background:0 0;border:0}.wsr-bi .trace-minimap-window[data-full=true]:before,.wsr-bi .trace-minimap-window[data-full=true]:after{display:none}.wsr-bi .trace-waterfall-toolbar{align-items:center;gap:var(--space-grid);border-block-end:1px solid var(--border-default);grid-template-columns:minmax(7rem,1fr) minmax(15rem,21rem) minmax(7rem,1fr);min-height:3rem;padding:.45rem .75rem;display:grid}.wsr-bi .trace-waterfall-heading,.wsr-bi .trace-waterfall-actions{align-items:center;gap:var(--space-tight);display:flex}.wsr-bi .trace-waterfall-actions{justify-self:end}.wsr-bi .trace-waterfall-heading>strong{font-size:var(--type-label-size);margin-inline-end:.4rem}.wsr-bi .trace-waterfall-actions button{min-height:1.65rem}.wsr-bi .trace-waterfall-toolbar input{width:100%;min-height:2rem}.wsr-bi .trace-timeline-head{min-height:2.2rem;padding:0}.wsr-bi .trace-timeline-head>:first-child{padding-inline:.85rem}.wsr-bi .trace-timeline-head>.trace-ruler{height:100%;padding:0;position:relative}.wsr-bi .trace-ruler>i{color:var(--content-muted);font:normal var(--type-caption-size) var(--type-code-family);text-transform:none;white-space:nowrap;position:absolute;inset-block-start:50%;transform:translate(-50%,-50%)}.wsr-bi .trace-ruler>i:first-child{transform:translateY(-50%)}.wsr-bi .trace-ruler>i:last-child{transform:translate(-100%,-50%)}.wsr-bi .trace-node-label{grid-template-columns:auto 1.25rem minmax(0,1fr) auto;align-items:stretch;gap:.3rem;min-width:0;padding:0 .65rem 0 0;display:grid}.wsr-bi .trace-indent-spacer{width:calc(var(--trace-indent-columns) * (.65rem + 1px));align-self:stretch}.wsr-bi .trace-indent-segment{z-index:3;width:.65rem;border-inline-start:2px solid var(--wsr-trace-indent-0,var(--content-muted));background:color-mix(in srgb, var(--wsr-trace-indent-0,var(--content-muted)) 12%, transparent);pointer-events:none;grid-column:1;place-self:stretch start;margin-inline-start:calc(var(--trace-indent-column) * (.65rem + 1px))}.wsr-bi .trace-indent-segment[data-guide-depth="1"]{border-color:var(--wsr-trace-indent-1,var(--status-available));background:color-mix(in srgb, var(--wsr-trace-indent-1,var(--status-available)) 12%, transparent)}.wsr-bi .trace-indent-segment[data-guide-depth="2"]{border-color:var(--wsr-trace-indent-2,var(--status-warning));background:color-mix(in srgb, var(--wsr-trace-indent-2,var(--status-warning)) 12%, transparent)}.wsr-bi .trace-indent-segment[data-guide-depth="3"]{border-color:var(--wsr-trace-indent-3,var(--status-error));background:color-mix(in srgb, var(--wsr-trace-indent-3,var(--status-error)) 12%, transparent)}.wsr-bi .trace-collapse-control,.wsr-bi .trace-collapse-placeholder{align-self:center;width:1.25rem;height:1.25rem}.wsr-bi .trace-view .trace-collapse-control{min-height:0;color:var(--content-secondary);background:0 0;border:0;place-items:center;padding:0;font-size:1rem;display:grid}.wsr-bi .trace-view .trace-node-main{text-align:start;background:0 0;border:0;border-radius:0;align-content:center;gap:.15rem;min-width:0;min-height:0;padding:0;display:grid}.wsr-bi .trace-node-title-line{align-items:center;gap:.4rem;min-width:0;display:flex}.wsr-bi .trace-node-title-line>strong{font-size:var(--type-label-size);text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.wsr-bi .trace-node-main>small{color:var(--content-muted);font:var(--type-caption-size) var(--type-code-family);text-overflow:ellipsis;white-space:nowrap;padding-inline-start:0;overflow:hidden}.wsr-bi .trace-waterfall-row{border-block-end:0}.wsr-bi .trace-waterfall-row:nth-child(2n){background:color-mix(in srgb, var(--surface-raised) 42%, var(--surface-panel))}.wsr-bi .trace-waterfall-row.is-selected{background:var(--interaction-selection)}.wsr-bi .trace-waterfall-row .trace-timeline-track{background-color:#0000;background-image:none;border:0;border-radius:0}.wsr-bi .trace-timeline{grid-auto-rows:minmax(3rem,auto);gap:0;display:grid;position:relative}.wsr-bi .trace-timeline-grid{z-index:1;border-inline-start:1px solid var(--border-strong);border-inline-end:1px solid var(--border-strong);background-image:linear-gradient(90deg, var(--border-strong) 0 1px, transparent 1px);opacity:.72;pointer-events:none;background-repeat:repeat-x;background-size:25% 100%;position:absolute;inset-block:0;inset-inline:19rem 0}.wsr-bi .trace-timeline-bar{z-index:2}.wsr-bi .trace-node-label>.numeric-exact,.wsr-bi .trace-node-label>.trace-error{font-size:var(--type-caption-size);align-self:center}@media (width<=64rem){.wsr-bi .trace-summary-dense{grid-template-columns:1fr}.wsr-bi .trace-summary-metrics{justify-content:flex-start}}@media (width<=40rem){.wsr-bi .trace-summary-metrics{grid-template-columns:repeat(2,minmax(0,1fr));display:grid}.wsr-bi .trace-minimap{display:none}.wsr-bi .trace-waterfall-toolbar{grid-template-columns:1fr}.wsr-bi .trace-waterfall-actions{justify-self:start}}@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-leading:initial;--tw-font-weight:initial;--tw-tracking:initial;--tw-border-style:solid}}}.wsr-bi .wsr-typography{color:var(--content-primary);margin:0}.wsr-bi .wsr-typography[data-variant=pageTitle]{font-size:var(--wsr-type-page-title,1.125rem);--tw-leading:var(--leading-tight,1.25);line-height:var(--leading-tight,1.25);--tw-font-weight:var(--font-weight-semibold,600);font-weight:var(--font-weight-semibold,600)}.wsr-bi .wsr-typography[data-variant=sectionTitle]{font-size:var(--type-heading-size);--tw-leading:var(--leading-snug,1.375);line-height:var(--leading-snug,1.375);--tw-font-weight:var(--font-weight-semibold,600);font-weight:var(--font-weight-semibold,600)}.wsr-bi .wsr-typography[data-variant=body]{font-size:var(--type-body-size);--tw-leading:var(--leading-relaxed,1.625);line-height:var(--leading-relaxed,1.625)}.wsr-bi .wsr-typography[data-variant=label]{font-size:var(--type-label-size);--tw-leading:var(--leading-snug,1.375);line-height:var(--leading-snug,1.375);--tw-font-weight:var(--font-weight-bold,700);font-weight:var(--font-weight-bold,700)}.wsr-bi .wsr-typography[data-variant=caption]{font-size:var(--type-caption-size);color:var(--content-secondary)}.wsr-bi .wsr-typography[data-variant=eyebrow]{font-size:var(--wsr-type-micro,.5rem);--tw-font-weight:var(--font-weight-bold,700);font-weight:var(--font-weight-bold,700);--tw-tracking:var(--tracking-widest,.1em);letter-spacing:var(--tracking-widest,.1em);color:var(--content-secondary);text-transform:uppercase}.wsr-bi .wsr-typography[data-variant=code]{font-family:var(--font-mono,ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);font-size:var(--type-code-size);color:var(--content-secondary)}.wsr-bi .wsr-typography[data-variant=value]{font-family:var(--font-mono,ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);font-size:var(--type-value-size);--tw-leading:var(--leading-tight,1.25);line-height:var(--leading-tight,1.25);--tw-font-weight:var(--font-weight-semibold,600);font-weight:var(--font-weight-semibold,600);color:var(--content-primary)}.wsr-bi .wsr-button{min-height:calc(var(--spacing,.25rem) * 8);justify-content:center;align-items:center;gap:calc(var(--spacing,.25rem) * 1.5);border-radius:var(--shape-control);border-style:var(--tw-border-style);padding-inline:calc(var(--spacing,.25rem) * 2.5);padding-block:calc(var(--spacing,.25rem) * 1.5);font-size:var(--type-label-size);color:var(--content-primary);border-width:1px;display:inline-flex}.wsr-bi .wsr-button[data-appearance=outline]{border-color:var(--border-strong);background-color:var(--surface-raised)}.wsr-bi .wsr-button[data-appearance=ghost]{color:var(--content-secondary);background-color:#0000;border-color:#0000}.wsr-bi .wsr-button[data-appearance=solid][data-tone=primary]{border-color:var(--interaction-accent);background-color:var(--interaction-selection)}.wsr-bi .wsr-button[data-appearance=solid][data-tone=danger]{border-color:var(--status-error);background-color:var(--status-error-surface);color:var(--status-error)}.wsr-bi .wsr-button[data-appearance=segment]{min-height:calc(var(--spacing,.25rem) * 7);background-color:#0000;border-color:#0000}.wsr-bi .wsr-button[data-appearance=segment][aria-pressed=true]{border-color:var(--interaction-accent);background-color:var(--interaction-selection)}.wsr-bi .wsr-button:disabled{cursor:not-allowed;opacity:.5}.wsr-bi .wsr-button[data-icon-button=true]{min-height:calc(var(--spacing,.25rem) * 7);width:calc(var(--spacing,.25rem) * 7);min-width:calc(var(--spacing,.25rem) * 7);padding:0}.wsr-bi .wsr-button[data-icon-button=true] svg{height:calc(var(--spacing,.25rem) * 3.5);width:calc(var(--spacing,.25rem) * 3.5);fill:none;stroke:currentColor;stroke-width:1.35px;stroke-linecap:round;stroke-linejoin:round}.wsr-bi .wsr-button-group{align-items:center;gap:calc(var(--spacing,.25rem) * 1.5);flex-wrap:wrap;display:flex}.wsr-bi .wsr-button-group[data-segmented]{gap:var(--spacing,.25rem);border-radius:var(--shape-control);border-style:var(--tw-border-style);border-width:1px;border-color:var(--border-default);background-color:var(--surface-inset);padding:calc(var(--spacing,.25rem) * .5)}.wsr-bi .wsr-surface{border-radius:var(--shape-panel);border-style:var(--tw-border-style);border-width:1px;border-color:var(--border-default);background-color:var(--surface-section);min-width:0}.wsr-bi .wsr-surface[data-level=panel]{background-color:var(--surface-panel)}.wsr-bi .wsr-surface[data-level=inset]{border-radius:var(--shape-control);background-color:var(--surface-inset)}.wsr-bi .wsr-surface[data-level=raised]{background-color:var(--surface-raised)}.wsr-bi .wsr-surface[data-border=dashed]{--tw-border-style:dashed;border-style:dashed}.wsr-bi .wsr-surface[data-border=none]{border-style:var(--tw-border-style);border-width:0}.wsr-bi .wsr-divider{border-style:var(--tw-border-style);background-color:var(--border-default);border-width:0;width:100%;height:1px;margin:0}.wsr-bi .wsr-input{min-height:calc(var(--spacing,.25rem) * 8);border-radius:var(--shape-control);border-style:var(--tw-border-style);border-width:1px;border-color:var(--border-strong);background-color:var(--surface-inset);min-width:0;padding-inline:calc(var(--spacing,.25rem) * 2.5);font-size:var(--type-label-size);color:var(--content-primary);--tw-outline-style:none;outline-style:none}.wsr-bi .wsr-input:focus{border-color:var(--interaction-accent)}.wsr-bi .wsr-status-badge{padding-inline:calc(var(--spacing,.25rem) * 2);padding-block:calc(var(--spacing,.25rem) * .5);font-size:var(--wsr-type-micro,.5rem);--tw-font-weight:var(--font-weight-bold,700);font-weight:var(--font-weight-bold,700);text-transform:uppercase;border-radius:2147483647px;align-items:center;display:inline-flex}.wsr-bi .wsr-status-badge[data-status=available],.wsr-bi .wsr-status-badge[data-status=selected]{background-color:var(--interaction-selection);color:var(--interaction-accent)}.wsr-bi .wsr-status-badge[data-status=partial]{background-color:var(--status-attention-surface);color:var(--status-attention)}.wsr-bi .wsr-status-badge[data-status=unavailable]{background-color:var(--surface-raised);color:var(--content-secondary)}.wsr-bi .wsr-status-badge[data-status=error]{background-color:var(--status-error-surface);color:var(--status-error)}@property --tw-leading{syntax:"*";inherits:false}@property --tw-font-weight{syntax:"*";inherits:false}@property --tw-tracking{syntax:"*";inherits:false}@property --tw-border-style{syntax:"*";inherits:false;initial-value:solid}\n/*$vite$:1*/';
 
 // packages/studio/src/client/evaluate-model.js
 var STORAGE_KEY = "wsr.studio.location@1";
@@ -5130,13 +6135,13 @@ var incompatibleResponse = Object.freeze({
 function validTaskPage(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value) && value.contract?.name === "evidence.query" && value.contract?.revision === "1.0.0" && value.observation_profile === "2.0.0" && value.read_model_revision === "2.0.0" && typeof value.snapshot === "string" && value.snapshot !== "" && Array.isArray(value.items) && value.items.length <= 200 && value.items.every((item) => item !== null && typeof item === "object" && TASK_ID.test(item.task_id)) && (value.next_cursor === null || typeof value.next_cursor === "string");
 }
-function side(value) {
-  return value?.tag === "SIDE_RESULT" ? Array.isArray(value.metric_results) && value.receipt !== null && typeof value.receipt === "object" : value?.tag === "SIDE_ERROR" && typeof value.code === "string";
+function side(value, catalogCoordinates) {
+  return value?.tag === "SIDE_RESULT" ? Array.isArray(value.metric_results) && value.receipt !== null && typeof value.receipt === "object" && (catalogCoordinates === void 0 || value.metric_results.length === catalogCoordinates.length && value.metric_results.every((metric, index) => `${metric.metric_id}@${metric.metric_version}` === catalogCoordinates[index])) : value?.tag === "SIDE_ERROR" && typeof value.code === "string";
 }
-function validComputeResponse(value) {
+function validComputeResponse(value, catalogCoordinates) {
   if (value?.api_version !== 1) return false;
-  if (value.mode === "SINGLE") return side(value.result) && value.result.tag === "SIDE_RESULT";
-  return value.mode === "COMPARE" && ["FULL_COMPARE", "PARTIAL_COMPARE"].includes(value.status) && side(value.left) && side(value.right) && Array.isArray(value.deltas);
+  if (value.mode === "SINGLE") return side(value.result, catalogCoordinates) && value.result.tag === "SIDE_RESULT";
+  return value.mode === "COMPARE" && ["FULL_COMPARE", "PARTIAL_COMPARE"].includes(value.status) && side(value.left, catalogCoordinates) && side(value.right, catalogCoordinates) && Array.isArray(value.deltas);
 }
 function initialRoute(storage, context) {
   const saved = storage?.getItem(STORAGE_KEY);
@@ -5146,13 +6151,14 @@ function initialRoute(storage, context) {
   }
   return context?.taskId !== void 0 && TASK_ID.test(context.taskId) ? { page: "results", selection: { mode: "single", taskIds: [context.taskId] } } : { page: "select" };
 }
-function createEvaluateController({ gateway, storage, initialContext } = {}) {
+function createEvaluateController({ gateway, storage, initialContext, catalogCoordinates } = {}) {
   if (gateway === void 0 || typeof gateway.call !== "function") throw new Error("STUDIO_GATEWAY_REQUIRED");
   const route = initialRoute(storage, initialContext);
   let snapshot = {
     phase: "idle",
     route,
     selection: route.selection,
+    recentSelection: route.selection,
     taskList: { phase: "idle", items: [] },
     drilldown: { phase: "idle", facts: [], trace: [] },
     result: void 0,
@@ -5177,8 +6183,23 @@ function createEvaluateController({ gateway, storage, initialContext } = {}) {
     },
     setSelection(selection2) {
       bodyFor(selection2);
-      publish({ selection: selection2, route: { page: "results", selection: selection2 }, phase: "idle", error: void 0 });
+      publish({ selection: selection2, recentSelection: selection2, route: { page: "results", selection: selection2 }, phase: "idle", error: void 0 });
       storage?.setItem(STORAGE_KEY, serializeStudioLocation({ page: "results", selection: selection2 }));
+    },
+    clearSelection() {
+      const nextRoute = { page: "select" };
+      snapshot = {
+        ...snapshot,
+        phase: "idle",
+        route: nextRoute,
+        selection: void 0,
+        result: void 0,
+        error: void 0,
+        refreshing: false,
+        drilldown: { phase: "idle", facts: [], trace: [] }
+      };
+      storage?.setItem(STORAGE_KEY, serializeStudioLocation(nextRoute));
+      for (const listener of listeners) listener();
     },
     async loadTasks(cursor) {
       publish({ taskList: { ...snapshot.taskList, phase: "loading", error: void 0 } });
@@ -5205,7 +6226,7 @@ function createEvaluateController({ gateway, storage, initialContext } = {}) {
         publish({ phase: retaining ? "degraded" : "error", refreshing: false, error: answer.error });
         return;
       }
-      if (!validComputeResponse(answer.value)) {
+      if (!validComputeResponse(answer.value, catalogCoordinates)) {
         publish({ phase: retaining ? "degraded" : "error", refreshing: false, error: incompatibleResponse });
         return;
       }
@@ -5296,9 +6317,9 @@ var STUDIO_PAGES = Object.freeze([
   Object.freeze({ id: "evaluate", label: "Evaluate", routePrefix: "/evaluate" })
 ]);
 var STUDIO_TRACE_VIEWS = Object.freeze([
-  Object.freeze({ id: "waterfall", label: "Waterfall", renderer: "TraceWaterfall" }),
-  Object.freeze({ id: "tree", label: "Tree", renderer: "TraceTree" }),
-  Object.freeze({ id: "statistics", label: "Statistics", renderer: "TraceStatistics" })
+  Object.freeze({ id: "waterfall", label: "Waterfall", renderer: "TraceWaterfall", note: "Exact span timing" }),
+  Object.freeze({ id: "tree", label: "Tree", renderer: "TraceTree", note: "Deterministic geometry \xB7 depth \u2192 recorded start/end \u2192 Span ID" }),
+  Object.freeze({ id: "statistics", label: "Statistics", renderer: "TraceStatistics", note: "Exact inventory \xB7 recorded-time aggregates \xB7 no inferred causality" })
 ]);
 var ACCESSIBILITY = Object.freeze({
   routes: Object.freeze(STUDIO_PAGES.map((page) => page.label)),
@@ -5321,8 +6342,8 @@ var viewStyle = {
   overflow: "auto",
   color: "var(--dsw-alias-label-primary)",
   background: "var(--dsw-alias-bg-base)",
-  border: "1px solid var(--dsw-alias-border-l2)",
-  padding: "clamp(12px, 3vw, 32px)",
+  padding: "clamp(11px, 2vw, 24px)",
+  paddingBottom: "clamp(120px, 18vh, 180px)",
   boxSizing: "border-box"
 };
 var controlStyle = { minHeight: "44px", minWidth: "44px" };
@@ -5330,13 +6351,18 @@ var DEFAULT_LAYOUT = Object.freeze({
   schemaVersion: "wsr-dsh.studio-layout@1",
   columns: Object.freeze({ desktop: 12, tablet: 6, mobile: 1 }),
   panels: Object.freeze([
-    ["operational-latency", 3, 2, 3, 2, 1, 2],
-    ["delivery-cycle-time", 3, 2, 3, 2, 1, 2],
-    ["usage-availability", 3, 2, 3, 2, 1, 2],
-    ["cohort-eligibility", 3, 2, 3, 2, 1, 2],
+    ["operational-latency-ms", 3, 2, 3, 2, 1, 2],
+    ["delivery-cycle-time-ms", 3, 2, 3, 2, 1, 2],
+    ["operational-usage-availability", 3, 2, 3, 2, 1, 2],
+    ["task-cohort-comparison-eligibility", 3, 2, 3, 2, 1, 2],
     ["role-template-rework-rate", 6, 3, 3, 3, 1, 3],
     ["role-model-task-outcome-rate", 6, 3, 3, 3, 1, 3],
-    ["delivery-stage-reach", 12, 4, 6, 4, 1, 4]
+    ["role-template-trajectory-partial-cost", 3, 2, 3, 2, 1, 2],
+    ["trajectory-partial-cost", 3, 2, 3, 2, 1, 2],
+    ["operational-attributable-cost", 3, 2, 3, 2, 1, 2],
+    ["delivery-stage-reach", 12, 4, 6, 4, 1, 4],
+    ["delivery-terminal-outcome-rate", 12, 4, 6, 4, 1, 4],
+    ["operational-token-usage", 12, 4, 6, 4, 1, 4]
   ].map(([id2, dw, dh, tw, th, mw, mh]) => Object.freeze({
     id: id2,
     desktop: Object.freeze({ w: dw, h: dh }),
@@ -5347,7 +6373,23 @@ var DEFAULT_LAYOUT = Object.freeze({
 var DASHBOARD_STORAGE_KEY = "wsr.studio.dashboard-layout@1";
 function createStudioTheme(mode) {
   if (mode !== "light" && mode !== "dark") throw new Error("UNKNOWN_STUDIO_THEME");
-  return Object.freeze({ mode, density: "compact", containerBorderStyle: "solid" });
+  return Object.freeze({
+    mode,
+    density: "compact",
+    containerBorderStyle: "solid",
+    surfaces: Object.freeze({
+      section: "var(--dsw-alias-bg-layer-1)",
+      panel: "var(--dsw-alias-bg-layer-1)",
+      raised: "var(--dsw-alias-bg-layer-2)",
+      inset: "var(--dsw-alias-bg-base)"
+    }),
+    traceIndentGuides: Object.freeze([
+      "var(--dsw-alias-label-dimmed)",
+      "oklch(75% 0.17 145)",
+      "var(--dsw-alias-state-warning-primary)",
+      "var(--dsw-alias-state-error-primary)"
+    ])
+  });
 }
 function createStudioDashboardState(panelIds) {
   if (!Array.isArray(panelIds) || new Set(panelIds).size !== panelIds.length || !panelIds.every((id2) => typeof id2 === "string" && id2.length > 0)) {
@@ -5417,33 +6459,56 @@ function createStudioLayoutStore(storage) {
   });
 }
 var hostStyles = `
-#wsr-studio-view { --studio-surface:color-mix(in srgb,var(--dsw-alias-bg-base) 88%,var(--dsw-alias-label-primary)); --studio-raised:color-mix(in srgb,var(--dsw-alias-bg-base) 82%,var(--dsw-alias-label-primary)); }
+#wsr-studio-view { --wsr-surface-section:var(--dsw-alias-bg-layer-1); --wsr-surface-panel:var(--dsw-alias-bg-layer-1); --wsr-surface-raised:var(--dsw-alias-bg-layer-2); --wsr-surface-inset:var(--dsw-alias-bg-base); --wsr-shape-panel:10px; --wsr-shape-control:7px; --wsr-type-page-title:18px; --wsr-type-section-title:13px; --wsr-type-body:11px; --wsr-type-label:10px; --wsr-type-caption:9px; --wsr-type-code:9px; --wsr-type-micro:8px; }
 #wsr-studio-view, #wsr-studio-view > *, #wsr-studio-view .studio-page-copy { min-width:0; max-width:100%; }
-#wsr-studio-view [data-wsr-studio-region="header"] { overflow:hidden; border:1px solid var(--dsw-alias-border-l2); border-radius:10px; background:var(--studio-surface); }
+#wsr-studio-view [data-wsr-studio-region="header"] { overflow:hidden; }
 #wsr-studio-view .studio-product-row, #wsr-studio-view .studio-page-row { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; }
-#wsr-studio-view .studio-product-row { min-height:44px; border-bottom:1px solid var(--dsw-alias-border-l2); }
-#wsr-studio-view .studio-breadcrumbs, #wsr-studio-view .studio-controls, #wsr-studio-view .studio-mode { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
-#wsr-studio-view .studio-breadcrumbs { color:var(--dsw-alias-label-secondary); font-size:12px; }
-#wsr-studio-view .studio-page-copy h1 { margin:2px 0; font-size:20px; }
-#wsr-studio-view .studio-page-copy p, #wsr-studio-view .studio-selection-copy { margin:2px 0; color:var(--dsw-alias-label-secondary); font-size:12px; }
-#wsr-studio-view .studio-page-copy p { overflow-wrap:anywhere; }
-#wsr-studio-view .studio-eyebrow { display:block; color:var(--dsw-alias-label-secondary); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
-#wsr-studio-view .studio-view-link[aria-current="page"] { border-color:var(--dsw-alias-blue-l1); color:var(--dsw-alias-blue-l1); }
+#wsr-studio-view .studio-product-row { min-height:47px; padding-block:0; border-bottom:1px solid var(--dsw-alias-border-l2); }
+#wsr-studio-view .studio-breadcrumbs, #wsr-studio-view .studio-controls { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+#wsr-studio-view .studio-breadcrumbs { color:var(--dsw-alias-label-secondary); font-size:10px; }
+#wsr-studio-view .studio-page-copy h1, #wsr-studio-view .studio-page-copy p, #wsr-studio-view .studio-selection-copy { margin:2px 0; }
+#wsr-studio-view .studio-page-copy p { max-width:67ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#wsr-studio-view .studio-eyebrow { display:block; }
+#wsr-studio-view .studio-product-row .studio-controls { align-self:stretch; gap:3px; }
+#wsr-studio-view .studio-view-link { min-height:47px; padding-inline:11px; border:0; border-bottom:2px solid transparent; border-radius:0; background:transparent; color:var(--dsw-alias-label-secondary); }
+#wsr-studio-view .studio-view-link[aria-current="page"] { border-color:var(--dsw-alias-state-business-primary,#79a6ff); background:linear-gradient(transparent,color-mix(in srgb,var(--dsw-alias-state-business-primary,#79a6ff) 7%,transparent)); color:var(--dsw-alias-state-business-primary,#79a6ff); }
+#wsr-studio-view .studio-trace-view-switcher { width:fit-content; }
+#wsr-studio-view .studio-trace-view-navigation { display:flex; width:100%; min-width:0; align-items:center; justify-content:space-between; gap:12px; }
+#wsr-studio-view .studio-trace-view-note { margin-inline-start:auto; text-align:end; }
 #wsr-studio-view [data-wsr-studio-region="main"] { margin-top:12px; }
 #wsr-studio-view .studio-selection-grid { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(250px,.75fr); gap:12px; }
-#wsr-studio-view .studio-selection-card { overflow:hidden; border:1px solid var(--dsw-alias-border-l2); border-radius:10px; background:var(--studio-surface); }
+#wsr-studio-view .studio-selection-card { overflow:hidden; }
 #wsr-studio-view .studio-selection-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border-bottom:1px solid var(--dsw-alias-border-l2); }
-#wsr-studio-view .studio-task-list { display:grid; max-height:min(50vh,520px); margin:0; padding:6px 10px; overflow:auto; list-style:none; }
+#wsr-studio-view .studio-selection-filter { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; padding:8px; border-bottom:1px solid var(--dsw-alias-border-l2); }
+#wsr-studio-view .studio-selection-filter .wsr-input { width:100%; }
+#wsr-studio-view .studio-filter-options { display:flex; gap:5px; grid-column:1/-1; }
+#wsr-studio-view .studio-filter-options button[aria-pressed="true"] { border-color:var(--dsw-alias-state-business-primary,#7199e7); color:var(--dsw-alias-state-business-primary,#7199e7); }
+#wsr-studio-view .studio-task-list { display:grid; max-height:min(50vh,520px); margin:0; padding:5px 8px 9px; overflow:auto; list-style:none; }
 #wsr-studio-view .studio-task-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; min-height:52px; gap:10px; padding:8px; border-bottom:1px solid var(--dsw-alias-border-l2); }
+#wsr-studio-view .studio-task-row:last-child { border-bottom:0; }
 #wsr-studio-view .studio-task-row label { display:flex; align-items:center; gap:9px; min-width:0; }
-#wsr-studio-view .studio-task-id { display:block; color:var(--dsw-alias-label-secondary); font:11px ui-monospace,monospace; overflow-wrap:anywhere; }
+#wsr-studio-view .studio-task-row input[type="checkbox"] { width:17px; height:17px; margin:0; accent-color:var(--dsw-alias-state-business-primary,#7199e7); }
+#wsr-studio-view .studio-task-id { display:block; overflow-wrap:anywhere; }
 #wsr-studio-view .studio-selected-list { display:grid; gap:8px; padding:12px; }
 #wsr-studio-view .studio-selected-item { padding:10px; border:1px solid var(--dsw-alias-border-l2); border-radius:8px; background:var(--studio-raised); }
+#wsr-studio-view .studio-selected-item .wsr-typography { display:block; }
 #wsr-studio-view [data-wsr-dashboard-layout] { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:12px; }
 #wsr-studio-view [data-wsr-dashboard-panel] { grid-column:span var(--studio-panel-desktop-columns,3); min-width:0; }
-#wsr-studio-view [data-wsr-studio-region="footer"] { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; padding:12px 14px; border:1px dashed var(--dsw-alias-border-l2); border-radius:10px; background:var(--studio-surface); }
+#wsr-studio-view [data-wsr-studio-region="footer"] { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; padding:12px 14px; }
 @media (max-width:900px) { #wsr-studio-view [data-wsr-dashboard-layout] { grid-template-columns:repeat(6,minmax(0,1fr)); } #wsr-studio-view [data-wsr-dashboard-panel] { grid-column:span var(--studio-panel-tablet-columns,3); } }
-@media (max-width:700px) { #wsr-studio-view .studio-selection-grid { grid-template-columns:1fr; } #wsr-studio-view .studio-product-row, #wsr-studio-view .studio-page-row { align-items:flex-start; flex-direction:column; } }
+@media (max-width:700px) {
+  #wsr-studio-view .studio-selection-grid { grid-template-columns:1fr; }
+  #wsr-studio-view .studio-product-row, #wsr-studio-view .studio-page-row { align-items:flex-start; flex-direction:column; }
+  #wsr-studio-view .studio-product-row .studio-controls { width:100%; flex-wrap:nowrap; overflow:hidden; }
+  #wsr-studio-view .studio-product-row .studio-controls > button { flex:1 1 0; min-width:0; }
+  #wsr-studio-view .studio-view-link { min-height:36px; padding-inline:2px; font-size:8px; }
+  #wsr-studio-view .studio-page-row { gap:8px; padding:10px 12px; }
+  #wsr-studio-view .studio-page-copy p { overflow-wrap:anywhere; white-space:normal; }
+  #wsr-studio-view .studio-page-actions { width:100%; flex-wrap:nowrap; gap:5px; }
+  #wsr-studio-view .studio-page-actions > button { min-height:32px; padding-inline:8px; font-size:9px; }
+  #wsr-studio-view .studio-page-actions > button:nth-child(2) { display:none; }
+  #wsr-studio-view .studio-trace-view-note { display:none; }
+}
 @media (max-width:560px) { #wsr-studio-view [data-wsr-dashboard-layout] { grid-template-columns:1fr; } #wsr-studio-view [data-wsr-dashboard-panel] { grid-column:span 1 !important; } }
 `;
 function platformThemeMode(explicitMode) {
@@ -5489,14 +6554,24 @@ function factRow(fact) {
     } : {}
   };
 }
+function reduceSingleTaskSelection(_current, taskId, checked) {
+  return checked ? Object.freeze({ mode: "single", taskIds: Object.freeze([taskId]) }) : void 0;
+}
 function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicitThemeMode, layoutStorage) {
-  const Button = Primitives2.Button ?? "button";
+  const Button = Bi2.Button;
+  const ButtonGroup = Bi2.ButtonGroup;
+  const StatusBadge = Bi2.StatusBadge;
+  const Surface = Bi2.Surface;
+  const TextInput = Bi2.TextInput;
+  const Typography = Bi2.Typography;
   const DisclosureRow = Primitives2.DisclosureRow;
   const JsonTree = Primitives2.JsonTree;
   return function StudioConversationView() {
     const [technicalDetailsOpen, setTechnicalDetailsOpen] = React2.useState(false);
     const [traceView, setTraceView] = React2.useState("waterfall");
     const [taskQuery, setTaskQuery] = React2.useState("");
+    const [filtersOpen, setFiltersOpen] = React2.useState(false);
+    const [taskFilter, setTaskFilter] = React2.useState("all");
     const [editingDashboard, setEditingDashboard] = React2.useState(false);
     const snapshot = React2.useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
     const [studioPage, setStudioPage] = React2.useState(() => snapshot.result !== void 0 || ["receipt", "facts", "trace"].includes(snapshot.route.page) ? "dashboard" : "selection");
@@ -5531,13 +6606,16 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
     const theme = Bi2.createBiTheme(createStudioTheme(platformThemeMode(explicitThemeMode)));
     const json = (data, label) => JsonTree === void 0 ? React2.createElement("pre", { "aria-label": label }, JSON.stringify(data, null, 2)) : React2.createElement(JsonTree, { data, label, copyable: true, expandTopLevel: true });
     const taskItems = snapshot.taskList.items ?? [];
-    const visibleTaskItems = taskItems.filter((task) => {
-      const query = taskQuery.trim().toLocaleLowerCase();
-      return query === "" || task.task_id.toLocaleLowerCase().includes(query) || task.display_name?.toLocaleLowerCase().includes(query);
-    });
     const current = snapshot.selection?.mode === "single" ? snapshot.selection.taskIds : [];
     const before = snapshot.selection?.mode === "compare" ? snapshot.selection.leftTaskIds : [];
     const after = snapshot.selection?.mode === "compare" ? snapshot.selection.rightTaskIds : [];
+    const selectedTaskIds = /* @__PURE__ */ new Set([...current, ...before, ...after]);
+    const visibleTaskItems = taskItems.filter((task) => {
+      const query = taskQuery.trim().toLocaleLowerCase();
+      const matchesQuery = query === "" || task.task_id.toLocaleLowerCase().includes(query) || task.display_name?.toLocaleLowerCase().includes(query);
+      const matchesFilter = taskFilter === "all" || taskFilter === "selected" === selectedTaskIds.has(task.task_id);
+      return matchesQuery && matchesFilter;
+    });
     const metricPanelIds = presentation.metrics.map((metric) => metric.coordinate.slice(0, metric.coordinate.lastIndexOf("@")));
     const layoutStore = createStudioLayoutStore(layoutStorage);
     const [dashboardState, setDashboardState] = React2.useState(() => layoutStore.load(createStudioDashboardState(DEFAULT_LAYOUT.panels.map(({ id: id2 }) => id2))));
@@ -5551,8 +6629,9 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
       reduceStudioDashboardState(expandedDashboardState, action)
     );
     const setTask = (id2, checked) => {
-      const taskIds = checked ? [.../* @__PURE__ */ new Set([...current, id2])] : current.filter((value) => value !== id2);
-      if (taskIds.length > 0) controller.setSelection({ mode: "single", taskIds });
+      const selection2 = reduceSingleTaskSelection(current, id2, checked);
+      if (selection2 === void 0) controller.clearSelection();
+      else controller.setSelection(selection2);
     };
     const setComparedTask = (side2, id2, checked) => {
       const selected = side2 === "left" ? before : after;
@@ -5578,7 +6657,18 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
       }
     };
     const pageIdentity = studioPage === "selection" ? { eyebrow: "New evaluation", title: "Select task population", detail: "Choose exact Task identities; display names are recognition only." } : snapshot.route.page === "trace" ? { eyebrow: "Recorded Evidence \xB7 exact identity", title: "Recorded Trace", detail: `${snapshot.route.traceId} \xB7 current evaluation \xB7 no inferred causality` } : snapshot.route.page === "facts" ? { eyebrow: "Evaluation Evidence", title: "Evidence", detail: "Exact recorded Facts and provenance for the current evaluation." } : snapshot.route.page === "receipt" ? { eyebrow: "Resolved evaluation context", title: "Evaluation receipt", detail: "Exact selection and resolved read-set identities." } : { eyebrow: `${snapshot.result?.mode === "COMPARE" ? "Compare" : "Single"} evaluation`, title: "Current evaluation", detail: "Current receipt \xB7 exact selection" };
-    return React2.createElement(
+    const traceViewDefinition = STUDIO_TRACE_VIEWS.find(({ id: id2 }) => id2 === traceView) ?? STUDIO_TRACE_VIEWS[0];
+    const traceViewNavigation = React2.createElement(
+      "nav",
+      { className: "studio-trace-view-navigation", "aria-label": "Trace renderer navigation" },
+      React2.createElement(
+        ButtonGroup,
+        { segmented: true, className: "studio-trace-view-switcher", "aria-label": "Trace renderer views" },
+        ...STUDIO_TRACE_VIEWS.map((view) => React2.createElement(Button, { appearance: "segment", key: view.id, selected: traceView === view.id, type: "button", onClick: () => setTraceView(view.id) }, view.label))
+      ),
+      React2.createElement(Typography, { as: "span", className: "studio-trace-view-note", variant: "caption" }, traceViewDefinition.note)
+    );
+    return React2.createElement(Bi2.BiSurface, { className: "studio-theme-root", theme }, React2.createElement(
       "section",
       {
         id: "wsr-studio-view",
@@ -5590,38 +6680,38 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
       React2.createElement("style", { "data-wsr-studio-host-styles": "wsr-dsh@1" }, hostStyles),
       sharedStyles === void 0 ? null : React2.createElement("style", { "data-wsr-bi-styles": "wsr-ui-core@0.1.0-rc.0" }, sharedStyles),
       React2.createElement(
-        "header",
-        { "data-wsr-studio-region": "header" },
+        Surface,
+        { as: "header", level: "section", "data-wsr-studio-region": "header" },
         React2.createElement(
           "div",
           { className: "studio-product-row" },
           React2.createElement(
             "div",
             { className: "studio-breadcrumbs" },
-            React2.createElement("strong", null, "WSR Studio"),
-            React2.createElement("span", null, "/"),
-            React2.createElement("span", null, "Evaluation"),
+            React2.createElement(Typography, { as: "strong", variant: "label" }, "WSR Studio"),
+            React2.createElement(Typography, { variant: "caption" }, "/"),
+            React2.createElement(Typography, { variant: "caption" }, "Evaluation"),
             snapshot.route.page === "trace" ? React2.createElement(
               React2.Fragment,
               null,
-              React2.createElement("span", null, "/"),
-              React2.createElement("span", null, "Trace")
+              React2.createElement(Typography, { variant: "caption" }, "/"),
+              React2.createElement(Typography, { variant: "caption" }, "Trace")
             ) : null
           ),
           React2.createElement(
             "nav",
             { className: "studio-controls", "aria-label": "Studio views" },
-            React2.createElement(Button, { className: "studio-view-link", type: "button", "aria-current": studioPage === "selection" ? "page" : void 0, onClick: () => {
+            React2.createElement(Button, { appearance: "ghost", className: "studio-view-link", type: "button", "aria-current": studioPage === "selection" ? "page" : void 0, onClick: () => {
               setSelectionRequested(true);
               setStudioPage("selection");
             } }, "Select"),
-            React2.createElement(Button, { className: "studio-view-link", type: "button", disabled: snapshot.result === void 0 && !["receipt", "facts", "trace"].includes(snapshot.route.page), "aria-current": studioPage === "dashboard" && snapshot.route.page === "results" ? "page" : void 0, onClick: () => {
+            React2.createElement(Button, { appearance: "ghost", className: "studio-view-link", type: "button", disabled: snapshot.result === void 0 && !["receipt", "facts", "trace"].includes(snapshot.route.page), "aria-current": studioPage === "dashboard" && snapshot.route.page === "results" ? "page" : void 0, onClick: () => {
               controller.backToResults();
               setSelectionRequested(false);
               setStudioPage("dashboard");
             } }, "Dashboard"),
-            React2.createElement(Button, { className: "studio-view-link", type: "button", disabled: snapshot.route.page !== "facts", "aria-current": snapshot.route.page === "facts" ? "page" : void 0 }, "Evidence"),
-            React2.createElement(Button, { className: "studio-view-link", type: "button", disabled: snapshot.route.page !== "trace", "aria-current": snapshot.route.page === "trace" ? "page" : void 0 }, "Recorded Trace")
+            React2.createElement(Button, { appearance: "ghost", className: "studio-view-link", type: "button", disabled: snapshot.route.page !== "facts", "aria-current": snapshot.route.page === "facts" ? "page" : void 0 }, "Evidence"),
+            React2.createElement(Button, { appearance: "ghost", className: "studio-view-link", type: "button", disabled: snapshot.route.page !== "trace", "aria-current": snapshot.route.page === "trace" ? "page" : void 0 }, "Recorded Trace")
           )
         ),
         React2.createElement(
@@ -5630,18 +6720,19 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
           React2.createElement(
             "div",
             { className: "studio-page-copy" },
-            React2.createElement("span", { className: "studio-eyebrow" }, pageIdentity.eyebrow),
-            React2.createElement("h1", { id: "wsr-studio-title" }, pageIdentity.title),
-            React2.createElement("p", null, pageIdentity.detail)
+            React2.createElement(Typography, { as: "span", className: "studio-eyebrow", variant: "eyebrow" }, pageIdentity.eyebrow),
+            React2.createElement(Typography, { as: "h1", id: "wsr-studio-title", variant: "pageTitle" }, pageIdentity.title),
+            React2.createElement(Typography, { as: "p", variant: snapshot.route.page === "trace" ? "code" : "caption" }, pageIdentity.detail)
           ),
           React2.createElement(
-            "div",
-            { className: "studio-controls", "aria-label": "Page actions" },
+            ButtonGroup,
+            { className: "studio-controls studio-page-actions", "aria-label": "Page actions" },
             studioPage === "selection" ? React2.createElement(
               React2.Fragment,
               null,
-              snapshot.taskList.phase === "idle" ? React2.createElement(Button, { type: "button", onClick: () => controller.loadTasks() }, "Load Tasks") : null,
-              React2.createElement(Button, { type: "button", disabled: snapshot.selection === void 0, onClick: evaluateSelection }, "Evaluate selection")
+              React2.createElement(Button, { appearance: "ghost", type: "button", disabled: snapshot.recentSelection === void 0, onClick: () => controller.setSelection(snapshot.recentSelection) }, "Use recent selection"),
+              React2.createElement(Button, { appearance: "outline", type: "button", disabled: snapshot.taskList.phase === "loading", onClick: () => controller.loadTasks() }, "Load tasks"),
+              React2.createElement(Button, { appearance: "solid", tone: "primary", type: "button", disabled: snapshot.selection === void 0, onClick: evaluateSelection }, "Evaluate selection")
             ) : null,
             studioPage === "dashboard" && snapshot.route.page === "results" ? React2.createElement(
               React2.Fragment,
@@ -5653,21 +6744,30 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
                 setStudioPage("selection");
               } }, "Change evaluation")
             ) : null,
-            studioPage === "dashboard" && snapshot.route.page === "trace" ? React2.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Dashboard") : null,
+            studioPage === "dashboard" && snapshot.route.page === "trace" ? React2.createElement(
+              React2.Fragment,
+              null,
+              React2.createElement(Button, { appearance: "outline", type: "button", onClick: () => controller.backToResults() }, "Back to Dashboard"),
+              presentation.metrics[0] === void 0 ? null : React2.createElement(Button, { appearance: "outline", type: "button", onClick: () => {
+                controller.openFacts(presentation.metrics[0].coordinate);
+                void controller.loadMetricFacts(presentation.metrics[0].coordinate);
+              } }, "Open Evidence"),
+              React2.createElement(Button, { appearance: "solid", tone: "primary", type: "button", onClick: () => navigator.clipboard?.writeText(snapshot.route.traceId) }, "Copy trace identity")
+            ) : null,
             studioPage === "dashboard" && editingDashboard ? React2.createElement(
               React2.Fragment,
               null,
               React2.createElement(Button, { type: "button", onClick: () => setDashboardState(reduceStudioDashboardState(expandedDashboardState, { type: "RESET" })) }, "Reset layout"),
-              React2.createElement(Button, { type: "button", onClick: () => {
+              React2.createElement(Button, { appearance: "solid", tone: "primary", type: "button", onClick: () => {
                 layoutStore.save(expandedDashboardState);
                 setSavedDashboardState(expandedDashboardState);
                 setEditingDashboard(false);
               } }, "Save layout"),
-              React2.createElement(Button, { type: "button", onClick: () => {
+              React2.createElement(Button, { appearance: "ghost", type: "button", onClick: () => {
                 setDashboardState(savedDashboardState);
                 setEditingDashboard(false);
               } }, "Cancel editing")
-            ) : studioPage === "dashboard" && snapshot.route.page === "results" ? React2.createElement(Button, { type: "button", "aria-pressed": false, onClick: () => {
+            ) : studioPage === "dashboard" && snapshot.route.page === "results" ? React2.createElement(Button, { appearance: "solid", tone: "primary", type: "button", onClick: () => {
               setSavedDashboardState(expandedDashboardState);
               setEditingDashboard(true);
             } }, "Edit dashboard") : null
@@ -5701,43 +6801,39 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
             className: "studio-selection-grid"
           },
           React2.createElement(
-            "section",
-            { className: "studio-selection-card", "data-wsr-selection-browser": "task-population" },
+            Surface,
+            { as: "section", level: "section", className: "studio-selection-card", "data-wsr-selection-browser": "task-population" },
             React2.createElement(
               "header",
               { className: "studio-selection-head" },
               React2.createElement(
                 "div",
                 null,
-                React2.createElement("h2", { id: "wsr-task-selection" }, "Task population"),
-                React2.createElement("p", { className: "studio-selection-copy" }, `${taskItems.length} Tasks \xB7 exact identities retained in the receipt`)
+                React2.createElement(Typography, { as: "h2", id: "wsr-task-selection", variant: "sectionTitle" }, "Task population"),
+                React2.createElement(Typography, { as: "p", className: "studio-selection-copy", variant: "caption" }, `${taskItems.length} Tasks \xB7 exact identities retained in the receipt`)
               ),
               React2.createElement(
-                "div",
-                { className: "studio-mode", role: "radiogroup", "aria-label": "Evaluation mode" },
-                React2.createElement(
-                  "label",
-                  null,
-                  React2.createElement("input", { type: "radio", name: "wsr-evaluation-mode", value: "single", checked: snapshot.selection?.mode !== "compare", onChange: () => chooseMode("single") }),
-                  "Single"
-                ),
-                React2.createElement(
-                  "label",
-                  null,
-                  React2.createElement("input", { type: "radio", name: "wsr-evaluation-mode", value: "compare", checked: snapshot.selection?.mode === "compare", onChange: () => chooseMode("compare") }),
-                  "Compare"
-                )
+                ButtonGroup,
+                { segmented: true, className: "studio-mode", "aria-label": "Evaluation mode" },
+                React2.createElement(Button, { appearance: "segment", selected: snapshot.selection?.mode !== "compare", type: "button", onClick: () => chooseMode("single") }, "Single"),
+                React2.createElement(Button, { appearance: "segment", selected: snapshot.selection?.mode === "compare", type: "button", onClick: () => chooseMode("compare") }, "Compare")
               )
             ),
             React2.createElement(
               "div",
-              { className: "studio-selection-head" },
-              React2.createElement("input", { type: "search", "aria-label": "Search Tasks", placeholder: "Search name or exact Task ID", value: taskQuery, onChange: (event) => setTaskQuery(event.target.value) }),
-              snapshot.taskList.page?.next_cursor ? React2.createElement(Button, { type: "button", onClick: () => controller.loadTasks(snapshot.taskList.page.next_cursor) }, "Load more Tasks") : null
+              { className: "studio-selection-filter" },
+              React2.createElement(TextInput, { inputKind: "search", "aria-label": "Search Tasks", placeholder: "Search name or exact Task ID", value: taskQuery, onChange: (event) => setTaskQuery(event.target.value) }),
+              React2.createElement(Button, { type: "button", "aria-expanded": filtersOpen, onClick: () => setFiltersOpen(!filtersOpen) }, "Filters"),
+              filtersOpen ? React2.createElement(
+                "div",
+                { className: "studio-filter-options", role: "group", "aria-label": "Task filters" },
+                ...[["all", "All"], ["selected", "Selected"], ["available", "Available"]].map(([value, label]) => React2.createElement(Button, { key: value, type: "button", "aria-pressed": taskFilter === value, onClick: () => setTaskFilter(value) }, label)),
+                snapshot.taskList.page?.next_cursor ? React2.createElement(Button, { type: "button", onClick: () => controller.loadTasks(snapshot.taskList.page.next_cursor) }, "Load more tasks") : null
+              ) : null
             ),
             snapshot.taskList.phase === "error" ? React2.createElement("p", { role: "alert" }, "Task list unavailable; the current selection remains usable.") : null,
             snapshot.selection?.mode === "compare" ? React2.createElement("div", { className: "studio-task-list" }, ...[["Before", "left", before], ["After", "right", after]].flatMap(([label, side2, selected]) => [
-              React2.createElement("strong", { key: `${side2}-label` }, label),
+              React2.createElement(Typography, { as: "strong", key: `${side2}-label`, variant: "label" }, label),
               ...visibleTaskItems.map((task) => React2.createElement(
                 "div",
                 { className: "studio-task-row", "data-wsr-selection-side": side2, "data-wsr-task-id": task.task_id, key: `${side2}-${task.task_id}` },
@@ -5745,9 +6841,14 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
                   "label",
                   null,
                   React2.createElement("input", { type: "checkbox", checked: selected.includes(task.task_id), onChange: (event) => setComparedTask(side2, task.task_id, event.target.checked) }),
-                  React2.createElement("span", null, task.display_name ?? task.task_id, React2.createElement("small", { className: "studio-task-id" }, task.task_id))
+                  React2.createElement(
+                    "span",
+                    null,
+                    React2.createElement(Typography, { as: "strong", variant: "label" }, task.display_name ?? task.task_id),
+                    React2.createElement(Typography, { as: "small", className: "studio-task-id", variant: "code" }, task.task_id)
+                  )
                 ),
-                React2.createElement("span", null, selected.includes(task.task_id) ? "Selected" : "Available")
+                React2.createElement(StatusBadge, { status: selected.includes(task.task_id) ? "selected" : "available" }, selected.includes(task.task_id) ? "Selected" : "Available")
               ))
             ])) : React2.createElement("div", { className: "studio-task-list", role: "list" }, ...visibleTaskItems.map((task) => React2.createElement(
               "div",
@@ -5756,41 +6857,47 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
                 "label",
                 null,
                 React2.createElement("input", { type: "checkbox", checked: current.includes(task.task_id), onChange: (event) => setTask(task.task_id, event.target.checked) }),
-                React2.createElement("span", null, task.display_name ?? task.task_id, React2.createElement("small", { className: "studio-task-id" }, task.task_id))
+                React2.createElement(
+                  "span",
+                  null,
+                  React2.createElement(Typography, { as: "strong", variant: "label" }, task.display_name ?? task.task_id),
+                  React2.createElement(Typography, { as: "small", className: "studio-task-id", variant: "code" }, task.task_id)
+                )
               ),
-              React2.createElement("span", null, current.includes(task.task_id) ? "Selected" : "Available")
+              React2.createElement(StatusBadge, { status: current.includes(task.task_id) ? "selected" : "available" }, current.includes(task.task_id) ? "Selected" : "Available")
             ))),
             snapshot.taskList.phase === "ready" && taskItems.length === 0 ? React2.createElement("p", { role: "status" }, "No Tasks are available in Evidence.") : null
           ),
           React2.createElement(
-            "aside",
-            { className: "studio-selection-card", "aria-label": "Current selection" },
+            Surface,
+            { as: "aside", level: "section", className: "studio-selection-card", "aria-label": "Current selection" },
             React2.createElement(
               "header",
               { className: "studio-selection-head" },
               React2.createElement(
                 "div",
                 null,
-                React2.createElement("h2", null, "Current selection"),
-                React2.createElement("p", { className: "studio-selection-copy" }, snapshot.selection?.mode === "compare" ? `${before.length} Before \xB7 ${after.length} After` : `Single evaluation \xB7 ${current.length} Tasks`)
-              )
+                React2.createElement(Typography, { as: "h2", variant: "sectionTitle" }, "Current selection"),
+                React2.createElement(Typography, { as: "p", className: "studio-selection-copy", variant: "caption" }, snapshot.selection?.mode === "compare" ? `${before.length} Before \xB7 ${after.length} After` : `Single evaluation \xB7 ${current.length} ${current.length === 1 ? "Task" : "Tasks"}`)
+              ),
+              React2.createElement(Button, { appearance: "ghost", type: "button", disabled: snapshot.selection === void 0, onClick: () => controller.clearSelection() }, "Clear")
             ),
             React2.createElement(
               "div",
               { className: "studio-selected-list" },
               ...(snapshot.selection?.mode === "compare" ? [["Before", before], ["After", after]] : [["Selected", current]]).flatMap(([label, ids]) => [
-                React2.createElement("strong", { key: `${label}-heading` }, label),
+                React2.createElement(Typography, { as: "strong", key: `${label}-heading`, variant: "label" }, label),
                 ...ids.map((id2) => {
                   const task = taskItems.find((candidate) => candidate.task_id === id2);
                   return React2.createElement(
                     "div",
                     { className: "studio-selected-item", key: `${label}-${id2}` },
-                    React2.createElement("strong", null, task?.display_name ?? id2),
-                    React2.createElement("small", { className: "studio-task-id" }, id2)
+                    React2.createElement(Typography, { as: "strong", variant: "label" }, task?.display_name ?? id2),
+                    React2.createElement(Typography, { as: "small", className: "studio-task-id", variant: "code" }, id2)
                   );
                 })
               ]),
-              React2.createElement("p", { className: "studio-selection-copy" }, "Evaluation resolves a current receipt. Layout and display names do not enter evaluation identity.")
+              React2.createElement(Typography, { as: "p", className: "studio-selection-copy", variant: "caption" }, "Evaluation resolves a current receipt. Layout and display names do not enter evaluation identity.")
             )
           )
         ) : null,
@@ -5839,8 +6946,9 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
                     "section",
                     { key: side2, "aria-label": `${side2} Metric Result` },
                     snapshot.result.mode === "COMPARE" ? React2.createElement("h4", null, `${side2} side`) : null,
-                    React2.createElement(Bi2.MetricPanel, {
+                    React2.createElement(Bi2.DashboardMetricPanel, {
                       result,
+                      size: placement.desktop >= 12 ? "WIDE" : placement.desktop >= 6 ? "MEDIUM" : "SMALL",
                       onEvidence: () => controller.openFacts(metric.coordinate)
                     })
                   );
@@ -5867,20 +6975,7 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
                 })
               });
             }) : []
-          ),
-          React2.createElement(
-            "details",
-            {
-              onToggle: (event) => setTechnicalDetailsOpen(event.currentTarget.open)
-            },
-            React2.createElement("summary", null, "Technical JSON details"),
-            technicalDetailsOpen ? json(snapshot.result, "Evaluation result JSON") : null
-          ),
-          ...presentation.deltas.map((delta) => React2.createElement(
-            "p",
-            { key: `${delta.metric_coordinate}-${JSON.stringify(delta.slice_key)}` },
-            `${delta.metric_coordinate}: ${delta.state}${delta.direction === void 0 ? "" : ` \xB7 ${delta.direction}`}`
-          ))
+          )
         ),
         studioPage === "dashboard" && snapshot.route.page === "receipt" ? React2.createElement(
           "section",
@@ -5943,28 +7038,30 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
             Bi2.BiSurface,
             { theme },
             recorded.status === "INVALID" ? React2.createElement("p", { role: "alert" }, recorded.errors.join("; ")) : null,
-            React2.createElement(
-              "div",
-              { className: "studio-controls", role: "group", "aria-label": "Trace view" },
-              ...STUDIO_TRACE_VIEWS.map((view) => React2.createElement(Button, { key: view.id, type: "button", "aria-pressed": traceView === view.id, onClick: () => setTraceView(view.id) }, view.label))
-            ),
-            React2.createElement(Bi2[STUDIO_TRACE_VIEWS.find(({ id: id2 }) => id2 === traceView)?.renderer ?? "TraceWaterfall"], { trace: recorded })
+            React2.createElement(Bi2[STUDIO_TRACE_VIEWS.find(({ id: id2 }) => id2 === traceView)?.renderer ?? "TraceWaterfall"], {
+              trace: recorded,
+              viewNavigation: traceViewNavigation
+            })
           )
         ) : null
       ),
       studioPage === "dashboard" && snapshot.route.page === "results" && snapshot.result !== void 0 ? React2.createElement(
-        "footer",
-        { "data-wsr-studio-region": "footer" },
-        React2.createElement("strong", null, presentation.trace.length > 0 ? "Recorded Trace is available" : "Recorded Trace availability follows current Evidence"),
-        React2.createElement("span", null, " \xB7 exact recorded identities only; no inferred ordering")
+        Surface,
+        { as: "footer", border: "dashed", level: "raised", "data-wsr-studio-region": "footer" },
+        React2.createElement(Typography, { as: "strong", variant: "label" }, presentation.trace.length > 0 ? "Recorded Trace is available" : "Recorded Trace availability follows current Evidence"),
+        React2.createElement(Typography, { variant: "caption" }, " \xB7 exact recorded identities only; no inferred ordering")
       ) : null
-    );
+    ));
   };
 }
 function createStudioClientPlugin({ React: React2, Primitives: Primitives2 = {}, Bi: Bi2, sharedStyles, initialContext, storage, themeMode } = {}) {
   if (React2 === void 0) throw new Error("STUDIO_REACT_REQUIRED");
-  const component = (value) => typeof value === "function" || typeof value === "string";
-  if (Bi2 === void 0 || !component(Bi2.BiSurface) || !component(Bi2.MetricPanel) || !component(Bi2.CompareResultFrame) || !component(Bi2.ReceiptView) || !component(Bi2.ScopedError) || !component(Bi2.EvidenceConsoleFoundation) || !component(Bi2.TraceWaterfall) || !component(Bi2.TraceTree) || !component(Bi2.TraceStatistics) || typeof Bi2.compileTraceView !== "function" || typeof Bi2.selectDefaultVisualizer !== "function" || typeof Bi2.createBiTheme !== "function") {
+  const component = (value) => {
+    if (typeof value === "function" || typeof value === "string") return true;
+    if (value === null || typeof value !== "object") return false;
+    return value.$$typeof === Symbol.for("react.memo") || value.$$typeof === Symbol.for("react.forward_ref") || value.$$typeof === Symbol.for("react.lazy");
+  };
+  if (Bi2 === void 0 || !component(Bi2.BiSurface) || !component(Bi2.Button) || !component(Bi2.ButtonGroup) || !component(Bi2.DashboardMetricPanel) || !component(Bi2.StatusBadge) || !component(Bi2.Surface) || !component(Bi2.TextInput) || !component(Bi2.Typography) || !component(Bi2.MetricPanel) || !component(Bi2.CompareResultFrame) || !component(Bi2.ReceiptView) || !component(Bi2.ScopedError) || !component(Bi2.EvidenceConsoleFoundation) || !component(Bi2.TraceWaterfall) || !component(Bi2.TraceTree) || !component(Bi2.TraceStatistics) || typeof Bi2.compileTraceView !== "function" || typeof Bi2.selectDefaultVisualizer !== "function" || typeof Bi2.createBiTheme !== "function") {
     throw new Error("STUDIO_BI_REQUIRED");
   }
   return {
@@ -5973,6 +7070,7 @@ function createStudioClientPlugin({ React: React2, Primitives: Primitives2 = {},
     apply(ctx) {
       const resolvedStorage = storage ?? (typeof window === "undefined" ? void 0 : window.sessionStorage);
       const controller = createEvaluateController({
+        catalogCoordinates: Bi2.CATALOG_COORDINATES,
         gateway: createStudioGatewayPort(ctx),
         initialContext,
         storage: resolvedStorage
@@ -5993,18 +7091,26 @@ function createStudioClientPlugin({ React: React2, Primitives: Primitives2 = {},
 
 // packages/studio/src/client/browser-entry.js
 var Bi = Object.freeze({
-  BiSurface: u,
-  CompareResultFrame: ge,
-  EvidenceConsoleFoundation: R,
-  MetricPanel: N,
-  ReceiptView: be,
-  ScopedError: O,
-  TraceStatistics: Pe,
-  TraceTree: Ne,
-  TraceWaterfall: je,
-  compileTraceView: Le,
-  createBiTheme: p,
-  selectDefaultVisualizer: C
+  BiSurface: x,
+  Button: p,
+  ButtonGroup: h,
+  CATALOG_COORDINATES: nt,
+  CompareResultFrame: xe,
+  DashboardMetricPanel: _e,
+  EvidenceConsoleFoundation: Me,
+  MetricPanel: ve,
+  ReceiptView: De,
+  ScopedError: V,
+  StatusBadge: y,
+  Surface: g,
+  TextInput: v,
+  TraceStatistics: tt,
+  TraceTree: et,
+  TraceWaterfall: Ye,
+  Typography: f,
+  compileTraceView: st,
+  createBiTheme: w,
+  selectDefaultVisualizer: L
 });
 var plugin = createStudioClientPlugin({ React: import_react2.default, Primitives, Bi, sharedStyles: styles_default });
 var name = plugin.name;

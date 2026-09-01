@@ -10,6 +10,7 @@ import {
   createStudioTheme,
   createStudioDashboardState,
   createStudioLayoutStore,
+  reduceSingleTaskSelection,
   reduceStudioDashboardState,
   STUDIO_PAGES,
   STUDIO_TRACE_VIEWS,
@@ -30,10 +31,17 @@ function elementsOf(element) {
 }
 
 const Bi = Object.freeze({
+  Button: "wsr-button",
+  ButtonGroup: "wsr-button-group",
+  Surface: "wsr-surface",
+  TextInput: "wsr-input",
+  StatusBadge: "wsr-status-badge",
+  Typography: "wsr-typography",
   BiCard: "wsr-bi-card",
   BiSection: "wsr-bi-section",
   BiSurface: "wsr-bi-surface",
   CompareResultFrame: "wsr-compare-result",
+  DashboardMetricPanel: "wsr-dashboard-metric-panel",
   EvidenceConsoleFoundation: "wsr-evidence-console",
   MetricPanel: "wsr-metric-panel",
   ReceiptView: "wsr-receipt-view",
@@ -54,23 +62,52 @@ const Bi = Object.freeze({
   selectDefaultVisualizer: (result) => result.slices[0]?.value?.kind === "RATIO" ? "ratio-bar@1" : "numeric-card@1",
 });
 
+test("the Host accepts memoized Core components from the packaged browser bundle", () => {
+  const memoizedBi = Object.freeze({
+    ...Bi,
+    TraceTree: Object.freeze({
+      $$typeof: Symbol.for("react.memo"),
+      type: () => null,
+    }),
+  });
+
+  assert.doesNotThrow(() => createStudioClientPlugin({ React: {}, Bi: memoizedBi }));
+});
+
 test("the Host owns a versioned responsive dashboard layout and creates the platform theme", () => {
   const layout = createDefaultStudioLayout();
   assert.equal(layout.schemaVersion, "wsr-dsh.studio-layout@1");
   assert.deepEqual(layout.columns, { desktop: 12, tablet: 6, mobile: 1 });
   assert.deepEqual(layout.panels.map(({ id, desktop, tablet, mobile }) => ({ id, desktop, tablet, mobile })), [
-    { id: "operational-latency", desktop: { w: 3, h: 2 }, tablet: { w: 3, h: 2 }, mobile: { w: 1, h: 2 } },
-    { id: "delivery-cycle-time", desktop: { w: 3, h: 2 }, tablet: { w: 3, h: 2 }, mobile: { w: 1, h: 2 } },
-    { id: "usage-availability", desktop: { w: 3, h: 2 }, tablet: { w: 3, h: 2 }, mobile: { w: 1, h: 2 } },
-    { id: "cohort-eligibility", desktop: { w: 3, h: 2 }, tablet: { w: 3, h: 2 }, mobile: { w: 1, h: 2 } },
+    { id: "operational-latency-ms", desktop: { w: 3, h: 2 }, tablet: { w: 3, h: 2 }, mobile: { w: 1, h: 2 } },
+    { id: "delivery-cycle-time-ms", desktop: { w: 3, h: 2 }, tablet: { w: 3, h: 2 }, mobile: { w: 1, h: 2 } },
+    { id: "operational-usage-availability", desktop: { w: 3, h: 2 }, tablet: { w: 3, h: 2 }, mobile: { w: 1, h: 2 } },
+    { id: "task-cohort-comparison-eligibility", desktop: { w: 3, h: 2 }, tablet: { w: 3, h: 2 }, mobile: { w: 1, h: 2 } },
     { id: "role-template-rework-rate", desktop: { w: 6, h: 3 }, tablet: { w: 3, h: 3 }, mobile: { w: 1, h: 3 } },
     { id: "role-model-task-outcome-rate", desktop: { w: 6, h: 3 }, tablet: { w: 3, h: 3 }, mobile: { w: 1, h: 3 } },
+    { id: "role-template-trajectory-partial-cost", desktop: { w: 3, h: 2 }, tablet: { w: 3, h: 2 }, mobile: { w: 1, h: 2 } },
+    { id: "trajectory-partial-cost", desktop: { w: 3, h: 2 }, tablet: { w: 3, h: 2 }, mobile: { w: 1, h: 2 } },
+    { id: "operational-attributable-cost", desktop: { w: 3, h: 2 }, tablet: { w: 3, h: 2 }, mobile: { w: 1, h: 2 } },
     { id: "delivery-stage-reach", desktop: { w: 12, h: 4 }, tablet: { w: 6, h: 4 }, mobile: { w: 1, h: 4 } },
+    { id: "delivery-terminal-outcome-rate", desktop: { w: 12, h: 4 }, tablet: { w: 6, h: 4 }, mobile: { w: 1, h: 4 } },
+    { id: "operational-token-usage", desktop: { w: 12, h: 4 }, tablet: { w: 6, h: 4 }, mobile: { w: 1, h: 4 } },
   ]);
   assert.deepEqual(createStudioTheme("dark"), {
     mode: "dark",
     density: "compact",
     containerBorderStyle: "solid",
+    surfaces: {
+      section: "var(--dsw-alias-bg-layer-1)",
+      panel: "var(--dsw-alias-bg-layer-1)",
+      raised: "var(--dsw-alias-bg-layer-2)",
+      inset: "var(--dsw-alias-bg-base)",
+    },
+    traceIndentGuides: [
+      "var(--dsw-alias-label-dimmed)",
+      "oklch(75% 0.17 145)",
+      "var(--dsw-alias-state-warning-primary)",
+      "var(--dsw-alias-state-error-primary)",
+    ],
   });
 });
 
@@ -193,9 +230,9 @@ test("the Studio shell advertises one Evaluate route and complete keyboard/scree
   assert.equal(JSON.stringify(model).includes("Builder"), false);
   assert.equal(JSON.stringify(model).includes("improvement"), false);
   assert.deepEqual(STUDIO_TRACE_VIEWS, [
-    { id: "waterfall", label: "Waterfall", renderer: "TraceWaterfall" },
-    { id: "tree", label: "Tree", renderer: "TraceTree" },
-    { id: "statistics", label: "Statistics", renderer: "TraceStatistics" },
+    { id: "waterfall", label: "Waterfall", renderer: "TraceWaterfall", note: "Exact span timing" },
+    { id: "tree", label: "Tree", renderer: "TraceTree", note: "Deterministic geometry · depth → recorded start/end → Span ID" },
+    { id: "statistics", label: "Statistics", renderer: "TraceStatistics", note: "Exact inventory · recorded-time aggregates · no inferred causality" },
   ]);
 });
 
@@ -226,9 +263,17 @@ test("the native Studio tab exposes a non-modal Evidence view without Session re
   assert.match(text, /Evaluate/);
   assert.match(text, /Single/);
   assert.match(text, /Compare/);
+  assert.match(text, /Use recent selection/);
+  assert.match(text, /Load tasks/);
+  assert.match(text, /Evaluate selection/);
+  assert.match(text, /Filters/);
+  assert.match(text, /Clear/);
   assert.equal(inputs.some(({ props }) => props["aria-label"] === "Repository"), false);
-  assert.ok(inputs.some(({ props }) => props.type === "radio" && props.value === "single"));
-  assert.ok(inputs.some(({ props }) => props.type === "radio" && props.value === "compare"));
+  assert.equal(inputs.some(({ props }) => props.type === "radio"), false);
+  const modeButtons = elementsOf(rendered).filter((element) =>
+    ["Single", "Compare"].includes(textOf(element)) && element.props?.appearance === "segment");
+  assert.deepEqual(modeButtons.map((element) => textOf(element)), ["Single", "Compare"]);
+  assert.equal(modeButtons.every((element) => element.props.type === "button"), true);
   assert.doesNotMatch(text, /Builder|improvement/i);
   const view = elementsOf(rendered).find((element) => element.props?.["data-wsr-studio-view"] === "evaluate");
   assert.equal(view.props.role, "region");
@@ -247,13 +292,13 @@ test("the native Studio tab exposes a non-modal Evidence view without Session re
   assert.match(text, /Select.*Dashboard.*Evidence.*Recorded Trace/s);
   assert.equal(Object.hasOwn(runtime.controller.getSnapshot(), "repository"), false);
   assert.equal(Object.hasOwn(runtime.controller.getSnapshot(), "workspaceId"), false);
-  assert.ok(elements.some((element) => element.type === "dsh-button"));
+  assert.ok(elements.some((element) => element.type === "wsr-button"));
   assert.equal(view.props.onKeyDown, undefined);
   assert.equal(components.has("shell.overlay"), false);
   assert.equal(components.has("sidebar.footer.action"), false);
 });
 
-test("AVAILABLE and UNAVAILABLE results use the shared BI product surface while JSON stays opt-in", async () => {
+test("AVAILABLE and UNAVAILABLE results use focused dashboard panels without raw JSON", async () => {
   const components = new Map();
   const result = {
     api_version: 1,
@@ -297,7 +342,7 @@ test("AVAILABLE and UNAVAILABLE results use the shared BI product surface while 
 
   const rendered = components.get("conversation.view")();
   const elements = elementsOf(rendered);
-  const panels = elements.filter((element) => element.type === "wsr-metric-panel");
+  const panels = elements.filter((element) => element.type === "wsr-dashboard-metric-panel");
   assert.equal(elements.some((element) => element.type === "wsr-bi-surface"), true);
   assert.deepEqual(panels.map((panel) => panel.props.visualizer), [undefined, undefined]);
   assert.deepEqual(panels.map((panel) => panel.props.result.metric_id), [
@@ -305,11 +350,11 @@ test("AVAILABLE and UNAVAILABLE results use the shared BI product surface while 
     "workflow-resolution-rate",
   ]);
   assert.equal(elements.some((element) => element.type === "dsh-json-tree"), false);
-  assert.match(textOf(rendered), /Technical JSON details/);
+  assert.doesNotMatch(textOf(rendered), /Technical JSON details/);
   assert.equal(elements.some((element) => element.props?.["data-wsr-studio-page"] === "dashboard"), true);
   assert.equal(elements.some((element) => element.props?.["data-wsr-studio-page"] === "selection"), false);
   assert.equal(elements.some((element) => element.type === "details" && textOf(element).includes("Change evaluation")), false);
-  assert.equal(elements.some((element) => element.type === "dsh-button" && textOf(element) === "Change evaluation"), true);
+  assert.equal(elements.some((element) => element.type === "wsr-button" && textOf(element) === "Change evaluation"), true);
   assert.equal(elements.some((element) => element.type === "nav" && element.props["aria-label"] === "Studio views"), true);
   assert.match(textOf(rendered), /Dashboard/);
   assert.match(textOf(rendered), /Evidence/);
@@ -321,6 +366,18 @@ test("AVAILABLE and UNAVAILABLE results use the shared BI product surface while 
     mode: "light",
     density: "compact",
     containerBorderStyle: "solid",
+    surfaces: {
+      section: "var(--dsw-alias-bg-layer-1)",
+      panel: "var(--dsw-alias-bg-layer-1)",
+      raised: "var(--dsw-alias-bg-layer-2)",
+      inset: "var(--dsw-alias-bg-base)",
+    },
+    traceIndentGuides: [
+      "var(--dsw-alias-label-dimmed)",
+      "oklch(75% 0.17 145)",
+      "var(--dsw-alias-state-warning-primary)",
+      "var(--dsw-alias-state-error-primary)",
+    ],
   });
   assert.equal(elements.some((element) => element.props?.["data-wsr-dashboard-layout"] === "wsr-dsh.studio-layout@1"), true);
 });
@@ -402,12 +459,13 @@ test("compare, receipt, Fact and recorded Trace routes use shared BI foundations
   runtime.controller.openTrace(traceId, spanId);
   await runtime.controller.loadTrace({ trace_id: traceId, limit: 200 });
   rendered = components.get("conversation.view")();
-  assert.equal(elementsOf(rendered).some((element) => element.type === "wsr-trace-waterfall"), true);
+  const traceRenderer = elementsOf(rendered).find((element) => element.type === "wsr-trace-waterfall");
+  assert.equal(traceRenderer !== undefined, true);
   assert.equal(elementsOf(rendered).some((element) => element.type === "wsr-metric-panel"), false);
   assert.equal(elementsOf(rendered).some((element) => element.type === "wsr-compare-result"), false);
-  assert.match(textOf(rendered), /Waterfall/);
-  assert.match(textOf(rendered), /Tree/);
-  assert.match(textOf(rendered), /Statistics/);
+  assert.match(textOf(traceRenderer.props.viewNavigation), /Waterfall/);
+  assert.match(textOf(traceRenderer.props.viewNavigation), /Tree/);
+  assert.match(textOf(traceRenderer.props.viewNavigation), /Statistics/);
 });
 
 test("the browser source has no direct downstream transport, credential, or mutation escape hatch", async () => {
@@ -420,4 +478,63 @@ test("the browser source has no direct downstream transport, credential, or muta
   assert.doesNotMatch(source, /function\s+(?:visualizerFor|metricResultCompatible|traceViewModel)\b/u);
   assert.doesNotMatch(source, /projectRecordedStructure/u);
   assert.doesNotMatch(source, /\.wsr-bi\s+[.#[]/u);
+});
+
+test("the Host trace assembly preserves the frozen page-family action and segmented navigation grammar", async () => {
+  const source = await readFile(resolve(import.meta.dirname, "../src/client/studio.js"), "utf8");
+  assert.match(source, /className:\s*"studio-trace-view-switcher"/u);
+  assert.match(source, /className:\s*"studio-trace-view-navigation"/u);
+  assert.match(source, /className:\s*"studio-trace-view-note"/u);
+  assert.match(source, /"Open Evidence"/u);
+  assert.match(source, /"Copy trace identity"/u);
+  assert.match(source, /appearance:\s*"outline"[\s\S]{0,300}"Back to Dashboard"/u);
+  assert.match(source, /appearance:\s*"outline"[\s\S]{0,500}"Open Evidence"/u);
+  assert.match(source, /appearance:\s*"solid",\s*tone:\s*"primary"[\s\S]{0,300}"Copy trace identity"/u);
+  assert.match(source, /aria-label":\s*"Trace renderer views"/u);
+  assert.match(source, /\.studio-product-row \.studio-controls > button \{ flex:1 1 0; min-width:0/u);
+  assert.match(source, /\.studio-page-copy p \{[^}]*overflow-wrap:anywhere;[^}]*white-space:normal/u);
+});
+
+test("the Host theme maps Core surfaces directly to DSH semantic background aliases", async () => {
+  const source = await readFile(resolve(import.meta.dirname, "../src/client/studio.js"), "utf8");
+  assert.match(source, /--wsr-surface-section:var\(--dsw-alias-bg-layer-1\)/u);
+  assert.match(source, /--wsr-surface-panel:var\(--dsw-alias-bg-layer-1\)/u);
+  assert.match(source, /--wsr-surface-raised:var\(--dsw-alias-bg-layer-2\)/u);
+  assert.match(source, /--wsr-surface-inset:var\(--dsw-alias-bg-base\)/u);
+  assert.doesNotMatch(source, /--studio-(?:surface|raised|filter-surface):color-mix/u);
+});
+
+test("the packaged browser entry wires every Core design-system asset consumed by the Host", async () => {
+  const source = await readFile(resolve(import.meta.dirname, "../src/client/browser-entry.js"), "utf8");
+  for (const asset of ["Button", "ButtonGroup", "DashboardMetricPanel", "StatusBadge", "Surface", "TextInput", "Typography"]) {
+    assert.match(source, new RegExp(`\\b${asset}\\b`, "u"));
+  }
+});
+
+test("Dashboard uses focused business panels and does not render result JSON or duplicate delta prose", async () => {
+  const source = await readFile(resolve(import.meta.dirname, "../src/client/studio.js"), "utf8");
+  assert.match(source, /React\.createElement\(Bi\.DashboardMetricPanel/u);
+  assert.doesNotMatch(source, /Evaluation result JSON/u);
+  assert.doesNotMatch(source, /presentation\.deltas\.map\(\(delta\) => React\.createElement\("p"/u);
+});
+
+test("the Select page composes Core semantic assets and keeps only Host layout grammar", async () => {
+  const source = await readFile(resolve(import.meta.dirname, "../src/client/studio.js"), "utf8");
+  assert.match(source, /\.studio-selection-filter \{ display:grid; grid-template-columns:minmax\(0,1fr\) auto/u);
+  assert.doesNotMatch(source, /\.studio-selection-filter input \{/u);
+  assert.doesNotMatch(source, /\.studio-task-state \{/u);
+  assert.match(source, /\.studio-task-row:last-child \{ border-bottom:0; \}/u);
+  assert.match(source, /React\.createElement\(ButtonGroup, \{ segmented: true, className: "studio-mode"/u);
+  assert.match(source, /React\.createElement\(TextInput, \{[^}]*inputKind: "search"/u);
+  assert.match(source, /React\.createElement\(StatusBadge, \{ status: current\.includes\(task\.task_id\) \? "selected" : "available"/u);
+  assert.match(source, /--wsr-type-section-title:13px/u);
+  assert.match(source, /--wsr-type-caption:9px/u);
+  assert.match(source, /--wsr-shape-panel:10px/u);
+  assert.match(source, /--wsr-surface-panel:var\(--dsw-alias-bg-layer-1\)/u);
+});
+
+test("Single mode replaces the selected Task instead of accumulating a population", () => {
+  assert.deepEqual(reduceSingleTaskSelection([], "task-a", true), { mode: "single", taskIds: ["task-a"] });
+  assert.deepEqual(reduceSingleTaskSelection(["task-a"], "task-b", true), { mode: "single", taskIds: ["task-b"] });
+  assert.equal(reduceSingleTaskSelection(["task-a"], "task-a", false), undefined);
 });

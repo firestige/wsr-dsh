@@ -222,7 +222,9 @@ try {
     if (request.url?.startsWith("/v1/evidence/tasks")) { json(200, {
       contract: { name: "evidence.query", revision: "1.0.0" }, observation_profile: "2.0.0",
       read_model_revision: "2.0.0", snapshot: "qualification", items: [
-        { task_id: "task-a", display_name: "Alpha Task" }, { task_id: "task-b", display_name: "Beta Task" },
+        { task_id: "task-a", display_name: "Writer quality pass" },
+        { task_id: "task-b", display_name: "Reviewer convergence" },
+        { task_id: "task-c", display_name: "Release verification" },
       ], next_cursor: null,
     }); return; }
     if (request.url?.startsWith("/v1/evidence/facts")) { json(200, { items: [{
@@ -232,20 +234,80 @@ try {
       truth: { completeness: "FINAL", availability: "AVAILABLE", expiry: "ACTIVE", expires_at: null },
       source: { kind: "SPAN", trace_id: traceId, span_id: "b".repeat(16) }, fields: [], relationships: [],
     }] }); return; }
-    if (request.url?.startsWith("/v1/evidence/traces")) { json(200, { items: [{
-      id: "trace-node-1", kind: "NODE", trace_id: traceId, recorded_at: "2026-09-01T00:00:00Z",
-      source: { kind: "SPAN", trace_id: traceId, span_id: "b".repeat(16) },
-      truth: { completeness: "FINAL", availability: "AVAILABLE", expiry: "ACTIVE", expires_at: null },
-      node: { span_id: "b".repeat(16), span_name: "Qualification evaluate", span_kind: "INTERNAL",
-        start_time_unix_nano: "1000000000", end_time_unix_nano: "2000000000", span_status: "OK",
-        span_flags: 1, trace_state: null, fields: [] }, edge: null,
-    }] }); return; }
+    if (request.url?.startsWith("/v1/evidence/traces")) {
+      const truth = { completeness: "FINAL", availability: "AVAILABLE", expiry: "ACTIVE", expires_at: null };
+      const spans = [
+        ["b", "Qualification evaluate", "INTERNAL", "1000000000", "2000000000", "OK", []],
+        ["c", "role.writer", "CLIENT", "1080000000", "1620000000", "UNSET", [{ field: "agentops.role.id", value: "writer" }]],
+        ["d", "model.generate", "CLIENT", "1120000000", "1520000000", "OK", [{ field: "gen_ai.provider.name", value: "deepseek" }]],
+        ["e", "tool.workspace_write", "CLIENT", "1550000000", "1610000000", "OK", [{ field: "tool.name", value: "workspace_write" }]],
+        ["f", "role.reviewer", "CLIENT", "1650000000", "1950000000", "ERROR", [{ field: "agentops.role.id", value: "reviewer" }]],
+        ["1", "model.review", "CLIENT", "1680000000", "1890000000", "OK", [{ field: "gen_ai.provider.name", value: "deepseek" }]],
+        ["2", "finding.persist", "INTERNAL", "1900000000", "1930000000", "OK", [{ field: "finding.kind", value: "qualification" }]],
+      ].map(([identity, name, kind, start, end, status, fields], index) => {
+        const spanId = identity.repeat(16);
+        return {
+          id: `trace-node-${index + 1}`, kind: "NODE", trace_id: traceId,
+          recorded_at: `2026-09-01T00:00:0${index}Z`,
+          source: { kind: "SPAN", trace_id: traceId, span_id: spanId }, truth,
+          node: { span_id: spanId, span_name: name, span_kind: kind,
+            start_time_unix_nano: start, end_time_unix_nano: end, span_status: status,
+            span_flags: kind === "CLIENT" ? 257 : 1, trace_state: null, fields }, edge: null,
+        };
+      });
+      const parentPairs = [["c", "b"], ["f", "b"], ["d", "c"], ["e", "c"], ["1", "f"], ["2", "f"]];
+      const parents = parentPairs.map(([child, parent], index) => ({
+        id: `trace-parent-${index + 1}`, kind: "PARENT_EDGE", trace_id: traceId,
+        recorded_at: `2026-09-01T00:00:1${index}Z`,
+        source: { kind: "SPAN", trace_id: traceId, span_id: child.repeat(16) }, truth, node: null,
+        edge: { from: { trace_id: traceId, span_id: child.repeat(16) }, to: { trace_id: traceId, span_id: parent.repeat(16) } },
+      }));
+      const link = {
+        id: "trace-link-writer-reviewer", kind: "LINK", trace_id: traceId,
+        recorded_at: "2026-09-01T00:00:20Z",
+        source: { kind: "SPAN", trace_id: traceId, span_id: "c".repeat(16) }, truth, node: null,
+        edge: { from: { trace_id: traceId, span_id: "c".repeat(16) }, to: { trace_id: traceId, span_id: "f".repeat(16) }, flags: 1, trace_state: "qualification=linked" },
+      };
+      json(200, { items: [...spans, ...parents, link] }); return;
+    }
     if (request.url === "/api/evolution/v1/evaluations:compute") {
       let body = "";
       request.on("data", (chunk) => { body += chunk; });
       request.on("end", () => {
         if (body === "{}") { json(400, { error: { code: "INVALID_REQUEST", retryable: false } }); return; }
         const input = JSON.parse(body);
+        const available = (value, extra = {}) => ({
+          slice_key: {}, state: "AVAILABLE", value,
+          measures: {}, coverage: { numerator: "1", denominator: "1", raw_ratio: "1", state: "FULL", alert: null },
+          compatibility: {}, exclusions: [], missing_inputs: [], provenance_refs: ["digest-fact-1"], ...extra,
+        });
+        const metricResults = [
+          ["role-template-rework-rate", [available({ kind: "RATIO", value: "17/25", unit: "ratio" }, { numerator: "17", denominator: "25" })]],
+          ["role-template-trajectory-partial-cost", [available({ kind: "MONEY", value: "4.50", unit: "USD" })]],
+          ["role-model-task-outcome-rate", [available({ kind: "RATIO", value: "10/24", unit: "ratio" }, { numerator: "10", denominator: "24" })]],
+          ["operational-latency-ms", [available({ kind: "DURATION_MS", value: "842", unit: "ms" })]],
+          ["trajectory-partial-cost", [available({ kind: "MONEY", value: "7.25", unit: "USD" })]],
+          ["task-cohort-comparison-eligibility", [available({ kind: "BOOLEAN", value: true, unit: "boolean" })]],
+          ["delivery-stage-reach", ["accepted", "executed", "verified"].map((stage, index) => available(
+            { kind: "RATIO", value: `${3 - index}/3`, unit: "ratio" },
+            { slice_key: { stage }, numerator: String(3 - index), denominator: "3" },
+          ))],
+          ["delivery-terminal-outcome-rate", ["succeeded", "failed"].map((outcome, index) => available(
+            { kind: "RATIO", value: index === 0 ? "2/3" : "1/3", unit: "ratio" },
+            { slice_key: { outcome }, numerator: index === 0 ? "2" : "1", denominator: "3" },
+          ))],
+          ["delivery-cycle-time-ms", [available({ kind: "DURATION_MS", value: "27900", unit: "ms" })]],
+          ["operational-token-usage", [
+            available({ kind: "QUANTITY", value: "1240", unit: "tokens" }, { slice_key: { kind: "input" } }),
+            available({ kind: "QUANTITY", value: "380", unit: "tokens" }, { slice_key: { kind: "output" } }),
+          ]],
+          ["operational-attributable-cost", [available({ kind: "MONEY", value: "0.018", unit: "USD" })]],
+          ["operational-usage-availability", [{
+            slice_key: {}, state: "NOT_APPLICABLE", withholding_reason: "NO_APPLICABLE_POPULATION",
+            measures: {}, coverage: { numerator: "0", denominator: "0", raw_ratio: null, state: "NO_POPULATION", alert: null },
+            compatibility: {}, exclusions: [], missing_inputs: [], provenance_refs: ["digest-fact-1"],
+          }]],
+        ].map(([metric_id, slices]) => ({ metric_id, metric_version: "2.0.0", slices }));
         const side = (selection) => ({ tag: "SIDE_RESULT", receipt: {
           context_version: 1, selection, as_of: "2026-09-01T00:00:00Z", resolved_at: "2026-09-01T00:00:01Z",
           population_state: "COMPLETE", catalog: { catalog_id: "agentops.evaluation.metric-catalog", version: "2.0.0",
@@ -257,10 +319,7 @@ try {
             delivery_id: "delivery-a", manifest_digest: "sha256:manifest", accepted_digest: "sha256:accepted",
             profile_version: "2.0.0", source_identity: "qualification", recorded_at: "2026-09-01T00:00:00Z",
           }] })), input_refs: [{ kind: "FACT", identity: "fact-1", provenance_ref: "digest-fact-1" }], workflow_resolutions: [],
-        }, metric_results: [{ metric_id: "delivery-cycle-time-ms", metric_version: "2.0.0", slices: [{
-          slice_key: {}, state: "AVAILABLE", value: { kind: "DURATION_MS", value: "12", unit: "ms" },
-          measures: {}, coverage: null, compatibility: {}, exclusions: [], missing_inputs: [], provenance_refs: ["digest-fact-1"],
-        }] }] });
+        }, metric_results: metricResults });
         json(200, input.mode === "SINGLE" ? { api_version: 1, mode: "SINGLE", result: side(input.selection) } : {
           api_version: 1, mode: "COMPARE", status: "FULL_COMPARE", left: side(input.left), right: side(input.right), deltas: [],
         });
@@ -649,21 +708,114 @@ try {
     throw new Error(`HARNESS_THEME_OR_ACCESSIBILITY_FAILED: ${JSON.stringify(studio)}`);
   }
   await waitFor(async () => cdp.evaluate(`document.querySelector('[data-wsr-studio-page="selection"]') !== null && document.querySelector('[data-wsr-dashboard-layout]') === null`), "HARNESS_STUDIO_SELECTION_PAGE_FAILED");
-  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Load Tasks').click(); })()`);
-  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Alpha Task')`), "HARNESS_STUDIO_TASKS_FAILED");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Load tasks').click(); })()`);
+  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Writer quality pass')`), "HARNESS_STUDIO_TASKS_FAILED");
+  await cdp.evaluate(`(() => { const input = document.querySelector('[data-wsr-task-id="task-a"] input[type="checkbox"]'); if (!input) throw new Error('qualification task checkbox missing: task-a'); input.click(); })()`);
+  const selectContract = await cdp.evaluate(`(() => {
+    const view = document.querySelector('[data-wsr-studio-page="selection"]');
+    const studio = document.querySelector('[data-wsr-studio-view="evaluate"]');
+    const buttons = [...studio.querySelectorAll('button')];
+    const rows = [...view.querySelectorAll('[data-wsr-task-id]')];
+    const modes = buttons.filter((node) => ['Single', 'Compare'].includes(node.textContent.trim()));
+    const actions = Object.fromEntries(['Use recent selection', 'Load tasks', 'Evaluate selection', 'Filters', 'Clear'].map((label) => {
+      const button = buttons.find((node) => node.textContent.trim() === label);
+      return [label, button && { appearance: button.dataset.appearance, tone: button.dataset.tone, size: button.dataset.size }];
+    }));
+    return {
+      schemaVersion: 'wsr.studio-render@1',
+      page: view.dataset.wsrStudioPage,
+      regions: [...studio.querySelectorAll('[data-wsr-studio-region]')].map((node) => node.dataset.wsrStudioRegion),
+      actions,
+      segmented: {
+        group: view.querySelector('[data-segmented="true"]') !== null,
+        modes: modes.map((node) => ({ label: node.textContent.trim(), appearance: node.dataset.appearance, selected: node.getAttribute('aria-pressed') })),
+        radioInputs: view.querySelectorAll('input[type="radio"]').length,
+      },
+      inputKinds: [...view.querySelectorAll('[data-input-kind]')].map((node) => node.dataset.inputKind),
+      statusKinds: [...view.querySelectorAll('[data-status]')].map((node) => node.dataset.status).sort(),
+      surfaceLevels: [...view.querySelectorAll('[data-level]')].map((node) => node.dataset.level),
+      typography: [...studio.querySelectorAll('[data-variant]')].map((node) => node.dataset.variant),
+      selectionTypography: {
+        taskLabels: view.querySelectorAll('.studio-task-row [data-variant="label"]').length,
+        taskCodes: view.querySelectorAll('.studio-task-row [data-variant="code"]').length,
+        selectedHeading: [...view.querySelectorAll('[data-variant]')].find((node) => node.textContent.trim() === 'Selected')?.dataset.variant,
+        note: [...view.querySelectorAll('[data-variant]')].find((node) => node.textContent.trim().startsWith('Evaluation resolves'))?.dataset.variant,
+      },
+      rows: rows.length,
+      selected: rows.filter((row) => row.querySelector('input[type="checkbox"]')?.checked).length,
+      terminalRow: rows.at(-1)?.nextElementSibling === null,
+    };
+  })()`);
+  const expectedSelectActions = {
+    "Use recent selection": { appearance: "ghost", tone: "neutral", size: "compact" },
+    "Load tasks": { appearance: "outline", tone: "neutral", size: "compact" },
+    "Evaluate selection": { appearance: "solid", tone: "primary", size: "compact" },
+    Filters: { appearance: "outline", tone: "neutral", size: "compact" },
+    Clear: { appearance: "ghost", tone: "neutral", size: "compact" },
+  };
+  const selectActionsMatch = JSON.stringify(selectContract.actions) === JSON.stringify(expectedSelectActions);
+  const selectModesMatch = JSON.stringify(selectContract.segmented.modes) === JSON.stringify([
+    { label: "Single", appearance: "segment", selected: "true" },
+    { label: "Compare", appearance: "segment", selected: "false" },
+  ]);
+  if (selectContract.schemaVersion !== "wsr.studio-render@1" || selectContract.page !== "selection" ||
+      !selectContract.regions.includes("header") || !selectContract.regions.includes("main") || selectContract.regions.includes("footer") ||
+      !selectActionsMatch || !selectContract.segmented.group || !selectModesMatch || selectContract.segmented.radioInputs !== 0 ||
+      JSON.stringify(selectContract.inputKinds) !== JSON.stringify(["search"]) ||
+      !selectContract.statusKinds.includes("selected") || !selectContract.statusKinds.includes("available") ||
+      selectContract.surfaceLevels.filter((level) => level === "section").length < 2 ||
+      !["pageTitle", "sectionTitle", "caption", "eyebrow", "code"].every((variant) => selectContract.typography.includes(variant)) ||
+      selectContract.selectionTypography.taskLabels !== selectContract.rows || selectContract.selectionTypography.taskCodes !== selectContract.rows ||
+      selectContract.selectionTypography.selectedHeading !== "label" || selectContract.selectionTypography.note !== "caption" ||
+      selectContract.rows !== 3 || selectContract.selected !== 1 || !selectContract.terminalRow) {
+    throw new Error(`HARNESS_STUDIO_SELECTION_CONTRACT_FAILED: ${JSON.stringify(selectContract)}`);
+  }
   const studioSelectionScreenshot = await captureScreenshot(cdp, "studio-selection-dark-desktop");
-  await cdp.evaluate(`(() => { const row = document.querySelector('[data-wsr-task-id="task-a"]'); const input = row?.querySelector('input[type="checkbox"]'); if (!input) throw new Error('qualification task checkbox missing'); input.click(); })()`);
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Evaluate selection').click(); })()`);
   const dashboard = await waitFor(async () => cdp.evaluate(`(() => {
     if (document.querySelector('[data-wsr-studio-page="dashboard"]') === null || document.querySelector('[data-wsr-selection-browser]') !== null) return undefined;
     const layout = document.querySelector('[data-wsr-dashboard-layout="wsr-dsh.studio-layout@1"]');
-    const panel = layout?.querySelector('[data-wsr-dashboard-panel]');
-    if (!layout || !panel || !panel.querySelector('.metric-frame')) return undefined;
-    return { columns: getComputedStyle(layout).gridTemplateColumns.split(' ').filter(Boolean).length,
+    const panels = [...(layout?.querySelectorAll('[data-wsr-dashboard-panel]') ?? [])];
+    if (!layout || panels.length === 0 || panels.some((panel) => !panel.querySelector('[data-presentation="dashboard"]'))) return undefined;
+    const buttons = [...document.querySelectorAll('[data-wsr-studio-region="header"] button')];
+    const headerSurface = document.querySelector('[data-wsr-studio-region="header"]');
+    const firstPanelSurface = panels[0]?.querySelector('[data-presentation="dashboard"]');
+    const actions = Object.fromEntries(['View receipt', 'Default overview', 'Change evaluation', 'Edit dashboard'].map((label) => {
+      const button = buttons.find((node) => node.textContent.trim() === label);
+      return [label, button && { appearance: button.dataset.appearance, tone: button.dataset.tone, size: button.dataset.size }];
+    }));
+    return { schemaVersion: 'wsr.studio-render@1', page: 'dashboard', layoutSchema: layout.dataset.wsrDashboardLayout,
       coreTheme: layout.closest('.wsr-bi')?.getAttribute('data-theme'),
-      panelColumns: getComputedStyle(panel).getPropertyValue('--studio-panel-desktop-columns').trim() };
+      panels: panels.map((panel) => {
+        const content = panel.querySelector('[data-presentation="dashboard"]');
+        return { id: panel.dataset.wsrDashboardPanel, columns: panel.style.getPropertyValue('--studio-panel-desktop-columns').trim(),
+          size: content?.dataset.panelSize, visualizer: content?.dataset.visualizer };
+      }),
+      rawDetails: document.querySelectorAll('[data-wsr-studio-page="dashboard"] details').length,
+      surfaceRoles: {
+        section: headerSurface && getComputedStyle(headerSurface).backgroundColor,
+        panel: firstPanelSurface && getComputedStyle(firstPanelSurface).backgroundColor,
+      },
+      actions };
   })()`), "HARNESS_STUDIO_DASHBOARD_LAYOUT_FAILED");
-  if (dashboard.columns !== 12 || dashboard.panelColumns !== "3" || dashboard.coreTheme !== "dark") throw new Error(`HARNESS_STUDIO_DASHBOARD_LAYOUT_INVALID: ${JSON.stringify(dashboard)}`);
+  const expectedDashboardActions = {
+    "View receipt": { appearance: "outline", tone: "neutral", size: "compact" },
+    "Default overview": { appearance: "outline", tone: "neutral", size: "compact" },
+    "Change evaluation": { appearance: "outline", tone: "neutral", size: "compact" },
+    "Edit dashboard": { appearance: "solid", tone: "primary", size: "compact" },
+  };
+  if (dashboard.schemaVersion !== "wsr.studio-render@1" || dashboard.layoutSchema !== "wsr-dsh.studio-layout@1" ||
+      dashboard.panels.length !== 12 || dashboard.panels.some((panel) => panel.id === undefined || panel.columns === "" || panel.size === undefined || panel.visualizer === undefined) ||
+      dashboard.panels.filter((panel) => panel.size === "SMALL").length !== 7 || dashboard.panels.filter((panel) => panel.size === "MEDIUM").length !== 2 ||
+      dashboard.panels.filter((panel) => panel.size === "WIDE").length !== 3 ||
+      dashboard.panels.filter((panel) => panel.visualizer === "numeric-card@1").length !== 6 ||
+      dashboard.panels.filter((panel) => panel.visualizer === "ratio-bar@1").length !== 2 ||
+      dashboard.panels.filter((panel) => panel.visualizer === "badge@1").length !== 1 ||
+      dashboard.panels.filter((panel) => panel.visualizer === "table@1").length !== 3 || dashboard.rawDetails !== 0 || dashboard.coreTheme !== "dark" ||
+      dashboard.surfaceRoles.section === "" || dashboard.surfaceRoles.section !== dashboard.surfaceRoles.panel ||
+      JSON.stringify(dashboard.actions) !== JSON.stringify(expectedDashboardActions)) {
+    throw new Error(`HARNESS_STUDIO_DASHBOARD_LAYOUT_INVALID: ${JSON.stringify(dashboard)}`);
+  }
   const studioDashboardScreenshot = await captureScreenshot(cdp, "studio-dashboard-dark-desktop");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Edit dashboard').click(); })()`);
   await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Save layout') && document.body.innerText.includes('Cancel editing') && document.body.innerText.includes('Reset layout')`), "HARNESS_STUDIO_DASHBOARD_EDIT_FAILED");
@@ -672,13 +824,13 @@ try {
   const savedDashboard = await waitFor(async () => cdp.evaluate(`(() => {
     const panel = document.querySelector('[data-wsr-dashboard-panel]');
     const stored = sessionStorage.getItem('wsr.studio.dashboard-layout@1');
-    return panel && stored && getComputedStyle(panel).getPropertyValue('--studio-panel-desktop-columns').trim() === '6'
+    return panel && stored && panel.style.getPropertyValue('--studio-panel-desktop-columns').trim() === '6'
       ? { panelColumns: '6', persisted: JSON.parse(stored).sizes }
       : undefined;
   })()`), "HARNESS_STUDIO_DASHBOARD_SAVE_FAILED");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Change evaluation').click(); })()`);
   await waitFor(async () => cdp.evaluate(`document.querySelector('[data-wsr-studio-page="selection"]') !== null && document.querySelector('[data-wsr-dashboard-layout]') === null`), "HARNESS_STUDIO_CHANGE_EVALUATION_FAILED");
-  await cdp.evaluate(`document.querySelector('input[type="radio"][value="compare"]').click()`);
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Compare').click(); })()`);
   await cdp.evaluate(`(() => { const row = document.querySelector('[data-wsr-selection-side="right"][data-wsr-task-id="task-b"]'); const input = row?.querySelector('input'); if (!input) throw new Error('qualification compare task missing'); input.click(); })()`);
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Evaluate selection').click(); })()`);
   await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('delivery-cycle-time-ms@2.0.0') && document.body.innerText.includes('left side') && document.body.innerText.includes('right side')`), "HARNESS_STUDIO_COMPARE_METRIC_FAILED");
@@ -690,32 +842,90 @@ try {
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.includes(${JSON.stringify(traceId)})).click(); })()`);
   const waterfall = await waitFor(async () => cdp.evaluate(`(() => {
     const view = document.querySelector('[data-trace-renderer="waterfall"]');
-    return view && view.textContent.includes('recorded duration') && view.textContent.includes('Qualification evaluate')
-      && view.querySelector('[aria-label="Recorded trace minimap"]') && view.querySelector('input[type="range"]') && view.textContent.includes('Span Passport')
-      ? { motion: view.getAttribute('data-motion'), spans: view.querySelectorAll('[role="treeitem"]').length, minimap: true, passport: true }
+    const studio = document.querySelector('[data-wsr-studio-view="evaluate"]');
+    const headerButtons = [...studio.querySelectorAll('[data-wsr-studio-region="header"] button')];
+    const actions = Object.fromEntries(['Back to Dashboard', 'Open Evidence', 'Copy trace identity'].map((label) => {
+      const button = headerButtons.find((node) => node.textContent.trim() === label);
+      return [label, button && { appearance: button.dataset.appearance, tone: button.dataset.tone, size: button.dataset.size }];
+    }));
+    const rendererViews = [...studio.querySelectorAll('[aria-label="Trace renderer views"] button')].map((node) => ({
+      label: node.textContent.trim(), appearance: node.dataset.appearance, selected: node.getAttribute('aria-pressed'),
+    }));
+    const summaryLabels = [...view?.querySelectorAll('.trace-summary-stat small') ?? []].map((node) => node.textContent.trim());
+    const summaryTones = Object.fromEntries([...view?.querySelectorAll('.trace-summary-stat') ?? []].map((node) => [node.querySelector('small')?.textContent.trim(), node.dataset.tone]));
+    const rulerTicks = [...view?.querySelectorAll('.trace-ruler i') ?? []].map((node) => node.textContent.trim());
+    const minimapSlider = view?.querySelector('[role="slider"][aria-label="Trace minimap zoom window"]');
+    const rootToggle = view?.querySelector('[aria-label="Collapse Qualification evaluate descendants"]');
+    const waterfallActions = view?.querySelector('.trace-waterfall-actions');
+    return view && view.textContent.includes('Qualification evaluate')
+      && view.querySelector('[aria-label="Recorded trace minimap"]') && minimapSlider && view.querySelector('input[type="range"]') && view.textContent.includes('Span Passport')
+      ? { schemaVersion: 'wsr.studio-render@1', motion: view.getAttribute('data-motion'), spans: view.querySelectorAll('[role="treeitem"]').length,
+          minimap: true, passport: Boolean(view.querySelector('.trace-passport-head') && view.querySelector('.trace-passport-body') && view.querySelector('.trace-passport-sigil')),
+          summaryLabels, summaryTones, rulerTicks, oldToolbar: Boolean(view.querySelector('.trace-view-tools')),
+          controls: { expand: Boolean(view.querySelector('[aria-label="Expand all spans"]')), collapse: Boolean(view.querySelector('[aria-label="Collapse all spans"]')), search: Boolean(view.querySelector('[aria-label="Search recorded spans"]')), rootToggle: Boolean(rootToggle) },
+          iconActions: { count: waterfallActions?.querySelectorAll('[data-icon-button="true"]').length, grouped: waterfallActions?.getAttribute('role') === 'group', segmented: waterfallActions?.getAttribute('data-segmented') },
+          minimapValue: minimapSlider.getAttribute('aria-valuetext'),
+          navigationNote: view.querySelector('.studio-trace-view-note')?.textContent.trim(), actions, rendererViews }
       : undefined;
   })()`), "HARNESS_STUDIO_TRACE_WATERFALL_FAILED");
+  const expectedTraceActions = {
+    "Back to Dashboard": { appearance: "outline", tone: "neutral", size: "compact" },
+    "Open Evidence": { appearance: "outline", tone: "neutral", size: "compact" },
+    "Copy trace identity": { appearance: "solid", tone: "primary", size: "compact" },
+  };
+  const expectedTraceViews = [
+    { label: "Waterfall", appearance: "segment", selected: "true" },
+    { label: "Tree", appearance: "segment", selected: "false" },
+    { label: "Statistics", appearance: "segment", selected: "false" },
+  ];
+  if (waterfall.schemaVersion !== "wsr.studio-render@1" || waterfall.spans !== 7 || !waterfall.passport ||
+      JSON.stringify(waterfall.summaryLabels) !== JSON.stringify(["Duration", "Start", "Spans", "Errors"]) ||
+      waterfall.summaryTones.Errors !== "error" ||
+      waterfall.rulerTicks.some((tick) => tick.includes("%")) || waterfall.rulerTicks.length !== 5 ||
+      waterfall.oldToolbar || Object.values(waterfall.controls).some((value) => !value) ||
+      waterfall.iconActions.count !== 3 || !waterfall.iconActions.grouped || waterfall.iconActions.segmented !== null ||
+      waterfall.navigationNote !== "Exact span timing" ||
+      JSON.stringify(waterfall.actions) !== JSON.stringify(expectedTraceActions) ||
+      JSON.stringify(waterfall.rendererViews) !== JSON.stringify(expectedTraceViews)) {
+    throw new Error(`HARNESS_STUDIO_TRACE_WATERFALL_DENSITY_INVALID: ${JSON.stringify(waterfall)}`);
+  }
+  await cdp.evaluate(`document.querySelector('[aria-label="Collapse Qualification evaluate descendants"]').click()`);
+  await waitFor(async () => cdp.evaluate(`document.querySelectorAll('[data-trace-renderer="waterfall"] [role="treeitem"]').length === 1`), "HARNESS_STUDIO_TRACE_COLLAPSE_FAILED");
+  await cdp.evaluate(`document.querySelector('[aria-label="Expand all spans"]').click()`);
+  await waitFor(async () => cdp.evaluate(`document.querySelectorAll('[data-trace-renderer="waterfall"] [role="treeitem"]').length === 7`), "HARNESS_STUDIO_TRACE_EXPAND_FAILED");
   const studioWaterfallScreenshot = await captureScreenshot(cdp, "studio-trace-waterfall-dark-desktop");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Tree').click(); })()`);
   const tree = await waitFor(async () => cdp.evaluate(`(() => {
     const view = document.querySelector('[data-trace-renderer="tree"]');
     return view && view.textContent.includes('Qualification evaluate') && view.textContent.includes('Span Passport')
       && view.querySelector('svg[aria-label="Recorded span call tree graph"]') && view.querySelector('[aria-label="Semantic camera map"]')
-      ? { spans: view.querySelectorAll('[role="treeitem"]').length,
+      ? { schemaVersion: 'wsr.trace-graph@1', spans: view.querySelectorAll('[role="treeitem"]').length,
           parentEdges: view.querySelectorAll('[data-relationship="PARENT_EDGE"]').length,
           links: view.querySelectorAll('[data-relationship="LINK"]').length,
-          cameraMap: true, passport: true }
+          graph: Boolean(view.querySelector('svg[aria-label="Recorded span call tree graph"]')),
+          cameraMap: true,
+          navigationNote: view.querySelector('.studio-trace-view-note')?.textContent.trim(),
+          passport: Boolean(view.querySelector('.trace-passport-head') && view.querySelector('.trace-passport-body') && view.querySelector('.trace-passport-sigil')) }
       : undefined;
   })()`), "HARNESS_STUDIO_TRACE_TREE_FAILED");
+  if (tree.schemaVersion !== "wsr.trace-graph@1" || tree.spans !== 7 || tree.parentEdges !== 6 || tree.links !== 1 || !tree.graph || !tree.passport ||
+      tree.navigationNote !== "Deterministic geometry · depth → recorded start/end → Span ID") throw new Error(`HARNESS_STUDIO_TRACE_TREE_DENSITY_INVALID: ${JSON.stringify(tree)}`);
   const studioTreeScreenshot = await captureScreenshot(cdp, "studio-trace-tree-dark-desktop");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Statistics').click(); })()`);
   const statistics = await waitFor(async () => cdp.evaluate(`(() => {
     const view = document.querySelector('[data-trace-renderer="statistics"]');
     return view && view.textContent.includes('Recorded spans') && view.textContent.includes('Recorded links')
       && !view.textContent.toLowerCase().includes('critical path') && !view.textContent.toLowerCase().includes('service map')
-      ? { exactInventory: true, inferredAnalysis: false }
+      ? { exactInventory: true, inferredAnalysis: false,
+          navigationNote: view.querySelector('.studio-trace-view-note')?.textContent.trim(),
+          typography: [...view.querySelectorAll('[data-variant]')].map((node) => node.dataset.variant) }
       : undefined;
   })()`), "HARNESS_STUDIO_TRACE_STATISTICS_FAILED");
+  if (statistics.navigationNote !== "Exact inventory · recorded-time aggregates · no inferred causality" ||
+      !statistics.typography.includes("sectionTitle") || !statistics.typography.includes("label") ||
+      !statistics.typography.includes("body") || !statistics.typography.includes("caption") || !statistics.typography.includes("value")) {
+    throw new Error(`HARNESS_STUDIO_TRACE_STATISTICS_SEMANTICS_INVALID: ${JSON.stringify(statistics)}`);
+  }
   const studioStatisticsScreenshot = await captureScreenshot(cdp, "studio-trace-statistics-dark-desktop");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Tree').click(); })()`);
   await waitFor(async () => cdp.evaluate(`document.querySelector('[data-trace-renderer="tree"]') !== null`), "HARNESS_STUDIO_TRACE_TREE_RESTORE_FAILED");
@@ -764,7 +974,7 @@ try {
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Back to Dashboard').click(); })()`);
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Change evaluation').click(); })()`);
   await waitFor(async () => cdp.evaluate(`document.querySelector('[data-wsr-studio-page="selection"]') !== null && document.querySelector('[data-wsr-dashboard-layout]') === null`), "HARNESS_STUDIO_DEGRADED_SELECTION_PAGE_FAILED");
-  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Load Tasks').click(); })()`);
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Load tasks').click(); })()`);
   const degraded = await waitFor(async () => cdp.evaluate(`(() => {
     const alert = [...document.querySelectorAll('[role="alert"]')].find((node) => node.textContent.includes('Task list unavailable'));
     return alert?.textContent.trim();
