@@ -46,4 +46,5 @@ test("the built Studio bundle embeds the qualified package but keeps Host React 
   assert.doesNotMatch(bundle, /react_production_min|react\.production\.min|__SECRET_INTERNALS_DO_NOT_USE/u);
   assert.doesNotMatch(bundle, /wsr-ui\/packages\/bi\/src|@wsr\/bi|file:|workspace:/u);
   assert.doesNotMatch(bundle, /rendererSelector|selectRenderer|canvasRenderer/iu);
+  assert.doesNotMatch(bundle, /projectRecordedStructure|RecordedStructureFoundation/u);
 });

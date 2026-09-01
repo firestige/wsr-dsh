@@ -4,8 +4,13 @@ import { resolve } from "node:path";
 import test from "node:test";
 
 import {
+  createDefaultStudioLayout,
   createStudioClientPlugin,
   createStudioGatewayPort,
+  createStudioTheme,
+  createStudioDashboardState,
+  createStudioLayoutStore,
+  reduceStudioDashboardState,
   STUDIO_PAGES,
   studioAccessibilityModel,
 } from "../src/client/studio.js";
@@ -24,22 +29,101 @@ function elementsOf(element) {
 }
 
 const Bi = Object.freeze({
+  BiCard: "wsr-bi-card",
+  BiSection: "wsr-bi-section",
   BiSurface: "wsr-bi-surface",
   CompareResultFrame: "wsr-compare-result",
   EvidenceConsoleFoundation: "wsr-evidence-console",
   MetricPanel: "wsr-metric-panel",
   ReceiptView: "wsr-receipt-view",
-  RecordedStructureFoundation: "wsr-recorded-structure",
+  TraceTree: "wsr-trace-tree",
+  TraceWaterfall: "wsr-trace-waterfall",
   ScopedError: "wsr-scoped-error",
-  projectRecordedStructure: () => ({
+  createBiTheme: (theme) => Object.freeze({ ...theme }),
+  compileTraceView: () => ({
+    schemaVersion: "wsr.trace-view@1",
     status: "READY",
-    depthGroups: [],
+    traceId: "trace-1",
+    nodes: [],
     parentEdges: [],
     links: [],
-    unresolvedNodes: [],
-    orphans: [],
     errors: [],
   }),
+  selectDefaultVisualizer: (result) => result.slices[0]?.value?.kind === "RATIO" ? "ratio-bar@1" : "numeric-card@1",
+});
+
+test("the Host owns a versioned responsive dashboard layout and creates the platform theme", () => {
+  const layout = createDefaultStudioLayout();
+  assert.equal(layout.schemaVersion, "wsr-dsh.studio-layout@1");
+  assert.deepEqual(layout.columns, { desktop: 12, tablet: 6, mobile: 1 });
+  assert.deepEqual(layout.panels.map(({ id, desktop, tablet, mobile }) => ({ id, desktop, tablet, mobile })), [
+    { id: "operational-latency", desktop: { w: 3, h: 2 }, tablet: { w: 3, h: 2 }, mobile: { w: 1, h: 2 } },
+    { id: "delivery-cycle-time", desktop: { w: 3, h: 2 }, tablet: { w: 3, h: 2 }, mobile: { w: 1, h: 2 } },
+    { id: "usage-availability", desktop: { w: 3, h: 2 }, tablet: { w: 3, h: 2 }, mobile: { w: 1, h: 2 } },
+    { id: "cohort-eligibility", desktop: { w: 3, h: 2 }, tablet: { w: 3, h: 2 }, mobile: { w: 1, h: 2 } },
+    { id: "role-template-rework-rate", desktop: { w: 6, h: 3 }, tablet: { w: 3, h: 3 }, mobile: { w: 1, h: 3 } },
+    { id: "role-model-task-outcome-rate", desktop: { w: 6, h: 3 }, tablet: { w: 3, h: 3 }, mobile: { w: 1, h: 3 } },
+    { id: "delivery-stage-reach", desktop: { w: 12, h: 4 }, tablet: { w: 6, h: 4 }, mobile: { w: 1, h: 4 } },
+  ]);
+  assert.deepEqual(createStudioTheme("dark"), {
+    mode: "dark",
+    density: "compact",
+    containerBorderStyle: "solid",
+  });
+});
+
+test("the Host owns dashboard add, remove, resize, and reorder state", () => {
+  const initial = createStudioDashboardState(["latency", "rework", "reach"]);
+  const resized = reduceStudioDashboardState(initial, {
+    type: "RESIZE",
+    panelId: "rework",
+    size: "wide",
+  });
+  const moved = reduceStudioDashboardState(resized, {
+    type: "MOVE",
+    panelId: "reach",
+    beforePanelId: "latency",
+  });
+  const removed = reduceStudioDashboardState(moved, {
+    type: "REMOVE",
+    panelId: "rework",
+  });
+  const restored = reduceStudioDashboardState(removed, {
+    type: "ADD",
+    panelId: "rework",
+  });
+
+  assert.deepEqual(restored.order, ["reach", "latency", "rework"]);
+  assert.deepEqual(restored.hidden, []);
+  assert.equal(restored.sizes.rework, "wide");
+  assert.throws(
+    () => reduceStudioDashboardState(restored, { type: "RESIZE", panelId: "missing", size: "wide" }),
+    /UNKNOWN_STUDIO_PANEL/,
+  );
+});
+
+test("dashboard edit state supports preset, reset, save, and fail-closed restore", () => {
+  const writes = new Map();
+  const storage = {
+    getItem(key) { return writes.get(key) ?? null; },
+    setItem(key, value) { writes.set(key, value); },
+  };
+  const initial = createStudioDashboardState(["latency", "rework"]);
+  const changed = reduceStudioDashboardState(
+    reduceStudioDashboardState(initial, { type: "REMOVE", panelId: "rework" }),
+    { type: "RESIZE", panelId: "latency", size: "full" },
+  );
+  const store = createStudioLayoutStore(storage);
+  store.save(changed);
+  assert.deepEqual(store.load(initial), changed);
+  assert.deepEqual(
+    reduceStudioDashboardState(changed, { type: "PRESET", preset: "default" }),
+    initial,
+  );
+  assert.deepEqual(reduceStudioDashboardState(changed, { type: "RESET" }), initial);
+
+  writes.set("wsr.studio.dashboard-layout@1", "{malformed");
+  assert.deepEqual(store.load(initial), initial);
 });
 
 test("the browser port uses only the DSH Host channel and exposes no downstream URL or credentials", async () => {
@@ -197,13 +281,25 @@ test("AVAILABLE and UNAVAILABLE results use the shared BI product surface while 
   const elements = elementsOf(rendered);
   const panels = elements.filter((element) => element.type === "wsr-metric-panel");
   assert.equal(elements.some((element) => element.type === "wsr-bi-surface"), true);
-  assert.deepEqual(panels.map((panel) => panel.props.visualizer), ["ratio-bar@1", "numeric-card@1"]);
+  assert.deepEqual(panels.map((panel) => panel.props.visualizer), [undefined, undefined]);
   assert.deepEqual(panels.map((panel) => panel.props.result.metric_id), [
     "delivery-success-rate",
     "workflow-resolution-rate",
   ]);
   assert.equal(elements.some((element) => element.type === "dsh-json-tree"), false);
   assert.match(textOf(rendered), /Technical JSON details/);
+  assert.match(textOf(rendered), /Dashboard/);
+  assert.match(textOf(rendered), /Evidence/);
+  assert.match(textOf(rendered), /Recorded Trace/);
+  const regions = elements.filter((element) => element.props?.["data-wsr-studio-region"]);
+  assert.deepEqual(regions.map((element) => element.props["data-wsr-studio-region"]), ["header", "main", "footer"]);
+  const surface = elements.find((element) => element.type === "wsr-bi-surface");
+  assert.deepEqual(surface.props.theme, {
+    mode: "light",
+    density: "compact",
+    containerBorderStyle: "solid",
+  });
+  assert.equal(elements.some((element) => element.props?.["data-wsr-dashboard-layout"] === "wsr-dsh.studio-layout@1"), true);
 });
 
 test("compare, receipt, Fact and recorded Trace routes use shared BI foundations", async () => {
@@ -283,7 +379,9 @@ test("compare, receipt, Fact and recorded Trace routes use shared BI foundations
   runtime.controller.openTrace(traceId, spanId);
   await runtime.controller.loadTrace({ trace_id: traceId, limit: 200 });
   rendered = components.get("conversation.view")();
-  assert.equal(elementsOf(rendered).some((element) => element.type === "wsr-recorded-structure"), true);
+  assert.equal(elementsOf(rendered).some((element) => element.type === "wsr-trace-waterfall"), true);
+  assert.match(textOf(rendered), /Waterfall/);
+  assert.match(textOf(rendered), /Tree/);
 });
 
 test("the browser source has no direct downstream transport, credential, or mutation escape hatch", async () => {
@@ -293,4 +391,7 @@ test("the browser source has no direct downstream transport, credential, or muta
   assert.doesNotMatch(source, /127\.0\.0\.1|localhost|\/v1\/evidence|evaluations:compute/u);
   assert.doesNotMatch(source, /Authorization|Cookie|credentials/u);
   assert.doesNotMatch(source, /facts\/(?:write|delete)|traces\/(?:write|delete)|repository\/(?:write|commit)/u);
+  assert.doesNotMatch(source, /function\s+(?:visualizerFor|metricResultCompatible|traceViewModel)\b/u);
+  assert.doesNotMatch(source, /projectRecordedStructure/u);
+  assert.doesNotMatch(source, /\.wsr-bi\s+[.#[]/u);
 });

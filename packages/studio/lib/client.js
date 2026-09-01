@@ -44,29 +44,6 @@ var import_react2 = __toESM(require("react"), 1);
 var Primitives = __toESM(require("@deepseek-ai/dsh-client-ui-primitives"), 1);
 
 // node_modules/wsr-ui-core/dist/index.js
-var dist_exports = {};
-__export(dist_exports, {
-  BiSurface: () => c,
-  CompareResultFrame: () => P,
-  CoverageLabel: () => v,
-  DEFAULT_MOTION_MODE: () => X2,
-  EvidenceConsoleFoundation: () => G,
-  EvidenceLifecycleLabel: () => b,
-  MetricExplanationView: () => L,
-  MetricNavigator: () => E,
-  MetricPanel: () => j,
-  MetricResultFrame: () => w,
-  MetricTruthLabel: () => _,
-  MotionControl: () => ae,
-  ReceiptView: () => B,
-  RecordedStructureFoundation: () => ie,
-  ScopedError: () => x,
-  VISUALIZER_REGISTRY: () => m,
-  compatibleVisualizerIds: () => h,
-  loadRecordedTrace: () => se,
-  presentExactValue: () => f,
-  projectRecordedStructure: () => $
-});
 var import_jsx_runtime = require("react/jsx-runtime");
 
 // node_modules/d3-array/src/ascending.js
@@ -353,8 +330,8 @@ function selector_default(selector) {
 // node_modules/d3-selection/src/selection/select.js
 function select_default(select) {
   if (typeof select !== "function") select = selector_default(select);
-  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j2 = 0; j2 < m2; ++j2) {
-    for (var group = groups[j2], n2 = group.length, subgroup = subgroups[j2] = new Array(n2), node, subnode, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
+    for (var group = groups[j], n2 = group.length, subgroup = subgroups[j] = new Array(n2), node, subnode, i = 0; i < n2; ++i) {
       if ((node = group[i]) && (subnode = select.call(node, node.__data__, i, group))) {
         if ("__data__" in node) subnode.__data__ = node.__data__;
         subgroup[i] = subnode;
@@ -388,8 +365,8 @@ function arrayAll(select) {
 function selectAll_default(select) {
   if (typeof select === "function") select = arrayAll(select);
   else select = selectorAll_default(select);
-  for (var groups = this._groups, m2 = groups.length, subgroups = [], parents = [], j2 = 0; j2 < m2; ++j2) {
-    for (var group = groups[j2], n2 = group.length, node, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, subgroups = [], parents = [], j = 0; j < m2; ++j) {
+    for (var group = groups[j], n2 = group.length, node, i = 0; i < n2; ++i) {
       if (node = group[i]) {
         subgroups.push(select.call(node, node.__data__, i, group));
         parents.push(node);
@@ -442,8 +419,8 @@ function selectChildren_default(match) {
 // node_modules/d3-selection/src/selection/filter.js
 function filter_default(match) {
   if (typeof match !== "function") match = matcher_default(match);
-  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j2 = 0; j2 < m2; ++j2) {
-    for (var group = groups[j2], n2 = group.length, subgroup = subgroups[j2] = [], node, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
+    for (var group = groups[j], n2 = group.length, subgroup = subgroups[j] = [], node, i = 0; i < n2; ++i) {
       if ((node = group[i]) && match.call(node, node.__data__, i, group)) {
         subgroup.push(node);
       }
@@ -543,8 +520,8 @@ function data_default(value, key) {
   if (!arguments.length) return Array.from(this, datum);
   var bind = key ? bindKey : bindIndex, parents = this._parents, groups = this._groups;
   if (typeof value !== "function") value = constant_default(value);
-  for (var m2 = groups.length, update = new Array(m2), enter = new Array(m2), exit = new Array(m2), j2 = 0; j2 < m2; ++j2) {
-    var parent = parents[j2], group = groups[j2], groupLength = group.length, data = arraylike(value.call(parent, parent && parent.__data__, j2, parents)), dataLength = data.length, enterGroup = enter[j2] = new Array(dataLength), updateGroup = update[j2] = new Array(dataLength), exitGroup = exit[j2] = new Array(groupLength);
+  for (var m2 = groups.length, update = new Array(m2), enter = new Array(m2), exit = new Array(m2), j = 0; j < m2; ++j) {
+    var parent = parents[j], group = groups[j], groupLength = group.length, data = arraylike(value.call(parent, parent && parent.__data__, j, parents)), dataLength = data.length, enterGroup = enter[j] = new Array(dataLength), updateGroup = update[j] = new Array(dataLength), exitGroup = exit[j] = new Array(groupLength);
     bind(parent, group, enterGroup, updateGroup, exitGroup, data, key);
     for (var i0 = 0, i1 = 0, previous, next; i0 < dataLength; ++i0) {
       if (previous = enterGroup[i0]) {
@@ -589,23 +566,23 @@ function join_default(onenter, onupdate, onexit) {
 // node_modules/d3-selection/src/selection/merge.js
 function merge_default(context) {
   var selection2 = context.selection ? context.selection() : context;
-  for (var groups0 = this._groups, groups1 = selection2._groups, m0 = groups0.length, m1 = groups1.length, m2 = Math.min(m0, m1), merges = new Array(m0), j2 = 0; j2 < m2; ++j2) {
-    for (var group0 = groups0[j2], group1 = groups1[j2], n2 = group0.length, merge = merges[j2] = new Array(n2), node, i = 0; i < n2; ++i) {
+  for (var groups0 = this._groups, groups1 = selection2._groups, m0 = groups0.length, m1 = groups1.length, m2 = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m2; ++j) {
+    for (var group0 = groups0[j], group1 = groups1[j], n2 = group0.length, merge = merges[j] = new Array(n2), node, i = 0; i < n2; ++i) {
       if (node = group0[i] || group1[i]) {
         merge[i] = node;
       }
     }
   }
-  for (; j2 < m0; ++j2) {
-    merges[j2] = groups0[j2];
+  for (; j < m0; ++j) {
+    merges[j] = groups0[j];
   }
   return new Selection(merges, this._parents);
 }
 
 // node_modules/d3-selection/src/selection/order.js
 function order_default() {
-  for (var groups = this._groups, j2 = -1, m2 = groups.length; ++j2 < m2; ) {
-    for (var group = groups[j2], i = group.length - 1, next = group[i], node; --i >= 0; ) {
+  for (var groups = this._groups, j = -1, m2 = groups.length; ++j < m2; ) {
+    for (var group = groups[j], i = group.length - 1, next = group[i], node; --i >= 0; ) {
       if (node = group[i]) {
         if (next && node.compareDocumentPosition(next) ^ 4) next.parentNode.insertBefore(node, next);
         next = node;
@@ -621,8 +598,8 @@ function sort_default(compare) {
   function compareNode(a2, b2) {
     return a2 && b2 ? compare(a2.__data__, b2.__data__) : !a2 - !b2;
   }
-  for (var groups = this._groups, m2 = groups.length, sortgroups = new Array(m2), j2 = 0; j2 < m2; ++j2) {
-    for (var group = groups[j2], n2 = group.length, sortgroup = sortgroups[j2] = new Array(n2), node, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, sortgroups = new Array(m2), j = 0; j < m2; ++j) {
+    for (var group = groups[j], n2 = group.length, sortgroup = sortgroups[j] = new Array(n2), node, i = 0; i < n2; ++i) {
       if (node = group[i]) {
         sortgroup[i] = node;
       }
@@ -650,8 +627,8 @@ function nodes_default() {
 
 // node_modules/d3-selection/src/selection/node.js
 function node_default() {
-  for (var groups = this._groups, j2 = 0, m2 = groups.length; j2 < m2; ++j2) {
-    for (var group = groups[j2], i = 0, n2 = group.length; i < n2; ++i) {
+  for (var groups = this._groups, j = 0, m2 = groups.length; j < m2; ++j) {
+    for (var group = groups[j], i = 0, n2 = group.length; i < n2; ++i) {
       var node = group[i];
       if (node) return node;
     }
@@ -673,8 +650,8 @@ function empty_default() {
 
 // node_modules/d3-selection/src/selection/each.js
 function each_default(callback) {
-  for (var groups = this._groups, j2 = 0, m2 = groups.length; j2 < m2; ++j2) {
-    for (var group = groups[j2], i = 0, n2 = group.length, node; i < n2; ++i) {
+  for (var groups = this._groups, j = 0, m2 = groups.length; j < m2; ++j) {
+    for (var group = groups[j], i = 0, n2 = group.length, node; i < n2; ++i) {
       if (node = group[i]) callback.call(node, node.__data__, i, group);
     }
   }
@@ -957,8 +934,8 @@ function onRemove(typename) {
   return function() {
     var on = this.__on;
     if (!on) return;
-    for (var j2 = 0, i = -1, m2 = on.length, o2; j2 < m2; ++j2) {
-      if (o2 = on[j2], (!typename.type || o2.type === typename.type) && o2.name === typename.name) {
+    for (var j = 0, i = -1, m2 = on.length, o2; j < m2; ++j) {
+      if (o2 = on[j], (!typename.type || o2.type === typename.type) && o2.name === typename.name) {
         this.removeEventListener(o2.type, o2.listener, o2.options);
       } else {
         on[++i] = o2;
@@ -971,8 +948,8 @@ function onRemove(typename) {
 function onAdd(typename, value, options) {
   return function() {
     var on = this.__on, o2, listener = contextListener(value);
-    if (on) for (var j2 = 0, m2 = on.length; j2 < m2; ++j2) {
-      if ((o2 = on[j2]).type === typename.type && o2.name === typename.name) {
+    if (on) for (var j = 0, m2 = on.length; j < m2; ++j) {
+      if ((o2 = on[j]).type === typename.type && o2.name === typename.name) {
         this.removeEventListener(o2.type, o2.listener, o2.options);
         this.addEventListener(o2.type, o2.listener = listener, o2.options = options);
         o2.value = value;
@@ -989,8 +966,8 @@ function on_default(typename, value, options) {
   var typenames = parseTypenames2(typename + ""), i, n2 = typenames.length, t2;
   if (arguments.length < 2) {
     var on = this.node().__on;
-    if (on) for (var j2 = 0, m2 = on.length, o2; j2 < m2; ++j2) {
-      for (i = 0, o2 = on[j2]; i < n2; ++i) {
+    if (on) for (var j = 0, m2 = on.length, o2; j < m2; ++j) {
+      for (i = 0, o2 = on[j]; i < n2; ++i) {
         if ((t2 = typenames[i]).type === o2.type && t2.name === o2.name) {
           return o2.value;
         }
@@ -1031,8 +1008,8 @@ function dispatch_default2(type2, params) {
 
 // node_modules/d3-selection/src/selection/iterator.js
 function* iterator_default() {
-  for (var groups = this._groups, j2 = 0, m2 = groups.length; j2 < m2; ++j2) {
-    for (var group = groups[j2], i = 0, n2 = group.length, node; i < n2; ++i) {
+  for (var groups = this._groups, j = 0, m2 = groups.length; j < m2; ++j) {
+    for (var group = groups[j], i = 0, n2 = group.length, node; i < n2; ++i) {
       if (node = group[i]) yield node;
     }
   }
@@ -1294,9 +1271,9 @@ function color_formatRgb() {
   return this.rgb().formatRgb();
 }
 function color(format2) {
-  var m2, l2;
+  var m2, l;
   format2 = (format2 + "").trim().toLowerCase();
-  return (m2 = reHex.exec(format2)) ? (l2 = m2[1].length, m2 = parseInt(m2[1], 16), l2 === 6 ? rgbn(m2) : l2 === 3 ? new Rgb(m2 >> 8 & 15 | m2 >> 4 & 240, m2 >> 4 & 15 | m2 & 240, (m2 & 15) << 4 | m2 & 15, 1) : l2 === 8 ? rgba(m2 >> 24 & 255, m2 >> 16 & 255, m2 >> 8 & 255, (m2 & 255) / 255) : l2 === 4 ? rgba(m2 >> 12 & 15 | m2 >> 8 & 240, m2 >> 8 & 15 | m2 >> 4 & 240, m2 >> 4 & 15 | m2 & 240, ((m2 & 15) << 4 | m2 & 15) / 255) : null) : (m2 = reRgbInteger.exec(format2)) ? new Rgb(m2[1], m2[2], m2[3], 1) : (m2 = reRgbPercent.exec(format2)) ? new Rgb(m2[1] * 255 / 100, m2[2] * 255 / 100, m2[3] * 255 / 100, 1) : (m2 = reRgbaInteger.exec(format2)) ? rgba(m2[1], m2[2], m2[3], m2[4]) : (m2 = reRgbaPercent.exec(format2)) ? rgba(m2[1] * 255 / 100, m2[2] * 255 / 100, m2[3] * 255 / 100, m2[4]) : (m2 = reHslPercent.exec(format2)) ? hsla(m2[1], m2[2] / 100, m2[3] / 100, 1) : (m2 = reHslaPercent.exec(format2)) ? hsla(m2[1], m2[2] / 100, m2[3] / 100, m2[4]) : named.hasOwnProperty(format2) ? rgbn(named[format2]) : format2 === "transparent" ? new Rgb(NaN, NaN, NaN, 0) : null;
+  return (m2 = reHex.exec(format2)) ? (l = m2[1].length, m2 = parseInt(m2[1], 16), l === 6 ? rgbn(m2) : l === 3 ? new Rgb(m2 >> 8 & 15 | m2 >> 4 & 240, m2 >> 4 & 15 | m2 & 240, (m2 & 15) << 4 | m2 & 15, 1) : l === 8 ? rgba(m2 >> 24 & 255, m2 >> 16 & 255, m2 >> 8 & 255, (m2 & 255) / 255) : l === 4 ? rgba(m2 >> 12 & 15 | m2 >> 8 & 240, m2 >> 8 & 15 | m2 >> 4 & 240, m2 >> 4 & 15 | m2 & 240, ((m2 & 15) << 4 | m2 & 15) / 255) : null) : (m2 = reRgbInteger.exec(format2)) ? new Rgb(m2[1], m2[2], m2[3], 1) : (m2 = reRgbPercent.exec(format2)) ? new Rgb(m2[1] * 255 / 100, m2[2] * 255 / 100, m2[3] * 255 / 100, 1) : (m2 = reRgbaInteger.exec(format2)) ? rgba(m2[1], m2[2], m2[3], m2[4]) : (m2 = reRgbaPercent.exec(format2)) ? rgba(m2[1] * 255 / 100, m2[2] * 255 / 100, m2[3] * 255 / 100, m2[4]) : (m2 = reHslPercent.exec(format2)) ? hsla(m2[1], m2[2] / 100, m2[3] / 100, 1) : (m2 = reHslaPercent.exec(format2)) ? hsla(m2[1], m2[2] / 100, m2[3] / 100, m2[4]) : named.hasOwnProperty(format2) ? rgbn(named[format2]) : format2 === "transparent" ? new Rgb(NaN, NaN, NaN, 0) : null;
 }
 function rgbn(n2) {
   return new Rgb(n2 >> 16 & 255, n2 >> 8 & 255, n2 & 255, 1);
@@ -1365,11 +1342,11 @@ function hex(value) {
   value = clampi(value);
   return (value < 16 ? "0" : "") + value.toString(16);
 }
-function hsla(h2, s2, l2, a2) {
-  if (a2 <= 0) h2 = s2 = l2 = NaN;
-  else if (l2 <= 0 || l2 >= 1) h2 = s2 = NaN;
+function hsla(h2, s2, l, a2) {
+  if (a2 <= 0) h2 = s2 = l = NaN;
+  else if (l <= 0 || l >= 1) h2 = s2 = NaN;
   else if (s2 <= 0) h2 = NaN;
-  return new Hsl(h2, s2, l2, a2);
+  return new Hsl(h2, s2, l, a2);
 }
 function hslConvert(o2) {
   if (o2 instanceof Hsl) return new Hsl(o2.h, o2.s, o2.l, o2.opacity);
@@ -1377,25 +1354,25 @@ function hslConvert(o2) {
   if (!o2) return new Hsl();
   if (o2 instanceof Hsl) return o2;
   o2 = o2.rgb();
-  var r = o2.r / 255, g2 = o2.g / 255, b2 = o2.b / 255, min2 = Math.min(r, g2, b2), max2 = Math.max(r, g2, b2), h2 = NaN, s2 = max2 - min2, l2 = (max2 + min2) / 2;
+  var r = o2.r / 255, g2 = o2.g / 255, b2 = o2.b / 255, min2 = Math.min(r, g2, b2), max2 = Math.max(r, g2, b2), h2 = NaN, s2 = max2 - min2, l = (max2 + min2) / 2;
   if (s2) {
     if (r === max2) h2 = (g2 - b2) / s2 + (g2 < b2) * 6;
     else if (g2 === max2) h2 = (b2 - r) / s2 + 2;
     else h2 = (r - g2) / s2 + 4;
-    s2 /= l2 < 0.5 ? max2 + min2 : 2 - max2 - min2;
+    s2 /= l < 0.5 ? max2 + min2 : 2 - max2 - min2;
     h2 *= 60;
   } else {
-    s2 = l2 > 0 && l2 < 1 ? 0 : h2;
+    s2 = l > 0 && l < 1 ? 0 : h2;
   }
-  return new Hsl(h2, s2, l2, o2.opacity);
+  return new Hsl(h2, s2, l, o2.opacity);
 }
-function hsl(h2, s2, l2, opacity) {
-  return arguments.length === 1 ? hslConvert(h2) : new Hsl(h2, s2, l2, opacity == null ? 1 : opacity);
+function hsl(h2, s2, l, opacity) {
+  return arguments.length === 1 ? hslConvert(h2) : new Hsl(h2, s2, l, opacity == null ? 1 : opacity);
 }
-function Hsl(h2, s2, l2, opacity) {
+function Hsl(h2, s2, l, opacity) {
   this.h = +h2;
   this.s = +s2;
-  this.l = +l2;
+  this.l = +l;
   this.opacity = +opacity;
 }
 define_default(Hsl, hsl, extend(Color, {
@@ -1408,7 +1385,7 @@ define_default(Hsl, hsl, extend(Color, {
     return new Hsl(this.h, this.s, this.l * k2, this.opacity);
   },
   rgb() {
-    var h2 = this.h % 360 + (this.h < 0) * 360, s2 = isNaN(h2) || isNaN(this.s) ? 0 : this.s, l2 = this.l, m2 = l2 + (l2 < 0.5 ? l2 : 1 - l2) * s2, m1 = 2 * l2 - m2;
+    var h2 = this.h % 360 + (this.h < 0) * 360, s2 = isNaN(h2) || isNaN(this.s) ? 0 : this.s, l = this.l, m2 = l + (l < 0.5 ? l : 1 - l) * s2, m1 = 2 * l - m2;
     return new Rgb(
       hsl2rgb(h2 >= 240 ? h2 - 240 : h2 + 120, m1, m2),
       hsl2rgb(h2, m1, m2),
@@ -1900,7 +1877,7 @@ function create(node, id2, self) {
     if (self.delay <= elapsed) start2(elapsed - self.delay);
   }
   function start2(elapsed) {
-    var i, j2, n2, o2;
+    var i, j, n2, o2;
     if (self.state !== SCHEDULED) return stop();
     for (i in schedules) {
       o2 = schedules[i];
@@ -1930,12 +1907,12 @@ function create(node, id2, self) {
     if (self.state !== STARTING) return;
     self.state = STARTED;
     tween = new Array(n2 = self.tween.length);
-    for (i = 0, j2 = -1; i < n2; ++i) {
+    for (i = 0, j = -1; i < n2; ++i) {
       if (o2 = self.tween[i].value.call(node, node.__data__, self.index, self.group)) {
-        tween[++j2] = o2;
+        tween[++j] = o2;
       }
     }
-    tween.length = j2 + 1;
+    tween.length = j + 1;
   }
   function tick(elapsed) {
     var t2 = elapsed < self.duration ? self.ease.call(null, elapsed / self.duration) : (self.timer.restart(stop), self.state = ENDING, 1), i = -1, n2 = tween.length;
@@ -2199,8 +2176,8 @@ function easeVarying_default(value) {
 // node_modules/d3-transition/src/transition/filter.js
 function filter_default2(match) {
   if (typeof match !== "function") match = matcher_default(match);
-  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j2 = 0; j2 < m2; ++j2) {
-    for (var group = groups[j2], n2 = group.length, subgroup = subgroups[j2] = [], node, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
+    for (var group = groups[j], n2 = group.length, subgroup = subgroups[j] = [], node, i = 0; i < n2; ++i) {
       if ((node = group[i]) && match.call(node, node.__data__, i, group)) {
         subgroup.push(node);
       }
@@ -2212,15 +2189,15 @@ function filter_default2(match) {
 // node_modules/d3-transition/src/transition/merge.js
 function merge_default2(transition2) {
   if (transition2._id !== this._id) throw new Error();
-  for (var groups0 = this._groups, groups1 = transition2._groups, m0 = groups0.length, m1 = groups1.length, m2 = Math.min(m0, m1), merges = new Array(m0), j2 = 0; j2 < m2; ++j2) {
-    for (var group0 = groups0[j2], group1 = groups1[j2], n2 = group0.length, merge = merges[j2] = new Array(n2), node, i = 0; i < n2; ++i) {
+  for (var groups0 = this._groups, groups1 = transition2._groups, m0 = groups0.length, m1 = groups1.length, m2 = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m2; ++j) {
+    for (var group0 = groups0[j], group1 = groups1[j], n2 = group0.length, merge = merges[j] = new Array(n2), node, i = 0; i < n2; ++i) {
       if (node = group0[i] || group1[i]) {
         merge[i] = node;
       }
     }
   }
-  for (; j2 < m0; ++j2) {
-    merges[j2] = groups0[j2];
+  for (; j < m0; ++j) {
+    merges[j] = groups0[j];
   }
   return new Transition(merges, this._parents, this._name, this._id);
 }
@@ -2262,8 +2239,8 @@ function remove_default2() {
 function select_default2(select) {
   var name2 = this._name, id2 = this._id;
   if (typeof select !== "function") select = selector_default(select);
-  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j2 = 0; j2 < m2; ++j2) {
-    for (var group = groups[j2], n2 = group.length, subgroup = subgroups[j2] = new Array(n2), node, subnode, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
+    for (var group = groups[j], n2 = group.length, subgroup = subgroups[j] = new Array(n2), node, subnode, i = 0; i < n2; ++i) {
       if ((node = group[i]) && (subnode = select.call(node, node.__data__, i, group))) {
         if ("__data__" in node) subnode.__data__ = node.__data__;
         subgroup[i] = subnode;
@@ -2278,10 +2255,10 @@ function select_default2(select) {
 function selectAll_default2(select) {
   var name2 = this._name, id2 = this._id;
   if (typeof select !== "function") select = selectorAll_default(select);
-  for (var groups = this._groups, m2 = groups.length, subgroups = [], parents = [], j2 = 0; j2 < m2; ++j2) {
-    for (var group = groups[j2], n2 = group.length, node, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, subgroups = [], parents = [], j = 0; j < m2; ++j) {
+    for (var group = groups[j], n2 = group.length, node, i = 0; i < n2; ++i) {
       if (node = group[i]) {
-        for (var children2 = select.call(node, node.__data__, i, group), child, inherit2 = get2(node, id2), k2 = 0, l2 = children2.length; k2 < l2; ++k2) {
+        for (var children2 = select.call(node, node.__data__, i, group), child, inherit2 = get2(node, id2), k2 = 0, l = children2.length; k2 < l; ++k2) {
           if (child = children2[k2]) {
             schedule_default(child, name2, id2, k2, children2, inherit2);
           }
@@ -2408,8 +2385,8 @@ function textTween_default(value) {
 // node_modules/d3-transition/src/transition/transition.js
 function transition_default() {
   var name2 = this._name, id0 = this._id, id1 = newId();
-  for (var groups = this._groups, m2 = groups.length, j2 = 0; j2 < m2; ++j2) {
-    for (var group = groups[j2], n2 = group.length, node, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, j = 0; j < m2; ++j) {
+    for (var group = groups[j], n2 = group.length, node, i = 0; i < n2; ++i) {
       if (node = group[i]) {
         var inherit2 = get2(node, id0);
         schedule_default(node, name2, id1, i, group, {
@@ -2522,8 +2499,8 @@ function transition_default2(name2) {
   } else {
     id2 = newId(), (timing = defaultTiming).time = now(), name2 = name2 == null ? null : name2 + "";
   }
-  for (var groups = this._groups, m2 = groups.length, j2 = 0; j2 < m2; ++j2) {
-    for (var group = groups[j2], n2 = group.length, node, i = 0; i < n2; ++i) {
+  for (var groups = this._groups, m2 = groups.length, j = 0; j < m2; ++j) {
+    for (var group = groups[j], n2 = group.length, node, i = 0; i < n2; ++i) {
       if (node = group[i]) {
         schedule_default(node, name2, id2, i, group, timing || inherit(node, id2));
       }
@@ -2599,12 +2576,12 @@ function exponent_default(x2) {
 // node_modules/d3-format/src/formatGroup.js
 function formatGroup_default(grouping, thousands) {
   return function(value, width) {
-    var i = value.length, t2 = [], j2 = 0, g2 = grouping[0], length = 0;
+    var i = value.length, t2 = [], j = 0, g2 = grouping[0], length = 0;
     while (i > 0 && g2 > 0) {
       if (length + g2 + 1 > width) g2 = Math.max(1, width - length);
       t2.push(value.substring(i -= g2, i + g2));
       if ((length += g2 + 1) > width) break;
-      g2 = grouping[j2 = (j2 + 1) % grouping.length];
+      g2 = grouping[j = (j + 1) % grouping.length];
     }
     return t2.reverse().join(thousands);
   };
@@ -2971,17 +2948,17 @@ function bimap(domain, range2, interpolate) {
   };
 }
 function polymap(domain, range2, interpolate) {
-  var j2 = Math.min(domain.length, range2.length) - 1, d2 = new Array(j2), r = new Array(j2), i = -1;
-  if (domain[j2] < domain[0]) {
+  var j = Math.min(domain.length, range2.length) - 1, d2 = new Array(j), r = new Array(j), i = -1;
+  if (domain[j] < domain[0]) {
     domain = domain.slice().reverse();
     range2 = range2.slice().reverse();
   }
-  while (++i < j2) {
+  while (++i < j) {
     d2[i] = normalize(domain[i], domain[i + 1]);
     r[i] = interpolate(range2[i], range2[i + 1]);
   }
   return function(x2) {
-    var i2 = bisect_default(domain, x2, 1, j2) - 1;
+    var i2 = bisect_default(domain, x2, 1, j) - 1;
     return r[i2](d2[i2](x2));
   };
 }
@@ -3021,8 +2998,8 @@ function transformer() {
   scale.unknown = function(_2) {
     return arguments.length ? (unknown = _2, scale) : unknown;
   };
-  return function(t2, u2) {
-    transform2 = t2, untransform = u2;
+  return function(t2, u) {
+    transform2 = t2, untransform = u;
     return rescale();
   };
 }
@@ -3163,47 +3140,95 @@ function transform(node) {
 
 // node_modules/wsr-ui-core/dist/index.js
 var import_react = require("react");
-function c({ children: e3, className: n2, density: r = "comfortable", theme: i = "system" }) {
+function c({ children: e3, className: n2, density: r, theme: i = "system" }) {
+  let a2 = typeof i == "string" ? i : i.mode, o2 = r ?? (typeof i == "string" ? "comfortable" : i.density), s2 = typeof i == "string" ? void 0 : { "--wsr-container-border-style": i.containerBorderStyle };
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: ["wsr-bi", n2].filter(Boolean).join(" "),
-    "data-density": r,
-    "data-theme": i,
+    "data-density": o2,
+    "data-theme": a2,
+    style: s2,
     children: e3
   });
 }
-function l(e3) {
+function d({ mode: e3, density: t2 = "comfortable", containerBorderStyle: n2 = "solid" }) {
+  return Object.freeze({
+    mode: e3,
+    density: t2,
+    containerBorderStyle: n2
+  });
+}
+function f(e3) {
   let t2 = e3.startsWith("-"), n2 = (t2 ? e3.slice(1) : e3).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return t2 ? `-${n2}` : n2;
 }
-function u(e3) {
+function p(e3) {
   let [t2, n2] = e3.split("/");
   return [BigInt(t2), BigInt(n2 ?? "1")];
 }
-function d(e3) {
-  let [t2, n2] = u(e3), r = t2 < 0n, i = (r ? -t2 : t2) * 10000n, a2 = i / n2;
+function m(e3) {
+  let [t2, n2] = p(e3), r = t2 < 0n, i = (r ? -t2 : t2) * 10000n, a2 = i / n2;
   i % n2 * 2n >= n2 && (a2 += 1n);
   let o2 = a2 / 100n, s2 = String(a2 % 100n).padStart(2, "0");
   return `${r ? "-" : ""}${o2}.${s2}%`;
 }
-function f(e3) {
+function h(e3) {
   let t2 = `${String(e3.value)} ${e3.unit}`;
   return e3.kind === "RATIO" ? {
-    display: d(e3.value),
+    display: m(e3.value),
     exact: t2
   } : e3.kind === "BOOLEAN" ? {
     display: t2,
     exact: t2
   } : /^-?(?:0|[1-9][0-9]*)$/.test(e3.value) ? {
-    display: `${l(e3.value)} ${e3.unit}`,
+    display: `${f(e3.value)} ${e3.unit}`,
     exact: t2
   } : {
     display: t2,
     exact: t2
   };
 }
-var p = (e3) => e3;
-var m = {
-  "numeric-card@1": p({
+var g = /* @__PURE__ */ new Set([
+  "AVAILABLE",
+  "LOWER_BOUND",
+  "NOT_APPLICABLE",
+  "UNAVAILABLE",
+  "EXPIRED",
+  "INCOMPATIBLE"
+]);
+var ee = /* @__PURE__ */ new Set([
+  "COUNT",
+  "QUANTITY",
+  "RATIO",
+  "MONEY",
+  "DURATION_MS",
+  "BOOLEAN"
+]);
+var _ = /* @__PURE__ */ new Set([
+  "SAMPLE_INSUFFICIENT",
+  "MISSING_INPUT",
+  "NO_APPLICABLE_POPULATION",
+  "OPEN_TASK",
+  "MIXED_TASK_OUTCOMES",
+  "EXPIRED_INPUT",
+  "INCOMPATIBLE_INPUT"
+]);
+var te = /* @__PURE__ */ new Set([
+  "NO_POPULATION",
+  "NO_COVERAGE",
+  "PARTIAL",
+  "FULL"
+]);
+var v = (e3) => typeof e3 == "object" && !!e3 && !Array.isArray(e3);
+var y = (e3) => Array.isArray(e3) && e3.every((e4) => typeof e4 == "string");
+function b(e3) {
+  return !v(e3) || typeof e3.metric_id != "string" || e3.metric_id.length === 0 || e3.metric_version !== "2.0.0" || !Array.isArray(e3.slices) ? false : e3.slices.every((e4) => {
+    let t2 = typeof e4 == "object" && !!e4 && (e4.coverage === null || v(e4.coverage) && typeof e4.coverage.numerator == "string" && typeof e4.coverage.denominator == "string" && (e4.coverage.raw_ratio === null || typeof e4.coverage.raw_ratio == "string") && typeof e4.coverage.state == "string" && te.has(e4.coverage.state) && (e4.coverage.alert === null || e4.coverage.alert === "LOW_COVERAGE"));
+    return !v(e4) || !v(e4.slice_key) || typeof e4.state != "string" || !g.has(e4.state) || !v(e4.measures) || !v(e4.compatibility) || !y(e4.exclusions) || !y(e4.missing_inputs) || !y(e4.provenance_refs) || !t2 || e4.numerator !== void 0 && typeof e4.numerator != "string" || e4.denominator !== void 0 && typeof e4.denominator != "string" || e4.contributing_count !== void 0 && typeof e4.contributing_count != "string" || e4.reading !== void 0 && typeof e4.reading != "string" ? false : e4.value === void 0 ? typeof e4.withholding_reason == "string" && _.has(e4.withholding_reason) : !v(e4.value) || typeof e4.value.kind != "string" || !ee.has(e4.value.kind) || typeof e4.value.unit != "string" ? false : e4.value.kind === "BOOLEAN" ? typeof e4.value.value == "boolean" : typeof e4.value.value == "string" ? e4.value.kind === "RATIO" ? /^-?(?:0|[1-9][0-9]*)(?:\/[1-9][0-9]*)?$/u.test(e4.value.value) : /^-?(?:0|[1-9][0-9]*)$/u.test(e4.value.value) || e4.value.kind === "MONEY" || e4.value.kind === "QUANTITY" : false;
+  });
+}
+var x = (e3) => e3;
+var ne = {
+  "numeric-card@1": x({
     id: "numeric-card@1",
     arity: "ONE_SLICE",
     channels: ["value"],
@@ -3220,7 +3245,7 @@ var m = {
     fallback: "table@1",
     transforms: ["DISPLAY_ROUNDING", "RATIO_TO_PERCENT"]
   }),
-  "badge@1": p({
+  "badge@1": x({
     id: "badge@1",
     arity: "ONE_SLICE",
     channels: ["value"],
@@ -3231,7 +3256,7 @@ var m = {
     fallback: "table@1",
     transforms: []
   }),
-  "ratio-bar@1": p({
+  "ratio-bar@1": x({
     id: "ratio-bar@1",
     arity: "ONE_SLICE",
     channels: ["value", "domain"],
@@ -3242,7 +3267,7 @@ var m = {
     fallback: "table@1",
     transforms: ["RATIO_TO_PERCENT", "SCALE_LAYOUT"]
   }),
-  "table@1": p({
+  "table@1": x({
     id: "table@1",
     arity: "ANY",
     channels: ["published-result"],
@@ -3258,12 +3283,17 @@ var m = {
     ]
   })
 };
-function h(e3) {
+function S(e3) {
   if (e3.value === void 0) return ["numeric-card@1", "table@1"];
   let t2 = [];
   return e3.value.kind === "BOOLEAN" ? t2.push("badge@1") : t2.push("numeric-card@1"), e3.value.kind === "RATIO" && e3.value.unit === "ratio" && t2.push("ratio-bar@1"), t2.push("table@1"), t2;
 }
-var g = {
+function C(e3) {
+  if (e3.slices.length !== 1) return "table@1";
+  let t2 = e3.slices[0]?.value;
+  return t2?.kind === "BOOLEAN" ? "badge@1" : t2?.kind === "RATIO" && t2.unit === "ratio" ? "ratio-bar@1" : "numeric-card@1";
+}
+var re2 = {
   AVAILABLE: {
     label: "Available",
     marker: "\u2713",
@@ -3295,8 +3325,8 @@ var g = {
     tone: "incompatible"
   }
 };
-function _({ state: e3, withholdingReason: r, reading: i }) {
-  let a2 = g[e3];
+function w({ state: e3, withholdingReason: r, reading: i }) {
+  let a2 = re2[e3];
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "status-stack",
     "data-state": e3,
@@ -3319,13 +3349,13 @@ function _({ state: e3, withholdingReason: r, reading: i }) {
     ]
   });
 }
-var ee = {
+var ie = {
   NO_POPULATION: "No applicable population",
   NO_COVERAGE: "No coverage",
   PARTIAL: "Partial coverage",
   FULL: "Full coverage"
 };
-var te = {
+var T = {
   NO_POPULATION: {
     marker: "\u25CB",
     tone: "unavailable"
@@ -3343,7 +3373,7 @@ var te = {
     tone: "available"
   }
 };
-function v({ coverage: e3 }) {
+function E({ coverage: e3 }) {
   if (e3 === null) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "coverage-label",
     "data-coverage": "UNAVAILABLE",
@@ -3355,7 +3385,7 @@ function v({ coverage: e3 }) {
       }), "Coverage unavailable"]
     })
   });
-  let r = te[e3.state];
+  let r = T[e3.state];
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "coverage-label",
     "data-coverage": e3.state,
@@ -3365,7 +3395,7 @@ function v({ coverage: e3 }) {
         children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           "aria-hidden": "true",
           children: r.marker
-        }), ee[e3.state]]
+        }), ie[e3.state]]
       }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
         className: "numeric-exact",
@@ -3382,10 +3412,10 @@ function v({ coverage: e3 }) {
     ]
   });
 }
-var y = (e3) => e3.toLowerCase().replaceAll("_", " ");
-function b(e3) {
+var D = (e3) => e3.toLowerCase().replaceAll("_", " ");
+function O(e3) {
   if (e3.traceState !== void 0) {
-    let r2 = e3.traceState === "PARTIAL" ? "partial recorded data" : y(e3.traceState), i = e3.traceState === "AVAILABLE" ? "available" : e3.traceState === "EXPIRED" ? "expired" : e3.traceState === "PARTIAL" ? "attention" : "unavailable";
+    let r2 = e3.traceState === "PARTIAL" ? "partial recorded data" : D(e3.traceState), i = e3.traceState === "AVAILABLE" ? "available" : e3.traceState === "EXPIRED" ? "expired" : e3.traceState === "PARTIAL" ? "attention" : "unavailable";
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
       className: `status-label status-${i}`,
       children: [
@@ -3402,13 +3432,13 @@ function b(e3) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "lifecycle-grid",
     children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Completeness: ", y(r.completeness ?? "UNSPECIFIED")] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Availability: ", y(r.availability)] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Expiry: ", y(r.expiry)] })
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Completeness: ", D(r.completeness ?? "UNSPECIFIED")] }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Availability: ", D(r.availability)] }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Expiry: ", D(r.expiry)] })
     ]
   });
 }
-function x({ title: e3, detail: r, correlation: i, retryable: a2, onRetry: o2, announce: s2 }) {
+function k({ title: e3, detail: r, correlation: i, retryable: a2, onRetry: o2, announce: s2 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-live": s2,
     className: "scoped-error",
@@ -3435,9 +3465,9 @@ function x({ title: e3, detail: r, correlation: i, retryable: a2, onRetry: o2, a
     ]
   });
 }
-function S({ slice: e3 }) {
+function ae({ slice: e3 }) {
   if (e3.value === void 0) return null;
-  let r = f(e3.value), i = ` ${e3.value.unit}`, a2 = r.display.endsWith(i) ? r.display.slice(0, -i.length) : r.display;
+  let r = h(e3.value), i = ` ${e3.value.unit}`, a2 = r.display.endsWith(i) ? r.display.slice(0, -i.length) : r.display;
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "metric-value",
     children: [
@@ -3456,7 +3486,7 @@ function S({ slice: e3 }) {
     ]
   });
 }
-function ne({ slice: e3 }) {
+function oe({ slice: e3 }) {
   let r = Object.entries(e3.measures), i = [
     ["Numerator", e3.numerator],
     ["Denominator", e3.denominator],
@@ -3473,7 +3503,7 @@ function ne({ slice: e3 }) {
     })] }, e4))]
   });
 }
-function C({ slice: e3 }) {
+function se({ slice: e3 }) {
   let r = Object.entries(e3.compatibility);
   return e3.state !== "INCOMPATIBLE" || r.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Incompatible coordinates",
@@ -3488,7 +3518,7 @@ function C({ slice: e3 }) {
     }) }, e4)) })]
   });
 }
-function w({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvidence: s2, onRecover: c2, focusEvidenceAction: l2 = false, recoveryLabel: u2 = "Recover result" }) {
+function A({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvidence: s2, onRecover: c2, focusEvidenceAction: l = false, recoveryLabel: u = "Recover result" }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
     "aria-label": r,
     className: "metric-frame",
@@ -3497,7 +3527,7 @@ function w({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvid
       children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
         className: "text-heading metric-coordinate",
         children: r
-      }), i.tag === "RESULT" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(_, {
+      }), i.tag === "RESULT" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(w, {
         reading: i.slice.reading,
         state: i.slice.state,
         withholdingReason: i.slice.withholding_reason
@@ -3507,18 +3537,18 @@ function w({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvid
       className: "loading-state",
       role: "status",
       children: "Loading metric\u2026"
-    }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(x, {
+    }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(k, {
       announce: "assertive",
       detail: i.detail,
       onRetry: i.onRetry,
       retryable: i.retryable,
       title: "Metric request failed"
     }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(S, { slice: i.slice }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ae, { slice: i.slice }),
       i.slice.value === void 0 ? null : a2,
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ne, { slice: i.slice }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(C, { slice: i.slice }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(v, { coverage: i.slice.coverage }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(oe, { slice: i.slice }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(se, { slice: i.slice }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(E, { coverage: i.slice.coverage }),
       i.slice.missing_inputs.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
         className: "status-reading",
         children: ["Missing inputs: ", i.slice.missing_inputs.join(", ")]
@@ -3530,7 +3560,7 @@ function w({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvid
             className: "action-control",
             onClick: c2,
             type: "button",
-            children: u2
+            children: u
           }),
           o2 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
             className: "action-control",
@@ -3539,7 +3569,7 @@ function w({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvid
             children: "Metric explanation"
           }),
           s2 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-            autoFocus: l2,
+            autoFocus: l,
             className: "action-control",
             onClick: (e3) => s2(e3.currentTarget),
             type: "button",
@@ -3550,28 +3580,7 @@ function w({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvid
     ] })]
   });
 }
-var T = (e3) => e3.toLowerCase().replaceAll("_", " ");
-function E({ items: r, selectedCoordinate: i, mode: a2, onSelect: o2 }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", {
-    "aria-label": "Metric results",
-    className: "metric-navigator",
-    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { children: r.map((r2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-      "aria-current": r2.coordinate === i ? "true" : void 0,
-      className: "metric-nav-item",
-      onClick: () => o2(r2.coordinate),
-      type: "button",
-      children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-        className: "metric-coordinate",
-        children: r2.coordinate
-      }), a2 === "single" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Result: ", T(r2.resultState)] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Before: ", T(r2.beforeState ?? "UNRESOLVED")] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["After: ", T(r2.afterState ?? "UNRESOLVED")] }),
-        r2.deltaState === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Delta: ", T(r2.deltaState)] })
-      ] })]
-    }) }, r2.coordinate)) })
-  });
-}
-function D({ onExplain: e3, onEvidence: r, focusEvidenceAction: i = false }) {
+function M({ onExplain: e3, onEvidence: r, focusEvidenceAction: i = false }) {
   return e3 === void 0 && r === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("footer", {
     className: "metric-actions",
     children: [e3 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
@@ -3588,7 +3597,7 @@ function D({ onExplain: e3, onEvidence: r, focusEvidenceAction: i = false }) {
     })]
   });
 }
-function O({ coordinate: e3, slices: r, label: i = "Result data" }) {
+function N({ coordinate: e3, slices: r, label: i = "Result data" }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "bounded-table",
     children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", {
@@ -3642,7 +3651,7 @@ function O({ coordinate: e3, slices: r, label: i = "Result data" }) {
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: e4.state }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
             className: "numeric-exact",
-            children: e4.value === void 0 ? e4.withholding_reason : f(e4.value).exact
+            children: e4.value === void 0 ? e4.withholding_reason : h(e4.value).exact
           }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("td", {
             className: "numeric-exact",
@@ -3674,7 +3683,7 @@ function O({ coordinate: e3, slices: r, label: i = "Result data" }) {
     })
   });
 }
-function k(e3) {
+function le(e3) {
   let [t2, n2 = "1"] = e3.split("/");
   try {
     let e4 = BigInt(t2), r = BigInt(n2);
@@ -3683,9 +3692,9 @@ function k(e3) {
     return false;
   }
 }
-function A({ slice: e3 }) {
+function ue({ slice: e3 }) {
   if (e3.value?.kind !== "RATIO") return null;
-  let [i, a2] = e3.value.value.split("/"), o2 = BigInt(a2 ?? "1"), s2 = Number(BigInt(i) * 10000n / o2), c2 = linear2().domain([0, 1e4]).range([8, 198])(s2), l2 = f(e3.value);
+  let [i, a2] = e3.value.value.split("/"), o2 = BigInt(a2 ?? "1"), s2 = Number(BigInt(i) * 10000n / o2), c2 = linear2().domain([0, 1e4]).range([8, 198])(s2), l = h(e3.value);
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "visual-with-fallback",
     children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
@@ -3694,7 +3703,7 @@ function A({ slice: e3 }) {
       role: "img",
       viewBox: "0 0 206 70",
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("title", { children: `${l2.display}; exact ${l2.exact}` }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("title", { children: `${l.display}; exact ${l.exact}` }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
           className: "stroke-border-default",
           d: "M8 35 H198",
@@ -3720,11 +3729,11 @@ function A({ slice: e3 }) {
       })] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("tr", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", {
         scope: "row",
         children: "Display percent"
-      }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: l2.display })] })] })]
+      }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: l.display })] })] })]
     })]
   });
 }
-function re2({ slice: e3 }) {
+function de({ slice: e3 }) {
   return e3.value?.kind === "BOOLEAN" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
     "aria-label": "Boolean result",
     className: "status-label",
@@ -3739,43 +3748,52 @@ function re2({ slice: e3 }) {
     ]
   }) : null;
 }
-function j({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvidenceAction: o2 = false }) {
-  let s2 = `${e3.metric_id}@${e3.metric_version}`;
-  return e3.slices.every((e4) => e4.value === void 0 || h(e4).includes(r) && (r !== "ratio-bar@1" || e4.value.kind === "RATIO" && k(e4.value.value))) ? r === "table@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+function P({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvidenceAction: o2 = false }) {
+  if (!b(e3)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
     className: "panel-card",
-    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, {
-      coordinate: s2,
+    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(k, {
+      announce: "assertive",
+      detail: "The supplied value does not satisfy the formal Metric Result 2.0.0 contract.",
+      retryable: false,
+      title: "Metric Result incompatible"
+    })
+  });
+  let s2 = r ?? C(e3), c2 = `${e3.metric_id}@${e3.metric_version}`;
+  return e3.slices.every((e4) => e4.value === void 0 || S(e4).includes(s2) && (s2 !== "ratio-bar@1" || e4.value.kind === "RATIO" && le(e4.value.value))) ? s2 === "table@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+    className: "panel-card",
+    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(N, {
+      coordinate: c2,
       slices: e3.slices
-    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(D, {
+    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(M, {
       focusEvidenceAction: o2,
       onEvidence: a2,
       onExplain: i
     })]
-  }) : e3.slices.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(w, {
+  }) : e3.slices.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(A, {
     content: {
       tag: "RESULT",
       slice: e4
     },
-    coordinate: s2,
+    coordinate: c2,
     onEvidence: a2,
     onExplain: i,
     focusEvidenceAction: o2,
-    visualization: r === "ratio-bar@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(A, { slice: e4 }) : r === "badge@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(re2, { slice: e4 }) : void 0
+    visualization: s2 === "ratio-bar@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ue, { slice: e4 }) : s2 === "badge@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(de, { slice: e4 }) : void 0
   }, JSON.stringify(e4.slice_key))) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     className: "panel-card",
     children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(x, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(k, {
         announce: "polite",
-        detail: `${r} cannot consume the published Result shape without inventing a domain or value.`,
+        detail: `${s2} cannot consume the published Result shape without inventing a domain or value.`,
         retryable: false,
         title: "Visualizer binding incompatible"
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, {
-        coordinate: s2,
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(N, {
+        coordinate: c2,
         label: "Fallback result data",
         slices: e3.slices
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(D, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(M, {
         focusEvidenceAction: o2,
         onEvidence: a2,
         onExplain: i
@@ -3783,7 +3801,7 @@ function j({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvide
     ]
   });
 }
-function M({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRetry: s2, onExplain: c2, onEvidence: l2, focusEvidenceAction: u2, visualizer: d2 }) {
+function F({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRetry: s2, onExplain: c2, onEvidence: l, focusEvidenceAction: u, visualizer: d2 }) {
   let f2 = r.lastIndexOf("@"), p2 = i === void 0 ? void 0 : {
     metric_id: r.slice(0, f2),
     metric_version: "2.0.0",
@@ -3795,7 +3813,7 @@ function M({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRet
     children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
       className: "text-label",
       children: e3
-    }), p2 === void 0 ? a2 !== void 0 && o2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(x, {
+    }), p2 === void 0 ? a2 !== void 0 && o2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(k, {
       announce: "assertive",
       detail: `${a2.code}: ${a2.detail}`,
       onRetry: s2,
@@ -3811,16 +3829,16 @@ function M({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRet
         " side unresolved: ",
         a2.code
       ]
-    }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(j, {
+    }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(P, {
       result: p2,
       visualizer: d2,
-      focusEvidenceAction: u2,
-      onEvidence: l2,
+      focusEvidenceAction: u,
+      onEvidence: l,
       onExplain: c2
     })]
   });
 }
-function N({ delta: e3 }) {
+function fe({ delta: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Delta result",
     className: "compare-delta",
@@ -3832,7 +3850,7 @@ function N({ delta: e3 }) {
       children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           className: "metric-number",
-          children: f(e3.value).display
+          children: h(e3.value).display
         }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           className: "status-reading",
@@ -3840,7 +3858,7 @@ function N({ delta: e3 }) {
         }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
           className: "numeric-exact",
-          children: ["Exact delta: ", f(e3.value).exact]
+          children: ["Exact delta: ", h(e3.value).exact]
         })
       ]
     }) : e3.state === "SIDE_UNRESOLVED" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -3852,44 +3870,44 @@ function N({ delta: e3 }) {
     })]
   });
 }
-function P({ coordinate: e3, before: r, after: i, beforeError: a2, afterError: o2, delta: s2, onRetryFailedSide: c2, ownsFailedSide: l2 = true, focusEvidenceSide: u2, onExplain: d2, onEvidence: f2, visualizer: p2 = "numeric-card@1" }) {
+function pe({ coordinate: e3, before: r, after: i, beforeError: a2, afterError: o2, delta: s2, onRetryFailedSide: c2, ownsFailedSide: l = true, focusEvidenceSide: u, onExplain: d2, onEvidence: f2, visualizer: p2 = "numeric-card@1" }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
     "aria-label": `Compare ${e3}`,
     className: "compare-result",
     children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(M, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(F, {
         coordinate: e3,
         error: a2,
-        focusEvidenceAction: u2 === "left",
+        focusEvidenceAction: u === "left",
         label: "Before",
-        ownsError: l2,
+        ownsError: l,
         onEvidence: f2 === void 0 ? void 0 : (e4) => f2("left", e4),
         onExplain: d2 === void 0 ? void 0 : (e4) => d2("left", e4),
         onRetry: a2 === void 0 ? void 0 : c2,
         slice: r,
         visualizer: p2
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(M, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(F, {
         coordinate: e3,
         error: o2,
-        focusEvidenceAction: u2 === "right",
+        focusEvidenceAction: u === "right",
         label: "After",
-        ownsError: l2,
+        ownsError: l,
         onEvidence: f2 === void 0 ? void 0 : (e4) => f2("right", e4),
         onExplain: d2 === void 0 ? void 0 : (e4) => d2("right", e4),
         onRetry: o2 === void 0 ? void 0 : c2,
         slice: i,
         visualizer: p2
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(N, { delta: s2 })
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(fe, { delta: s2 })
     ]
   });
 }
-function F({ values: e3 }) {
+function I({ values: e3 }) {
   let n2 = Object.entries(e3);
   return n2.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "None" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: n2.map(([e4, t2]) => `${e4}=${t2}`).join(", ") });
 }
-function I({ membership: e3 }) {
+function L({ membership: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
       className: "text-code",
@@ -3911,35 +3929,7 @@ function I({ membership: e3 }) {
     })
   ] });
 }
-function L({ metricCoordinate: e3, definition: r, valueSemantics: i, eligibility: a2, exclusions: o2, limits: s2 }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-    className: "detail-view",
-    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-        className: "text-label text-content-muted",
-        children: "Catalog semantics"
-      }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-        className: "text-heading",
-        children: "Metric explanation"
-      }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
-        className: "text-code",
-        children: e3
-      })
-    ] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dl", {
-      className: "detail-list",
-      children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Definition" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: r })] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Value semantics" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: i })] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Eligible population" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: a2 })] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Exclusions" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: o2.length === 0 ? "None" : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { children: o2.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: e4 }, e4)) }) })] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Interpretation limits" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: s2 })] })
-      ]
-    })]
-  });
-}
-function R({ population: e3 }) {
+function z({ population: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
     className: "text-heading",
     children: "Task population"
@@ -3954,18 +3944,18 @@ function R({ population: e3 }) {
           children: e4.task_id
         }) : null,
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [e4.memberships.length, " Delivery memberships"] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Cohort: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(F, { values: e4.cohort_coordinates })] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Cohort: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(I, { values: e4.cohort_coordinates })] }),
         e4.terminal_reading === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Terminal reading: ", e4.terminal_reading] }),
         e4.exclusions.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Exclusions: ", e4.exclusions.join(", ")] }),
         e4.memberships.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
           className: "detail-rows",
-          children: e4.memberships.map((e6) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(I, { membership: e6 }, e6.delivery_id))
+          children: e4.memberships.map((e6) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(L, { membership: e6 }, e6.delivery_id))
         })
       ] }, e4.task_id);
     })
   })] });
 }
-function z({ resolution: e3 }) {
+function B({ resolution: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: e3.state }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
@@ -4038,7 +4028,7 @@ function z({ resolution: e3 }) {
     })
   ] });
 }
-function B({ receipt: e3, side: r }) {
+function me({ receipt: e3, side: r }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     className: "detail-view",
     children: [
@@ -4092,7 +4082,7 @@ function B({ receipt: e3, side: r }) {
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Catalog observation profile" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: e3.catalog.observation_profile })] })
         ]
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(R, { population: e3.task_population }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(z, { population: e3.task_population }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
         className: "text-heading",
         children: "Evidence bindings"
@@ -4103,7 +4093,7 @@ function B({ receipt: e3, side: r }) {
             className: "text-code",
             children: e4.route
           }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Filter: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(F, { values: e4.canonical_filter })] }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Filter: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(I, { values: e4.canonical_filter })] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Contract revision ", e4.contract_revision] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Observation profile ", e4.observation_profile] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Read model revision ", e4.read_model_revision] }),
@@ -4143,7 +4133,7 @@ function B({ receipt: e3, side: r }) {
         children: "No Workflow resolutions."
       }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
         className: "detail-rows",
-        children: e3.workflow_resolutions.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(z, { resolution: e4 }, e4.manifest_digest))
+        children: e3.workflow_resolutions.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(B, { resolution: e4 }, e4.manifest_digest))
       })] })
     ]
   });
@@ -4162,12 +4152,12 @@ var V = [
     label: "Resolved read set"
   }
 ];
-var H = {
+var he = {
   result: "Exact provenance identities cited by this Metric Result; non-Fact detail may remain unresolved.",
   related: "Related Facts match the context but are not claimed as calculation contributors.",
   "read-set": "Every bounded identity recorded by this receipt; this view only hydrates matching Fact rows."
 };
-function U({ rows: e3 }) {
+function ge({ rows: e3 }) {
   return e3.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "table-scroll",
     children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", {
@@ -4209,7 +4199,7 @@ function U({ rows: e3 }) {
     })
   });
 }
-function W({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
+function _e({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
   let s2 = V.find((e3) => e3.id === r).label;
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "table-scroll",
@@ -4253,8 +4243,8 @@ function W({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("td", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
               className: "text-code",
               children: r2.provenance
-            }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(b, { truth: r2.truth })] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: r2.trace === void 0 ? "No Trace reference" : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [r2.trace.state === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Trace lifecycle not loaded" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(b, { traceState: r2.trace.state }), o2 === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
+            }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, { truth: r2.truth })] }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: r2.trace === void 0 ? "No Trace reference" : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [r2.trace.state === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Trace lifecycle not loaded" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(O, { traceState: r2.trace.state }), o2 === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
               className: "text-code",
               children: [r2.trace.traceId, r2.trace.spanId === void 0 ? "" : ` / ${r2.trace.spanId}`]
             }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
@@ -4273,7 +4263,7 @@ function W({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
     })
   });
 }
-function G({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: s2, onScopeChange: c2, onOpenTrace: l2 }) {
+function ve({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: s2, onScopeChange: c2, onOpenTrace: l }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     className: "evidence-console",
     children: [
@@ -4297,13 +4287,13 @@ function G({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: s
       }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
         className: "scope-note",
-        children: H[r]
+        children: he[r]
       }),
       i.tag === "LOADING" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
         "aria-live": "polite",
         role: "status",
         children: "Loading Evidence\u2026"
-      }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(x, {
+      }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(k, {
         announce: "assertive",
         detail: i.detail,
         onRetry: i.onRetry,
@@ -4322,22 +4312,18 @@ function G({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: s
           className: "status-banner status-expired",
           children: "Evidence detail expired"
         }) : null,
-        a2.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(W, {
+        a2.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(_e, {
           focusedFactId: s2,
-          onOpenTrace: l2,
+          onOpenTrace: l,
           rows: a2,
           scope: r
         }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(U, { rows: o2 })
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ge, { rows: o2 })
       ] })
     ]
   });
 }
-var K = {
-  AVAILABLE: "Available recorded detail",
-  UNRESOLVED: "Unresolved recorded endpoint"
-};
-var q = (0, import_react.memo)(function({ model: e3 }) {
+var ye = (0, import_react.memo)(function({ model: e3 }) {
   let r = /* @__PURE__ */ new Map();
   for (let t2 of e3.depthGroups) {
     let e4 = t2.nodes.map((e6) => e6.endpointId ?? e6.id), n2 = point().domain(e4).range([80, 880]);
@@ -4389,335 +4375,276 @@ var q = (0, import_react.memo)(function({ model: e3 }) {
       ]
     })
   });
-}, J);
-function J(e3, t2) {
+}, be);
+function be(e3, t2) {
   return e3.model.depthGroups === t2.model.depthGroups && e3.model.parentEdges === t2.model.parentEdges && e3.model.links === t2.model.links;
 }
-function Y2({ node: e3, selected: r, onSelect: i }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-    "aria-current": r ? "true" : void 0,
-    className: "recorded-node",
-    onClick: () => i(e3.id),
-    type: "button",
-    children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: e3.label }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
-        className: "text-code",
-        children: e3.id
-      }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-        className: `recorded-state recorded-${e3.state.toLowerCase()}`,
-        children: K[e3.state]
-      })
-    ]
-  });
-}
-function ie({ model: r, onSelect: i }) {
-  let [a2, o2] = (0, import_react.useState)(false), c2 = r.depthGroups.reduce((e3, t2) => e3 + t2.nodes.length, 0);
+function W({ node: e3 }) {
+  let r = Object.fromEntries(e3.fields.map(({ field: e4, value: t2 }) => [e4, t2]));
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-    className: "recorded-structure",
-    children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-        className: "text-heading",
-        children: "Recorded structure"
-      }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-        className: "text-body",
-        children: "Parent depth, independent LINK records, and unresolved endpoints only."
-      })] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(q, { model: r }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-        className: "status-reading",
-        children: [
-          c2,
-          " nodes \xB7 ",
-          r.parentEdges.length,
-          " parent relations \xB7",
-          " ",
-          r.links.length,
-          " links \xB7 ",
-          r.orphans.length,
-          " orphan endpoints",
-          r.selectedId === void 0 ? null : ` \xB7 Selected: ${r.selectedId}`
-        ]
-      }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", {
-        className: "recorded-exact-details",
-        onToggle: (e3) => o2(e3.currentTarget.open),
-        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", { children: "Recorded structure exact details" }), a2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-            className: "recorded-parent-edges",
-            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-              className: "text-label",
-              children: "PARENT_EDGE \u2014 recorded structure"
-            }), r.parentEdges.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-              className: "text-body",
-              children: "No recorded parent relations."
-            }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { children: r.parentEdges.map((e3) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-              "aria-label": `Recorded parent relation ${e3.sourceId} to ${e3.targetId}`,
-              className: "recorded-relation",
-              onClick: () => i(e3.id),
-              type: "button",
-              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
-                className: "text-code",
-                children: [
-                  e3.sourceId,
-                  " \u2192 ",
-                  e3.targetId
-                ]
-              }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "PARENT_EDGE" })]
-            }) }, e3.id)) })]
-          }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-            className: "recorded-depths",
-            children: r.depthGroups.map((e3) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-              "aria-label": `Recorded depth ${e3.depth}`,
-              className: "recorded-group",
-              role: "group",
-              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h3", {
-                className: "text-label",
-                children: ["Depth ", e3.depth]
-              }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-                className: "recorded-siblings",
-                children: e3.nodes.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Y2, {
-                  node: e4,
-                  onSelect: i,
-                  selected: r.selectedId === e4.id
-                }, e4.id))
-              })]
-            }, e3.depth))
-          }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-            className: "recorded-links",
-            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-              className: "text-label",
-              children: "LINK \u2014 independent recorded relation"
-            }), r.links.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-              className: "text-body",
-              children: "No recorded LINK relations."
-            }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { children: r.links.map((e3) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-              "aria-label": `Independent LINK ${e3.sourceId} to ${e3.targetId}`,
-              className: "recorded-relation",
-              onClick: () => i(e3.id),
-              type: "button",
-              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
-                className: "text-code",
-                children: [
-                  e3.sourceId,
-                  " \u21E2 ",
-                  e3.targetId
-                ]
-              }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["LINK \xB7 ", K[e3.state]] })]
-            }) }, e3.id)) })]
-          }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-            "aria-label": "Orphan endpoints",
-            className: "orphan-lane",
-            role: "group",
-            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-              className: "text-label",
-              children: "Orphan endpoints"
-            }), r.orphans.map((e3) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Y2, {
-              node: e3,
-              onSelect: i,
-              selected: r.selectedId === e3.id
-            }, e3.id))]
-          })
-        ] }) : null]
-      })
-    ]
+    "aria-label": "Span passport",
+    className: "span-passport panel-card",
+    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+      className: "text-heading",
+      children: "Span passport"
+    }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dl", {
+      className: "trace-passport-grid",
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Span" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+          className: "text-code",
+          children: e3.endpoint.span_id
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded start (ns)" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+          className: "numeric-exact",
+          children: e3.startTimeUnixNano
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded end (ns)" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+          className: "numeric-exact",
+          children: e3.endTimeUnixNano
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded duration (ns)" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+          className: "numeric-exact",
+          children: e3.durationNano
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Status / truth" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: `${e3.status} \xB7 ${e3.truth.completeness ?? "UNKNOWN"} \xB7 ${e3.truth.availability}` }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Flags / trace state" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+          className: "text-code",
+          children: `${e3.flags} \xB7 ${e3.traceState ?? "none"}`
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Fields" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+          className: "text-code",
+          children: JSON.stringify(r)
+        })
+      ]
+    })]
   });
 }
-var X2 = "STILL";
-function ae({ mode: e3, reducedMotion: r, canStart: i, disabledReason: a2, onStart: s2, onStop: c2, onReset: l2 }) {
-  let u2 = (0, import_react.useId)(), d2 = r ? "STILL" : e3, f2 = r ? "Reduced motion keeps the complete structure still." : a2;
+function G({ trace: e3 }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(k, {
+    announce: "polite",
+    detail: e3.errors.join(" \xB7 ") || "Recorded Trace IR is invalid.",
+    retryable: false,
+    title: "Recorded Trace unavailable"
+  });
+}
+function K({ trace: e3, node: n2 }) {
+  let r = n2 ? e3.links.filter((e4) => e4.from.span_id === n2.id || e4.to.span_id === n2.id) : e3.links;
+  return r.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+    "aria-label": "Recorded span links",
+    className: "trace-link-list",
+    children: r.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", {
+      className: "text-code",
+      children: `Recorded LINK \u2192 ${e4.to.trace_id}:${e4.to.span_id}`
+    }, e4.id))
+  });
+}
+function q(e3, t2) {
+  let n2 = BigInt(t2);
+  if (n2 <= 0n) return "0%";
+  let r = BigInt(e3) * 10000n / n2;
+  return `${Number(r) / 100}%`;
+}
+function we({ trace: e3, reducedMotion: r = false }) {
+  let [i, a2] = (0, import_react.useState)();
+  if (e3.status !== "READY" || e3.durationNano === void 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(G, { trace: e3 });
+  let o2 = e3.nodes.find((e4) => e4.id === i);
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-    className: "motion-control",
+    "aria-label": "Recorded trace waterfall",
+    className: "trace-view trace-waterfall",
+    "data-motion": r ? "off" : "finite-recorded-time",
     children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-        "aria-live": "polite",
-        children: ["Mode: ", d2 === "STILL" ? "Still" : d2]
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+        className: "trace-summary",
+        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: `${e3.durationNano} ns recorded duration` }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: `Recorded links: ${e3.links.length}` })]
       }),
-      d2 === "LIVE" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-        className: "action-control",
-        onClick: c2,
-        type: "button",
-        children: "Stop Live reading"
-      }) : d2 === "COMPLETE" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-        className: "action-control",
-        onClick: l2,
-        type: "button",
-        children: "Reset reading"
-      }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-        "aria-describedby": f2 === void 0 ? void 0 : u2,
-        className: "action-control",
-        disabled: r || !i,
-        onClick: s2,
-        type: "button",
-        children: "Start Live reading"
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+        "aria-label": "Shared recorded timeline",
+        className: "trace-timeline",
+        children: e3.nodes.map((r2) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+          className: "trace-waterfall-row",
+          children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+            "aria-label": `${r2.label}, ${r2.durationNano} nanoseconds`,
+            className: "recorded-node trace-node-label",
+            onClick: () => a2(r2.id),
+            type: "button",
+            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: r2.label }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+              className: "numeric-exact",
+              children: `${r2.durationNano} ns`
+            })]
+          }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+            "aria-hidden": "true",
+            className: "trace-timeline-track",
+            children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+              className: "trace-timeline-bar",
+              style: {
+                insetInlineStart: q(r2.startOffsetNano, e3.durationNano),
+                width: q(r2.durationNano, e3.durationNano)
+              }
+            })
+          })]
+        }, r2.id))
       }),
-      f2 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-        className: "status-reason",
-        id: u2,
-        children: f2
-      })
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(K, { trace: e3 }),
+      o2 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(W, { node: o2 })
     ]
   });
 }
-var Z = (e3) => `${e3.trace_id}:${e3.span_id}`;
+function Te({ trace: e3 }) {
+  let [r, i] = (0, import_react.useState)();
+  if (e3.status !== "READY") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(G, { trace: e3 });
+  let a2 = e3.nodes.find((e4) => e4.id === r);
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+    "aria-label": "Recorded trace tree",
+    className: "trace-view trace-tree",
+    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+      "aria-label": "Recorded trace call tree",
+      role: "tree",
+      children: e3.nodes.map((r2) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+        "aria-level": r2.depth + 1,
+        className: "trace-tree-row",
+        role: "treeitem",
+        style: { paddingInlineStart: `${r2.depth * 1.5}rem` },
+        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+          className: "recorded-node",
+          onClick: () => i(r2.id),
+          type: "button",
+          children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: r2.label }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+            className: "numeric-exact",
+            children: `${r2.durationNano} ns`
+          })]
+        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(K, {
+          node: r2,
+          trace: e3
+        })]
+      }, r2.id))
+    }), a2 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(W, { node: a2 })]
+  });
+}
+var Z = ({ trace_id: e3, span_id: t2 }) => `${e3}:${t2}`;
 var Q = (e3, t2) => e3 < t2 ? -1 : +(e3 > t2);
-function oe(e3) {
+function $(e3) {
   return {
-    id: e3.node.span_id,
-    endpoint: {
-      trace_id: e3.trace_id,
-      span_id: e3.node.span_id
-    },
-    label: e3.node.span_name,
-    kind: e3.node.span_kind,
-    status: e3.node.span_status,
-    truth: e3.truth
+    schemaVersion: "wsr.trace-view@1",
+    status: "INVALID",
+    nodes: [],
+    parentEdges: [],
+    links: [],
+    errors: [...new Set(e3)].sort(Q)
   };
 }
-function $(e3) {
-  let t2 = /* @__PURE__ */ new Map(), n2 = /* @__PURE__ */ new Map(), r = [], i = [], a2 = /* @__PURE__ */ new Map(), o2 = [];
+function Oe(e3) {
+  let t2 = [], n2 = /* @__PURE__ */ new Map(), r = /* @__PURE__ */ new Map(), i = [], a2 = [], o2 = /* @__PURE__ */ new Set();
   for (let s3 of e3) {
     if (s3.kind === "NODE") {
-      let e6 = oe(s3), n3 = Z(e6.endpoint);
-      t2.has(n3) ? o2.push(`duplicate NODE ${n3}`) : t2.set(n3, e6);
+      let e4 = Z({
+        trace_id: s3.trace_id,
+        span_id: s3.node.span_id
+      });
+      o2.add(s3.trace_id), n2.has(e4) ? t2.push(`duplicate NODE ${e4}`) : n2.set(e4, s3);
+      try {
+        BigInt(s3.node.end_time_unix_nano) < BigInt(s3.node.start_time_unix_nano) && t2.push(`negative recorded duration for ${e4}`);
+      } catch {
+        t2.push(`invalid recorded time for ${e4}`);
+      }
       continue;
     }
-    let e4 = Z(s3.edge.from), c3 = Z(s3.edge.to);
-    if (a2.set(e4, s3.edge.from), a2.set(c3, s3.edge.to), s3.kind === "LINK") {
-      i.push({
+    if (s3.kind === "PARENT_EDGE") {
+      let e4 = Z(s3.edge.from), n3 = Z(s3.edge.to), a3 = r.get(e4);
+      a3 !== void 0 && a3 !== n3 ? t2.push(`multiple recorded parents for ${e4}`) : r.set(e4, n3), i.push({
         id: s3.id,
-        from: s3.edge.from,
-        to: s3.edge.to
+        from: { ...s3.edge.from },
+        to: { ...s3.edge.to },
+        truth: { ...s3.truth },
+        recordedAt: s3.recorded_at,
+        source: { ...s3.source }
       });
       continue;
     }
-    let l3 = n2.get(e4);
-    l3 !== void 0 && l3 !== c3 ? o2.push(`multiple recorded parents for ${e4}`) : n2.set(e4, c3), r.push({
+    a2.push({
       id: s3.id,
-      from: s3.edge.from,
-      to: s3.edge.to
+      from: { ...s3.edge.from },
+      to: { ...s3.edge.to },
+      flags: s3.edge.flags,
+      traceState: s3.edge.trace_state,
+      truth: { ...s3.truth },
+      recordedAt: s3.recorded_at,
+      source: { ...s3.source }
     });
   }
-  let s2 = /* @__PURE__ */ new Map(), c2 = /* @__PURE__ */ new Set(), l2 = (e4) => {
-    let r2 = s2.get(e4);
-    if (r2 !== void 0) return r2;
-    if (c2.has(e4)) return o2.some((e6) => e6.startsWith("recorded parent cycle at ")) || o2.push(`recorded parent cycle at ${e4}`), null;
-    let i2 = n2.get(e4);
-    if (i2 === void 0) return s2.set(e4, 0), 0;
-    if (!t2.has(i2)) return null;
+  o2.size > 1 && t2.push("multiple NODE trace identities");
+  let s2 = /* @__PURE__ */ new Map(), c2 = /* @__PURE__ */ new Set(), l = (e4) => {
+    let i2 = s2.get(e4);
+    if (i2 !== void 0) return i2;
+    if (c2.has(e4)) {
+      t2.push(`recorded parent cycle at ${e4}`);
+      return;
+    }
+    let a3 = r.get(e4);
+    if (a3 === void 0) return s2.set(e4, 0), 0;
+    if (!n2.has(a3)) {
+      t2.push(`missing recorded parent ${a3} for ${e4}`);
+      return;
+    }
     c2.add(e4);
-    let a3 = l2(i2);
-    if (c2.delete(e4), a3 === null) return null;
-    let u3 = a3 + 1;
-    return s2.set(e4, u3), u3;
+    let o3 = l(a3);
+    if (c2.delete(e4), o3 !== void 0) return s2.set(e4, o3 + 1), o3 + 1;
   };
-  for (let e4 of [...t2.keys()].sort(Q)) l2(e4);
-  let u2 = [...[...s2.entries()].reduce((e4, [n3, r2]) => {
-    let i2 = e4.get(r2) ?? [];
-    return i2.push(t2.get(n3)), e4.set(r2, i2), e4;
-  }, /* @__PURE__ */ new Map()).entries()].sort(([e4], [t3]) => e4 - t3).map(([e4, t3]) => ({
-    depth: e4,
-    nodes: t3.sort((e6, t4) => Q(Z(e6.endpoint), Z(t4.endpoint)))
-  })), d2 = [...t2.entries()].filter(([e4]) => !s2.has(e4)).sort(([e4], [t3]) => Q(e4, t3)).map(([, e4]) => e4), f2 = [...a2.entries()].filter(([e4]) => !t2.has(e4)).sort(([e4], [t3]) => Q(e4, t3)).map(([e4, t3]) => ({
-    id: e4,
-    endpoint: t3
-  }));
+  for (let e4 of [...n2.keys()].sort(Q)) l(e4);
+  if (t2.length > 0) return $(t2);
+  let u = [...n2.values()].sort((e4, t3) => {
+    let n3 = BigInt(e4.node.start_time_unix_nano) - BigInt(t3.node.start_time_unix_nano);
+    return n3 === 0n ? Q(e4.recorded_at, t3.recorded_at) || Q(e4.id, t3.id) : n3 < 0n ? -1 : 1;
+  });
+  if (u.length === 0) return $(["recorded trace has no NODE"]);
+  let d2 = u.reduce((e4, t3) => BigInt(t3.node.start_time_unix_nano) < e4 ? BigInt(t3.node.start_time_unix_nano) : e4, BigInt(u[0].node.start_time_unix_nano)), f2 = u.reduce((e4, t3) => BigInt(t3.node.end_time_unix_nano) > e4 ? BigInt(t3.node.end_time_unix_nano) : e4, BigInt(u[0].node.end_time_unix_nano));
   return {
-    status: o2.length === 0 ? "READY" : "INVALID",
-    depthGroups: o2.length === 0 ? u2 : [],
-    parentEdges: r.sort((e4, t3) => Q(e4.id, t3.id)),
-    links: i.sort((e4, t3) => Q(e4.id, t3.id)),
-    unresolvedNodes: d2,
-    orphans: f2,
-    errors: [...new Set(o2)].sort(Q)
-  };
-}
-async function se(e3, t2, n2 = {}) {
-  let r = n2.maximumPages ?? 20, i = n2.maximumItems ?? 4e3, a2 = [], o2 = /* @__PURE__ */ new Set(), s2 = /* @__PURE__ */ new Set(), c2, l2, u2, d2, f2 = /* @__PURE__ */ new Set(), p2 = 0;
-  do {
-    if (p2 >= r) return {
-      ok: false,
-      reason: "TRACE_PAGE_BOUND_EXCEEDED"
-    };
-    let n3 = l2 === void 0, m2 = await e3.getTracesPage({
-      trace_id: t2,
-      limit: 200,
-      ...l2 === void 0 ? {} : { cursor: l2 }
-    });
-    if (!m2.ok) return {
-      ok: false,
-      reason: "reason" in m2.error ? m2.error.reason : "code" in m2.error ? m2.error.code : m2.error.kind
-    };
-    let h2 = m2.value;
-    if (p2 += 1, n3 && (h2.trace_state === "AVAILABLE" || h2.trace_state === "PARTIAL") && h2.items.length === 0) return {
-      ok: false,
-      reason: "TRACE_INITIAL_PAGE_EMPTY"
-    };
-    if (c2 !== void 0 && h2.snapshot !== c2) return {
-      ok: false,
-      reason: "TRACE_SNAPSHOT_DRIFT"
-    };
-    c2 = h2.snapshot;
-    let g2 = JSON.stringify(h2.trace_summaries);
-    if (u2 !== void 0 && h2.trace_state !== u2 || d2 !== void 0 && g2 !== d2) return {
-      ok: false,
-      reason: "TRACE_SUMMARY_DRIFT"
-    };
-    if (u2 = h2.trace_state, d2 = g2, h2.trace_summaries.some((e4) => e4.trace_id !== t2) || h2.items.some((e4) => e4.trace_id !== t2)) return {
-      ok: false,
-      reason: "TRACE_IDENTITY_MISMATCH"
-    };
-    for (let e4 of h2.items) {
-      if (o2.has(e4.id)) return {
-        ok: false,
-        reason: "TRACE_DUPLICATE_IDENTITY"
+    schemaVersion: "wsr.trace-view@1",
+    status: "READY",
+    traceId: [...o2][0],
+    startTimeUnixNano: d2.toString(),
+    endTimeUnixNano: f2.toString(),
+    durationNano: (f2 - d2).toString(),
+    nodes: u.map((e4) => {
+      let t3 = {
+        trace_id: e4.trace_id,
+        span_id: e4.node.span_id
+      }, i2 = r.get(Z(t3));
+      return {
+        id: e4.node.span_id,
+        endpoint: t3,
+        label: e4.node.span_name,
+        kind: e4.node.span_kind,
+        status: e4.node.span_status,
+        startTimeUnixNano: e4.node.start_time_unix_nano,
+        endTimeUnixNano: e4.node.end_time_unix_nano,
+        durationNano: (BigInt(e4.node.end_time_unix_nano) - BigInt(e4.node.start_time_unix_nano)).toString(),
+        startOffsetNano: (BigInt(e4.node.start_time_unix_nano) - d2).toString(),
+        flags: e4.node.span_flags,
+        traceState: e4.node.trace_state,
+        fields: e4.node.fields.map((e6) => ({ ...e6 })),
+        truth: { ...e4.truth },
+        depth: s2.get(Z(t3)),
+        ...i2 === void 0 ? {} : { parentId: n2.get(i2).node.span_id },
+        evidenceId: e4.id,
+        recordedAt: e4.recorded_at,
+        source: { ...e4.source }
       };
-      o2.add(e4.id);
-      let t3 = e4.kind === "NODE" ? `NODE:${e4.trace_id}:${e4.node.span_id}` : `${e4.kind}:${e4.edge.from.trace_id}:${e4.edge.from.span_id}:${e4.edge.to.trace_id}:${e4.edge.to.span_id}`;
-      if (s2.has(t3)) return {
-        ok: false,
-        reason: "TRACE_DUPLICATE_CANONICAL_IDENTITY"
-      };
-      s2.add(t3), a2.push(e4);
-    }
-    if (a2.length > i) return {
-      ok: false,
-      reason: "TRACE_ITEM_BOUND_EXCEEDED"
-    };
-    if (l2 = h2.next_cursor ?? void 0, l2 !== void 0) {
-      if (f2.has(l2)) return {
-        ok: false,
-        reason: "TRACE_CURSOR_REPEATED"
-      };
-      f2.add(l2);
-    }
-  } while (l2 !== void 0);
-  return c2 === void 0 || u2 === void 0 ? {
-    ok: false,
-    reason: "TRACE_EMPTY_RESPONSE"
-  } : u2 === "ABSENT" || u2 === "EXPIRED" ? a2.length === 0 ? {
-    ok: true,
-    state: "ABSENT",
-    pages: p2,
-    snapshot: c2
-  } : {
-    ok: false,
-    reason: "TRACE_ABSENT_WITH_ITEMS"
-  } : {
-    ok: true,
-    state: u2,
-    pages: p2,
-    snapshot: c2,
-    structure: $(a2)
+    }),
+    parentEdges: i.sort((e4, t3) => Q(e4.id, t3.id)),
+    links: a2.sort((e4, t3) => Q(e4.id, t3.id)),
+    errors: []
   };
 }
 
 // node_modules/wsr-ui-core/dist/styles.css
-var styles_default = ".wsr-bi{--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light;--surface-canvas:oklch(97.5% .006 250);--surface-panel:oklch(100% 0 0);--surface-raised:oklch(99% .004 250);--surface-inset:oklch(94.5% .01 250);--content-primary:oklch(23% .025 255);--content-secondary:oklch(42% .025 255);--content-muted:oklch(54% .02 255);--border-default:oklch(86% .015 250);--border-strong:oklch(67% .025 250);--interaction-accent:oklch(49% .18 244);--interaction-selection:oklch(90% .05 244);--interaction-disabled:oklch(70% .01 250);--focus-ring:oklch(57% .17 244);--status-available:oklch(42% .12 155);--status-available-surface:oklch(94% .05 155);--status-attention:oklch(50% .13 75);--status-attention-surface:oklch(95% .055 85);--status-unavailable:oklch(45% .025 255);--status-unavailable-surface:oklch(94% .012 250);--status-expired:oklch(48% .1 305);--status-expired-surface:oklch(95% .035 305);--status-incompatible:oklch(48% .13 28);--status-incompatible-surface:oklch(95% .045 28);--status-error:oklch(47% .17 25);--status-error-surface:oklch(95% .05 25);--data-series-1:oklch(50% .17 244);--space-page:1.5rem;--space-grid:1rem;--space-cluster:.75rem;--space-control:.625rem;--space-tight:.375rem;--density-row:2.75rem;--density-control:2.5rem;--shape-panel:.75rem;--shape-control:.5rem;--shape-pill:999px;--type-heading-size:1rem;--type-body-size:.9375rem;--type-label-size:.6875rem;--type-code-size:.8125rem;--type-numeric-size:1.5rem;--layout-table-max-height:32rem;--layout-visual-preview-height:6rem;--motion-finite-duration:.32s;box-sizing:border-box;min-width:0;color:var(--content-primary);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}.wsr-bi[data-theme=dark]{--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;--surface-canvas:oklch(18% .02 255);--surface-panel:oklch(22.5% .025 255);--surface-raised:oklch(25.5% .025 255);--surface-inset:oklch(16% .02 255);--content-primary:oklch(94% .01 250);--content-secondary:oklch(76% .018 250);--content-muted:oklch(64% .02 250);--border-default:oklch(34% .025 250);--border-strong:oklch(49% .03 250);--interaction-accent:oklch(76% .13 235);--interaction-selection:oklch(32% .07 244);--interaction-disabled:oklch(48% .018 250);--focus-ring:oklch(73% .14 235);--status-available:oklch(79% .12 153);--status-available-surface:oklch(31% .07 155);--status-attention:oklch(84% .12 82);--status-attention-surface:oklch(32% .06 76);--status-unavailable:oklch(72% .025 250);--status-unavailable-surface:oklch(28% .02 250);--status-expired:oklch(79% .1 305);--status-expired-surface:oklch(31% .06 305);--status-incompatible:oklch(82% .13 35);--status-incompatible-surface:oklch(31% .07 28);--status-error:oklch(80% .14 25);--status-error-surface:oklch(31% .08 25);--data-series-1:oklch(75% .14 235)}.wsr-bi[data-density=compact]{--space-page:1rem;--space-grid:.75rem;--space-cluster:.5rem;--space-control:.375rem;--space-tight:.25rem;--density-control:2.75rem}.wsr-bi *,.wsr-bi :before,.wsr-bi :after{box-sizing:inherit}.wsr-bi :focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}.wsr-bi .panel-card,.wsr-bi .metric-frame{gap:var(--space-grid);min-width:0;padding:var(--space-page);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);flex-direction:column;display:flex}.wsr-bi .metric-frame-header,.wsr-bi .metric-actions{justify-content:space-between;align-items:center;gap:var(--space-cluster);flex-wrap:wrap;display:flex}.wsr-bi .metric-value,.wsr-bi .status-stack{gap:var(--space-tight);display:grid}.wsr-bi .metric-number{font-size:var(--type-numeric-size);font-variant-numeric:tabular-nums;font-weight:650}.wsr-bi .numeric-exact,.wsr-bi .text-code{overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--type-code-size);font-variant-numeric:tabular-nums}.wsr-bi .text-heading{font-size:var(--type-heading-size);margin:0;font-weight:650}.wsr-bi .text-label{font-size:var(--type-label-size);letter-spacing:.08em;text-transform:uppercase;font-weight:700}.wsr-bi .status-label{align-items:center;gap:var(--space-tight);width:fit-content;padding:var(--space-tight) var(--space-cluster);border-radius:var(--shape-pill);font-size:var(--type-label-size);border:1px solid;font-weight:700;display:inline-flex}.wsr-bi .status-available{background:var(--status-available-surface);color:var(--status-available)}.wsr-bi .status-attention{background:var(--status-attention-surface);color:var(--status-attention)}.wsr-bi .status-unavailable{background:var(--status-unavailable-surface);color:var(--status-unavailable)}.wsr-bi .status-expired{background:var(--status-expired-surface);color:var(--status-expired)}.wsr-bi .status-incompatible{background:var(--status-incompatible-surface);color:var(--status-incompatible)}.wsr-bi .status-error{background:var(--status-error-surface);color:var(--status-error)}.wsr-bi .action-control,.wsr-bi .recorded-node,.wsr-bi .recorded-relation{min-height:var(--density-control);padding:var(--space-control);border:1px solid var(--border-strong);border-radius:var(--shape-control);background:var(--surface-raised);color:var(--content-primary);font:inherit;cursor:pointer}.wsr-bi .visual-with-fallback,.wsr-bi .compare-result,.wsr-bi .recorded-structure{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .compare-result{grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr))}.wsr-bi .visual-preview{width:100%;height:var(--layout-visual-preview-height)}.wsr-bi .fill-current{fill:currentColor}.wsr-bi .text-data-series-1{color:var(--data-series-1)}.wsr-bi .stroke-border-default{stroke:var(--border-default)}.wsr-bi .visual-data-table{table-layout:fixed;border-collapse:collapse;width:100%;max-width:100%;font-size:var(--type-label-size)}.wsr-bi .visual-data-table th,.wsr-bi .visual-data-table td{padding:var(--space-tight);border-block-end:1px solid var(--border-default);overflow-wrap:anywhere;text-align:start}.wsr-bi .bounded-table,.wsr-bi .recorded-graph-frame{max-width:100%;overflow:auto}.wsr-bi .recorded-graph{width:100%;min-width:40rem}.wsr-bi .recorded-graph-parent{stroke:var(--border-strong)}.wsr-bi .recorded-graph-link{stroke:var(--interaction-accent);stroke-dasharray:5 4}.wsr-bi .recorded-graph-node{fill:var(--surface-panel);stroke:var(--interaction-accent)}.wsr-bi .recorded-graph-label{fill:var(--content-primary);font-size:var(--type-label-size)}@media (prefers-reduced-motion:reduce){.wsr-bi{--motion-finite-duration:0s}}\n/*$vite$:1*/";
+var styles_default = ".wsr-bi{--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light;--surface-canvas:oklch(97.5% .006 250);--surface-panel:oklch(100% 0 0);--surface-raised:oklch(99% .004 250);--surface-inset:oklch(94.5% .01 250);--content-primary:oklch(23% .025 255);--content-secondary:oklch(42% .025 255);--content-muted:oklch(54% .02 255);--border-default:oklch(86% .015 250);--border-strong:oklch(67% .025 250);--interaction-accent:oklch(49% .18 244);--interaction-selection:oklch(90% .05 244);--interaction-disabled:oklch(70% .01 250);--focus-ring:oklch(57% .17 244);--status-available:oklch(42% .12 155);--status-available-surface:oklch(94% .05 155);--status-attention:oklch(50% .13 75);--status-attention-surface:oklch(95% .055 85);--status-unavailable:oklch(45% .025 255);--status-unavailable-surface:oklch(94% .012 250);--status-expired:oklch(48% .1 305);--status-expired-surface:oklch(95% .035 305);--status-incompatible:oklch(48% .13 28);--status-incompatible-surface:oklch(95% .045 28);--status-error:oklch(47% .17 25);--status-error-surface:oklch(95% .05 25);--data-series-1:oklch(50% .17 244);--space-page:1.5rem;--space-grid:1rem;--space-cluster:.75rem;--space-control:.625rem;--space-tight:.375rem;--density-row:2.75rem;--density-control:2.5rem;--shape-panel:.75rem;--shape-control:.5rem;--shape-pill:999px;--type-heading-size:1rem;--type-body-size:.9375rem;--type-label-size:.6875rem;--type-code-size:.8125rem;--type-numeric-size:1.5rem;--layout-table-max-height:32rem;--layout-visual-preview-height:6rem;--motion-finite-duration:.32s;--wsr-container-border-style:solid;box-sizing:border-box;min-width:0;color:var(--content-primary);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}.wsr-bi[data-theme=dark]{--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;--surface-canvas:oklch(18% .02 255);--surface-panel:oklch(22.5% .025 255);--surface-raised:oklch(25.5% .025 255);--surface-inset:oklch(16% .02 255);--content-primary:oklch(94% .01 250);--content-secondary:oklch(76% .018 250);--content-muted:oklch(64% .02 250);--border-default:oklch(34% .025 250);--border-strong:oklch(49% .03 250);--interaction-accent:oklch(76% .13 235);--interaction-selection:oklch(32% .07 244);--interaction-disabled:oklch(48% .018 250);--focus-ring:oklch(73% .14 235);--status-available:oklch(79% .12 153);--status-available-surface:oklch(31% .07 155);--status-attention:oklch(84% .12 82);--status-attention-surface:oklch(32% .06 76);--status-unavailable:oklch(72% .025 250);--status-unavailable-surface:oklch(28% .02 250);--status-expired:oklch(79% .1 305);--status-expired-surface:oklch(31% .06 305);--status-incompatible:oklch(82% .13 35);--status-incompatible-surface:oklch(31% .07 28);--status-error:oklch(80% .14 25);--status-error-surface:oklch(31% .08 25);--data-series-1:oklch(75% .14 235)}.wsr-bi[data-density=compact]{--space-page:1rem;--space-grid:.75rem;--space-cluster:.5rem;--space-control:.375rem;--space-tight:.25rem;--density-control:2.75rem}.wsr-bi *,.wsr-bi :before,.wsr-bi :after{box-sizing:inherit}.wsr-bi :focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}.wsr-bi .panel-card,.wsr-bi .metric-frame,.wsr-bi .bi-card{gap:var(--space-grid);min-width:0;padding:var(--space-page);border:1px var(--wsr-container-border-style) var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);flex-direction:column;display:flex}.wsr-bi .bi-section{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .metric-frame-header,.wsr-bi .metric-actions{justify-content:space-between;align-items:center;gap:var(--space-cluster);flex-wrap:wrap;display:flex}.wsr-bi .metric-value,.wsr-bi .status-stack{gap:var(--space-tight);display:grid}.wsr-bi .metric-number{font-size:var(--type-numeric-size);font-variant-numeric:tabular-nums;font-weight:650}.wsr-bi .numeric-exact,.wsr-bi .text-code{overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--type-code-size);font-variant-numeric:tabular-nums}.wsr-bi .text-heading{font-size:var(--type-heading-size);margin:0;font-weight:650}.wsr-bi .text-label{font-size:var(--type-label-size);letter-spacing:.08em;text-transform:uppercase;font-weight:700}.wsr-bi .status-label{align-items:center;gap:var(--space-tight);width:fit-content;padding:var(--space-tight) var(--space-cluster);border-radius:var(--shape-pill);font-size:var(--type-label-size);border:1px solid;font-weight:700;display:inline-flex}.wsr-bi .status-available{background:var(--status-available-surface);color:var(--status-available)}.wsr-bi .status-attention{background:var(--status-attention-surface);color:var(--status-attention)}.wsr-bi .status-unavailable{background:var(--status-unavailable-surface);color:var(--status-unavailable)}.wsr-bi .status-expired{background:var(--status-expired-surface);color:var(--status-expired)}.wsr-bi .status-incompatible{background:var(--status-incompatible-surface);color:var(--status-incompatible)}.wsr-bi .status-error{background:var(--status-error-surface);color:var(--status-error)}.wsr-bi .action-control,.wsr-bi .recorded-node,.wsr-bi .recorded-relation{min-height:var(--density-control);padding:var(--space-control);border:1px solid var(--border-strong);border-radius:var(--shape-control);background:var(--surface-raised);color:var(--content-primary);font:inherit;cursor:pointer}.wsr-bi .visual-with-fallback,.wsr-bi .compare-result,.wsr-bi .recorded-structure{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .compare-result{grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr))}.wsr-bi .visual-preview{width:100%;height:var(--layout-visual-preview-height)}.wsr-bi .fill-current{fill:currentColor}.wsr-bi .text-data-series-1{color:var(--data-series-1)}.wsr-bi .stroke-border-default{stroke:var(--border-default)}.wsr-bi .visual-data-table{table-layout:fixed;border-collapse:collapse;width:100%;max-width:100%;font-size:var(--type-label-size)}.wsr-bi .visual-data-table th,.wsr-bi .visual-data-table td{padding:var(--space-tight);border-block-end:1px solid var(--border-default);overflow-wrap:anywhere;text-align:start}.wsr-bi .bounded-table,.wsr-bi .recorded-graph-frame{max-width:100%;overflow:auto}.wsr-bi .recorded-graph{width:100%;min-width:40rem}.wsr-bi .recorded-graph-parent{stroke:var(--border-strong)}.wsr-bi .recorded-graph-link{stroke:var(--interaction-accent);stroke-dasharray:5 4}.wsr-bi .recorded-graph-node{fill:var(--surface-panel);stroke:var(--interaction-accent)}.wsr-bi .recorded-graph-label{fill:var(--content-primary);font-size:var(--type-label-size)}.wsr-bi .trace-view,.wsr-bi .trace-timeline,.wsr-bi .trace-tree,.wsr-bi .trace-tree-row{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .trace-summary,.wsr-bi .trace-waterfall-row,.wsr-bi .trace-node-label,.wsr-bi .trace-tree-row>.recorded-node{justify-content:space-between;align-items:center;gap:var(--space-cluster);min-width:0;display:flex}.wsr-bi .trace-waterfall-row{grid-template-columns:minmax(10rem,.35fr) minmax(16rem,1fr);display:grid}.wsr-bi .trace-timeline-track{min-height:var(--density-row);border:1px solid var(--border-default);border-radius:var(--shape-control);background:var(--surface-inset);position:relative;overflow:hidden}.wsr-bi .trace-timeline-bar{inset-block:var(--space-tight);border-radius:var(--shape-control);background:var(--data-series-1);transform-origin:0;min-width:2px;animation:trace-recorded-reveal var(--motion-finite-duration) ease-out both;position:absolute}.wsr-bi [data-motion=off] .trace-timeline-bar{animation:none}.wsr-bi .trace-passport-grid{gap:var(--space-tight) var(--space-grid);grid-template-columns:minmax(9rem,auto) minmax(0,1fr);margin:0;display:grid}.wsr-bi .trace-passport-grid dt{color:var(--content-secondary);font-weight:650}.wsr-bi .trace-passport-grid dd{overflow-wrap:anywhere;min-width:0;margin:0}.wsr-bi .trace-link-list{color:var(--content-secondary);margin:0}@keyframes trace-recorded-reveal{0%{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}@media (width<=40rem){.wsr-bi .trace-waterfall-row{grid-template-columns:1fr}}@media (prefers-reduced-motion:reduce){.wsr-bi{--motion-finite-duration:0s}}\n/*$vite$:1*/";
 
 // packages/studio/src/client/evaluate-model.js
 var STORAGE_KEY = "wsr.studio.location@1";
@@ -5068,15 +4995,116 @@ var viewStyle = {
 };
 var controlStyle = { minHeight: "44px", minWidth: "44px" };
 var listStyle = { maxHeight: "min(42vh, 480px)", overflow: "auto", overflowWrap: "anywhere" };
-function visualizerFor(metric) {
-  if (!Array.isArray(metric?.slices) || metric.slices.length !== 1) return "table@1";
-  const value = metric.slices[0]?.value;
-  if (value?.kind === "RATIO" && value.unit === "ratio") return "ratio-bar@1";
-  if (value?.kind === "BOOLEAN") return "badge@1";
-  return "numeric-card@1";
+var DEFAULT_LAYOUT = Object.freeze({
+  schemaVersion: "wsr-dsh.studio-layout@1",
+  columns: Object.freeze({ desktop: 12, tablet: 6, mobile: 1 }),
+  panels: Object.freeze([
+    ["operational-latency", 3, 2, 3, 2, 1, 2],
+    ["delivery-cycle-time", 3, 2, 3, 2, 1, 2],
+    ["usage-availability", 3, 2, 3, 2, 1, 2],
+    ["cohort-eligibility", 3, 2, 3, 2, 1, 2],
+    ["role-template-rework-rate", 6, 3, 3, 3, 1, 3],
+    ["role-model-task-outcome-rate", 6, 3, 3, 3, 1, 3],
+    ["delivery-stage-reach", 12, 4, 6, 4, 1, 4]
+  ].map(([id2, dw, dh, tw, th, mw, mh]) => Object.freeze({
+    id: id2,
+    desktop: Object.freeze({ w: dw, h: dh }),
+    tablet: Object.freeze({ w: tw, h: th }),
+    mobile: Object.freeze({ w: mw, h: mh })
+  })))
+});
+var DASHBOARD_STORAGE_KEY = "wsr.studio.dashboard-layout@1";
+function createStudioTheme(mode) {
+  if (mode !== "light" && mode !== "dark") throw new Error("UNKNOWN_STUDIO_THEME");
+  return Object.freeze({ mode, density: "compact", containerBorderStyle: "solid" });
 }
-function metricResultCompatible(metric) {
-  return typeof metric?.metric_id === "string" && typeof metric.metric_version === "string" && Array.isArray(metric.slices) && metric.slices.every((slice) => slice !== null && typeof slice === "object" && slice.slice_key !== null && typeof slice.slice_key === "object" && !Array.isArray(slice.slice_key) && typeof slice.state === "string" && slice.measures !== null && typeof slice.measures === "object" && !Array.isArray(slice.measures) && (slice.coverage === null || typeof slice.coverage === "object") && slice.compatibility !== null && typeof slice.compatibility === "object" && !Array.isArray(slice.compatibility) && Array.isArray(slice.exclusions) && Array.isArray(slice.missing_inputs) && Array.isArray(slice.provenance_refs));
+function createStudioDashboardState(panelIds) {
+  if (!Array.isArray(panelIds) || new Set(panelIds).size !== panelIds.length || !panelIds.every((id2) => typeof id2 === "string" && id2.length > 0)) {
+    throw new Error("INVALID_STUDIO_PANELS");
+  }
+  return Object.freeze({
+    defaults: Object.freeze([...panelIds]),
+    order: Object.freeze([...panelIds]),
+    hidden: Object.freeze([]),
+    sizes: Object.freeze({})
+  });
+}
+function reduceStudioDashboardState(state, action) {
+  if (action.type === "RESET" || action.type === "PRESET") {
+    if (action.type === "PRESET" && action.preset !== "default") throw new Error("UNKNOWN_STUDIO_LAYOUT_PRESET");
+    return createStudioDashboardState(state.defaults);
+  }
+  const known = state.order.includes(action.panelId);
+  if (!known) throw new Error("UNKNOWN_STUDIO_PANEL");
+  if (action.type === "REMOVE") return Object.freeze({
+    ...state,
+    hidden: Object.freeze([.../* @__PURE__ */ new Set([...state.hidden, action.panelId])])
+  });
+  if (action.type === "ADD") return Object.freeze({
+    ...state,
+    hidden: Object.freeze(state.hidden.filter((id2) => id2 !== action.panelId))
+  });
+  if (action.type === "RESIZE") {
+    if (!["compact", "wide", "full"].includes(action.size)) throw new Error("UNKNOWN_STUDIO_PANEL_SIZE");
+    return Object.freeze({ ...state, sizes: Object.freeze({ ...state.sizes, [action.panelId]: action.size }) });
+  }
+  if (action.type === "MOVE") {
+    if (!state.order.includes(action.beforePanelId)) throw new Error("UNKNOWN_STUDIO_PANEL");
+    const order = state.order.filter((id2) => id2 !== action.panelId);
+    order.splice(order.indexOf(action.beforePanelId), 0, action.panelId);
+    return Object.freeze({ ...state, order: Object.freeze(order) });
+  }
+  throw new Error("UNKNOWN_STUDIO_LAYOUT_ACTION");
+}
+function validDashboardState(value) {
+  const uniqueStrings = (items) => Array.isArray(items) && items.every((item) => typeof item === "string" && item.length > 0) && new Set(items).size === items.length;
+  return value !== null && typeof value === "object" && !Array.isArray(value) && uniqueStrings(value.defaults) && uniqueStrings(value.order) && uniqueStrings(value.hidden) && value.defaults.every((id2) => value.order.includes(id2)) && value.hidden.every((id2) => value.order.includes(id2)) && value.sizes !== null && typeof value.sizes === "object" && !Array.isArray(value.sizes) && Object.entries(value.sizes).every(([id2, size]) => value.order.includes(id2) && ["compact", "wide", "full"].includes(size));
+}
+function createStudioLayoutStore(storage) {
+  return Object.freeze({
+    load(fallback) {
+      if (storage === void 0) return fallback;
+      try {
+        const encoded = storage.getItem(DASHBOARD_STORAGE_KEY);
+        if (encoded === null) return fallback;
+        const parsed = JSON.parse(encoded);
+        if (!validDashboardState(parsed)) return fallback;
+        return Object.freeze({
+          defaults: Object.freeze([...parsed.defaults]),
+          order: Object.freeze([...parsed.order]),
+          hidden: Object.freeze([...parsed.hidden]),
+          sizes: Object.freeze({ ...parsed.sizes })
+        });
+      } catch {
+        return fallback;
+      }
+    },
+    save(state) {
+      if (!validDashboardState(state)) throw new Error("INVALID_STUDIO_LAYOUT_STATE");
+      storage?.setItem(DASHBOARD_STORAGE_KEY, JSON.stringify(state));
+    }
+  });
+}
+var hostStyles = `
+#wsr-studio-view [data-wsr-dashboard-layout] { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:12px; }
+#wsr-studio-view [data-wsr-dashboard-panel] { grid-column:span var(--studio-panel-desktop-columns,3); min-width:0; }
+#wsr-studio-view [data-wsr-studio-region="header"], #wsr-studio-view [data-wsr-studio-region="footer"] { border:1px solid var(--dsw-alias-border-l2); padding:12px; }
+#wsr-studio-view .studio-title-row, #wsr-studio-view .studio-controls { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
+@media (max-width:900px) { #wsr-studio-view [data-wsr-dashboard-layout] { grid-template-columns:repeat(6,minmax(0,1fr)); } #wsr-studio-view [data-wsr-dashboard-panel] { grid-column:span var(--studio-panel-tablet-columns,3); } }
+@media (max-width:560px) { #wsr-studio-view [data-wsr-dashboard-layout] { grid-template-columns:1fr; } #wsr-studio-view [data-wsr-dashboard-panel] { grid-column:span 1 !important; } }
+`;
+function platformThemeMode(explicitMode) {
+  if (explicitMode === "light" || explicitMode === "dark") return explicitMode;
+  if (typeof document !== "undefined" && document.body?.hasAttribute("data-ds-dark-theme")) return "dark";
+  if (typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+  return "light";
+}
+function studioPanelPlacement(panelId, size) {
+  if (size === "full") return { desktop: 12, tablet: 6, mobile: 1 };
+  if (size === "wide") return { desktop: 6, tablet: 6, mobile: 1 };
+  if (size === "compact") return { desktop: 3, tablet: 3, mobile: 1 };
+  const configured = DEFAULT_LAYOUT.panels.find(({ id: id2 }) => id2 === panelId);
+  return configured === void 0 ? { desktop: 3, tablet: 3, mobile: 1 } : { desktop: configured.desktop.w, tablet: configured.tablet.w, mobile: configured.mobile.w };
 }
 function sliceIdentity(sliceKey) {
   return JSON.stringify(Object.fromEntries(Object.entries(sliceKey ?? {}).sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0)));
@@ -5108,56 +5136,14 @@ function factRow(fact) {
     } : {}
   };
 }
-function traceViewModel(Bi, items, selectedId) {
-  const structure = Bi.projectRecordedStructure(items);
-  const endpointId = (endpoint) => `${endpoint.trace_id}:${endpoint.span_id}`;
-  return {
-    status: structure.status,
-    errors: structure.errors,
-    model: {
-      depthGroups: structure.depthGroups.map((group) => ({
-        depth: group.depth,
-        nodes: group.nodes.map((node) => ({
-          id: node.id,
-          endpointId: endpointId(node.endpoint),
-          label: node.label,
-          state: "AVAILABLE"
-        }))
-      })),
-      parentEdges: structure.parentEdges.map((edge) => ({
-        id: edge.id,
-        sourceId: endpointId(edge.from),
-        targetId: endpointId(edge.to)
-      })),
-      links: structure.links.map((link) => ({
-        id: link.id,
-        sourceId: endpointId(link.from),
-        targetId: endpointId(link.to),
-        state: "AVAILABLE"
-      })),
-      orphans: [
-        ...structure.unresolvedNodes.map((node) => ({
-          id: node.id,
-          label: `${node.label} \u2014 unresolved parent`,
-          state: "UNRESOLVED"
-        })),
-        ...structure.orphans.map((orphan) => ({
-          id: orphan.id,
-          label: `Missing endpoint ${orphan.endpoint.span_id}`,
-          state: "UNRESOLVED"
-        }))
-      ],
-      selectedId
-    }
-  };
-}
-function StudioView(React2, Primitives2, Bi, sharedStyles, controller) {
+function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicitThemeMode, layoutStorage) {
   const Button = Primitives2.Button ?? "button";
   const DisclosureRow = Primitives2.DisclosureRow;
   const JsonTree = Primitives2.JsonTree;
   return function StudioConversationView() {
     const [technicalDetailsOpen, setTechnicalDetailsOpen] = React2.useState(false);
-    const [selectedTraceId, setSelectedTraceId] = React2.useState(void 0);
+    const [traceView, setTraceView] = React2.useState("waterfall");
+    const [editingDashboard, setEditingDashboard] = React2.useState(false);
     const snapshot = React2.useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
     React2.useEffect(() => {
       if (snapshot.drilldown.phase !== "idle") return;
@@ -5176,16 +5162,29 @@ function StudioView(React2, Primitives2, Bi, sharedStyles, controller) {
     let recorded;
     if (snapshot.route.page === "trace" && presentation.trace.length > 0) {
       try {
-        recorded = traceViewModel(Bi, presentation.trace, selectedTraceId ?? snapshot.route.spanId);
+        recorded = Bi2.compileTraceView(presentation.trace);
       } catch {
         recorded = void 0;
       }
     }
+    const theme = Bi2.createBiTheme(createStudioTheme(platformThemeMode(explicitThemeMode)));
     const json = (data, label) => JsonTree === void 0 ? React2.createElement("pre", { "aria-label": label }, JSON.stringify(data, null, 2)) : React2.createElement(JsonTree, { data, label, copyable: true, expandTopLevel: true });
     const taskItems = snapshot.taskList.items ?? [];
     const current = snapshot.selection?.mode === "single" ? snapshot.selection.taskIds : [];
     const before = snapshot.selection?.mode === "compare" ? snapshot.selection.leftTaskIds : [];
     const after = snapshot.selection?.mode === "compare" ? snapshot.selection.rightTaskIds : [];
+    const metricPanelIds = presentation.metrics.map((metric) => metric.coordinate.slice(0, metric.coordinate.lastIndexOf("@")));
+    const layoutStore = createStudioLayoutStore(layoutStorage);
+    const [dashboardState, setDashboardState] = React2.useState(() => layoutStore.load(createStudioDashboardState(DEFAULT_LAYOUT.panels.map(({ id: id2 }) => id2))));
+    const [savedDashboardState, setSavedDashboardState] = React2.useState(dashboardState);
+    const expandedDashboardState = dashboardState.order === void 0 ? dashboardState : {
+      ...dashboardState,
+      order: [...dashboardState.order, ...metricPanelIds.filter((id2) => !dashboardState.order.includes(id2))]
+    };
+    const dashboardMetrics = [...presentation.metrics].filter((metric) => !expandedDashboardState.hidden.includes(metric.coordinate.slice(0, metric.coordinate.lastIndexOf("@")))).sort((left, right) => expandedDashboardState.order.indexOf(left.coordinate.slice(0, left.coordinate.lastIndexOf("@"))) - expandedDashboardState.order.indexOf(right.coordinate.slice(0, right.coordinate.lastIndexOf("@"))));
+    const updateDashboard = (action) => setDashboardState(
+      reduceStudioDashboardState(expandedDashboardState, action)
+    );
     const setTask = (id2, checked) => {
       const taskIds = checked ? [.../* @__PURE__ */ new Set([...current, id2])] : current.filter((value) => value !== id2);
       if (taskIds.length > 0) controller.setSelection({ mode: "single", taskIds });
@@ -5215,16 +5214,55 @@ function StudioView(React2, Primitives2, Bi, sharedStyles, controller) {
         "data-wsr-studio-view": "evaluate",
         style: viewStyle
       },
+      React2.createElement("style", { "data-wsr-studio-host-styles": "wsr-dsh@1" }, hostStyles),
       React2.createElement(
         "header",
-        null,
-        React2.createElement("p", null, "Workflow Self-Recursive"),
-        React2.createElement("h1", { id: "wsr-studio-title" }, "WSR Studio")
+        { "data-wsr-studio-region": "header" },
+        React2.createElement(
+          "div",
+          { className: "studio-title-row" },
+          React2.createElement(
+            "div",
+            null,
+            React2.createElement("p", null, "Single evaluation \xB7 current receipt"),
+            React2.createElement("h1", { id: "wsr-studio-title" }, "WSR Studio")
+          ),
+          React2.createElement(
+            "div",
+            { className: "studio-controls" },
+            React2.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Dashboard"),
+            React2.createElement(Button, { type: "button", disabled: snapshot.route.page !== "facts" }, "Evidence"),
+            React2.createElement(Button, { type: "button", disabled: snapshot.route.page !== "trace" }, "Recorded Trace"),
+            React2.createElement(Button, { type: "button", onClick: () => setDashboardState(reduceStudioDashboardState(expandedDashboardState, { type: "PRESET", preset: "default" })) }, "Default overview"),
+            editingDashboard ? React2.createElement(
+              React2.Fragment,
+              null,
+              React2.createElement(Button, { type: "button", onClick: () => setDashboardState(reduceStudioDashboardState(expandedDashboardState, { type: "RESET" })) }, "Reset layout"),
+              React2.createElement(Button, { type: "button", onClick: () => {
+                layoutStore.save(expandedDashboardState);
+                setSavedDashboardState(expandedDashboardState);
+                setEditingDashboard(false);
+              } }, "Save layout"),
+              React2.createElement(Button, { type: "button", onClick: () => {
+                setDashboardState(savedDashboardState);
+                setEditingDashboard(false);
+              } }, "Cancel editing")
+            ) : React2.createElement(Button, { type: "button", "aria-pressed": false, onClick: () => {
+              setSavedDashboardState(expandedDashboardState);
+              setEditingDashboard(true);
+            } }, "Edit dashboard")
+          )
+        ),
+        editingDashboard && metricPanelIds.some((id2) => expandedDashboardState.hidden.includes(id2)) ? React2.createElement(
+          "div",
+          { className: "studio-controls", "aria-label": "Add dashboard panels" },
+          ...metricPanelIds.filter((id2) => expandedDashboardState.hidden.includes(id2)).map((panelId) => React2.createElement(Button, { key: panelId, type: "button", onClick: () => updateDashboard({ type: "ADD", panelId }) }, `Add ${panelId}`))
+        ) : null,
+        React2.createElement("nav", { "aria-label": "Studio" }, ...STUDIO_PAGES.map((page) => React2.createElement("span", { key: page.id, "aria-current": page.id === "evaluate" ? "page" : void 0 }, page.label)))
       ),
-      React2.createElement("nav", { "aria-label": "Studio" }, ...STUDIO_PAGES.map((page) => React2.createElement("span", { key: page.id, "aria-current": page.id === "evaluate" ? "page" : void 0 }, page.label))),
       React2.createElement(
         "main",
-        { tabIndex: -1 },
+        { tabIndex: -1, "data-wsr-studio-region": "main" },
         snapshot.phase === "loading" || snapshot.refreshing ? React2.createElement("p", { role: "status", "aria-live": "polite" }, snapshot.refreshing ? "Refreshing evaluation\u2026" : "Loading evaluation\u2026") : null,
         snapshot.error === void 0 ? null : React2.createElement(
           "section",
@@ -5286,40 +5324,59 @@ function StudioView(React2, Primitives2, Bi, sharedStyles, controller) {
           snapshot.phase === "partial" ? React2.createElement("p", { role: "status" }, "Partial comparison: the available side remains visible.") : null,
           React2.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.openReceipt() }, "View receipt"),
           React2.createElement(
-            Bi.BiSurface,
-            null,
+            Bi2.BiSurface,
+            { theme },
             sharedStyles === void 0 ? null : React2.createElement("style", { "data-wsr-bi-styles": "wsr-ui-core@0.1.0-rc.0" }, sharedStyles),
-            ...presentation.metrics.filter((metric) => snapshot.result.mode !== "COMPARE" || !deltaCoordinates.has(metric.coordinate)).map((metric) => React2.createElement(
-              "article",
-              { key: metric.coordinate, "data-wsr-bi-metric": metric.coordinate },
-              snapshot.result.mode === "COMPARE" ? React2.createElement("h3", null, metric.coordinate) : null,
-              ...metric.sides.map(({ side: side2, slices }) => {
-                const result = {
-                  metric_id: metric.coordinate.slice(0, metric.coordinate.lastIndexOf("@")),
-                  metric_version: metric.coordinate.slice(metric.coordinate.lastIndexOf("@") + 1),
-                  slices
-                };
-                return React2.createElement(
-                  "section",
-                  { key: side2, "aria-label": `${side2} Metric Result` },
-                  snapshot.result.mode === "COMPARE" ? React2.createElement("h4", null, `${side2} side`) : null,
-                  metricResultCompatible(result) ? React2.createElement(Bi.MetricPanel, {
-                    result,
-                    visualizer: visualizerFor(result),
-                    onEvidence: () => controller.openFacts(metric.coordinate)
-                  }) : React2.createElement(Bi.ScopedError, {
-                    announce: "assertive",
-                    detail: metric.coordinate,
-                    retryable: false,
-                    title: "Studio received an incompatible formal Metric Result shape"
-                  })
-                );
-              })
-            )),
+            React2.createElement("div", {
+              "data-wsr-dashboard-layout": DEFAULT_LAYOUT.schemaVersion
+            }, ...dashboardMetrics.filter((metric) => snapshot.result.mode !== "COMPARE" || !deltaCoordinates.has(metric.coordinate)).map((metric) => {
+              const panelId = metric.coordinate.slice(0, metric.coordinate.lastIndexOf("@"));
+              const placement = studioPanelPlacement(panelId, expandedDashboardState.sizes[panelId]);
+              return React2.createElement(
+                "article",
+                {
+                  key: metric.coordinate,
+                  "data-wsr-bi-metric": metric.coordinate,
+                  "data-wsr-dashboard-panel": panelId,
+                  style: {
+                    "--studio-panel-desktop-columns": placement.desktop,
+                    "--studio-panel-tablet-columns": placement.tablet,
+                    "--studio-panel-mobile-columns": placement.mobile
+                  }
+                },
+                editingDashboard ? React2.createElement(
+                  "div",
+                  { className: "studio-controls", "aria-label": `${panelId} layout controls` },
+                  React2.createElement(Button, { type: "button", onClick: () => updateDashboard({ type: "RESIZE", panelId, size: placement.desktop >= 12 ? "compact" : placement.desktop >= 6 ? "full" : "wide" }) }, "Resize panel"),
+                  React2.createElement(Button, { type: "button", onClick: () => {
+                    const index = expandedDashboardState.order.indexOf(panelId);
+                    if (index > 0) updateDashboard({ type: "MOVE", panelId, beforePanelId: expandedDashboardState.order[index - 1] });
+                  } }, "Move earlier"),
+                  React2.createElement(Button, { type: "button", onClick: () => updateDashboard({ type: "REMOVE", panelId }) }, "Remove panel")
+                ) : null,
+                snapshot.result.mode === "COMPARE" ? React2.createElement("h3", null, metric.coordinate) : null,
+                ...metric.sides.map(({ side: side2, slices }) => {
+                  const result = {
+                    metric_id: metric.coordinate.slice(0, metric.coordinate.lastIndexOf("@")),
+                    metric_version: metric.coordinate.slice(metric.coordinate.lastIndexOf("@") + 1),
+                    slices
+                  };
+                  return React2.createElement(
+                    "section",
+                    { key: side2, "aria-label": `${side2} Metric Result` },
+                    snapshot.result.mode === "COMPARE" ? React2.createElement("h4", null, `${side2} side`) : null,
+                    React2.createElement(Bi2.MetricPanel, {
+                      result,
+                      onEvidence: () => controller.openFacts(metric.coordinate)
+                    })
+                  );
+                })
+              );
+            })),
             ...snapshot.result.mode === "COMPARE" ? presentation.deltas.map((delta) => {
               const before2 = metricSlice(snapshot.result.left, delta.metric_coordinate, delta.slice_key);
               const after2 = metricSlice(snapshot.result.right, delta.metric_coordinate, delta.slice_key);
-              return React2.createElement(Bi.CompareResultFrame, {
+              return React2.createElement(Bi2.CompareResultFrame, {
                 key: `${delta.metric_coordinate}-${sliceIdentity(delta.slice_key)}`,
                 coordinate: delta.metric_coordinate,
                 before: before2,
@@ -5329,7 +5386,11 @@ function StudioView(React2, Primitives2, Bi, sharedStyles, controller) {
                 delta,
                 onRetryFailedSide: () => controller.refresh(),
                 onEvidence: (_side) => controller.openFacts(delta.metric_coordinate),
-                visualizer: visualizerFor({ slices: [before2 ?? after2].filter(Boolean) })
+                visualizer: Bi2.selectDefaultVisualizer({
+                  metric_id: delta.metric_coordinate.slice(0, delta.metric_coordinate.lastIndexOf("@")),
+                  metric_version: delta.metric_coordinate.slice(delta.metric_coordinate.lastIndexOf("@") + 1),
+                  slices: [before2 ?? after2].filter(Boolean)
+                })
               });
             }) : []
           ),
@@ -5353,9 +5414,9 @@ function StudioView(React2, Primitives2, Bi, sharedStyles, controller) {
           React2.createElement("h2", null, "Receipts"),
           React2.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Metric Results"),
           React2.createElement(
-            Bi.BiSurface,
-            null,
-            ...presentation.receipts.map(({ side: side2, receipt }) => React2.createElement(Bi.ReceiptView, {
+            Bi2.BiSurface,
+            { theme },
+            ...presentation.receipts.map(({ side: side2, receipt }) => React2.createElement(Bi2.ReceiptView, {
               key: side2,
               receipt,
               side: side2
@@ -5373,9 +5434,9 @@ function StudioView(React2, Primitives2, Bi, sharedStyles, controller) {
           { "aria-label": "Fact drill-down" },
           React2.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Metric Results"),
           React2.createElement(
-            Bi.BiSurface,
-            null,
-            React2.createElement(Bi.EvidenceConsoleFoundation, {
+            Bi2.BiSurface,
+            { theme },
+            React2.createElement(Bi2.EvidenceConsoleFoundation, {
               scope: snapshot.route.scope,
               state: presentation.drilldownError !== void 0 ? { tag: "ERROR", detail: presentation.drilldownError.message } : !factsCompatible ? { tag: "ERROR", detail: "Studio received an incompatible formal Fact shape" } : snapshot.drilldown.phase === "loading" ? { tag: "LOADING" } : facts.length === 0 ? { tag: "EMPTY" } : facts.every((row) => row.truth.expiry === "EXPIRED") ? { tag: "EXPIRED" } : { tag: "READY" },
               rows: facts.filter(Boolean),
@@ -5407,20 +5468,32 @@ function StudioView(React2, Primitives2, Bi, sharedStyles, controller) {
             { role: presentation.trace.length > 0 ? "alert" : "status" },
             presentation.trace.length > 0 ? "Studio received an incompatible formal Trace shape" : "No recorded Trace items"
           ) : React2.createElement(
-            Bi.BiSurface,
-            null,
+            Bi2.BiSurface,
+            { theme },
             recorded.status === "INVALID" ? React2.createElement("p", { role: "alert" }, recorded.errors.join("; ")) : null,
-            React2.createElement(Bi.RecordedStructureFoundation, { model: recorded.model, onSelect: setSelectedTraceId })
+            React2.createElement(
+              "div",
+              { className: "studio-controls", role: "group", "aria-label": "Trace view" },
+              React2.createElement(Button, { type: "button", "aria-pressed": traceView === "waterfall", onClick: () => setTraceView("waterfall") }, "Waterfall"),
+              React2.createElement(Button, { type: "button", "aria-pressed": traceView === "tree", onClick: () => setTraceView("tree") }, "Tree")
+            ),
+            traceView === "tree" ? React2.createElement(Bi2.TraceTree, { trace: recorded }) : React2.createElement(Bi2.TraceWaterfall, { trace: recorded })
           )
         ) : null
+      ),
+      React2.createElement(
+        "footer",
+        { "data-wsr-studio-region": "footer" },
+        React2.createElement("strong", null, presentation.trace.length > 0 ? "Recorded Trace is available" : "Recorded Trace availability follows current Evidence"),
+        React2.createElement("span", null, " \xB7 exact recorded identities only; no inferred ordering")
       )
     );
   };
 }
-function createStudioClientPlugin({ React: React2, Primitives: Primitives2 = {}, Bi, sharedStyles, initialContext, storage } = {}) {
+function createStudioClientPlugin({ React: React2, Primitives: Primitives2 = {}, Bi: Bi2, sharedStyles, initialContext, storage, themeMode } = {}) {
   if (React2 === void 0) throw new Error("STUDIO_REACT_REQUIRED");
   const component = (value) => typeof value === "function" || typeof value === "string";
-  if (Bi === void 0 || !component(Bi.BiSurface) || !component(Bi.MetricPanel) || !component(Bi.CompareResultFrame) || !component(Bi.ReceiptView) || !component(Bi.ScopedError) || !component(Bi.EvidenceConsoleFoundation) || !component(Bi.RecordedStructureFoundation) || typeof Bi.projectRecordedStructure !== "function") {
+  if (Bi2 === void 0 || !component(Bi2.BiSurface) || !component(Bi2.MetricPanel) || !component(Bi2.CompareResultFrame) || !component(Bi2.ReceiptView) || !component(Bi2.ScopedError) || !component(Bi2.EvidenceConsoleFoundation) || !component(Bi2.TraceWaterfall) || !component(Bi2.TraceTree) || typeof Bi2.compileTraceView !== "function" || typeof Bi2.selectDefaultVisualizer !== "function" || typeof Bi2.createBiTheme !== "function") {
     throw new Error("STUDIO_BI_REQUIRED");
   }
   return {
@@ -5440,7 +5513,7 @@ function createStudioClientPlugin({ React: React2, Primitives: Primitives2 = {},
           id: "wsr-studio",
           order: 30,
           label: "WSR Studio"
-        }, StudioView(React2, Primitives2, Bi, sharedStyles, controller));
+        }, StudioView(React2, Primitives2, Bi2, sharedStyles, controller, themeMode, resolvedStorage));
       });
       return Object.assign(() => dispose?.(), { controller });
     }
@@ -5448,7 +5521,20 @@ function createStudioClientPlugin({ React: React2, Primitives: Primitives2 = {},
 }
 
 // packages/studio/src/client/browser-entry.js
-var plugin = createStudioClientPlugin({ React: import_react2.default, Primitives, Bi: dist_exports, sharedStyles: styles_default });
+var Bi = Object.freeze({
+  BiSurface: c,
+  CompareResultFrame: pe,
+  EvidenceConsoleFoundation: ve,
+  MetricPanel: P,
+  ReceiptView: me,
+  ScopedError: k,
+  TraceTree: Te,
+  TraceWaterfall: we,
+  compileTraceView: Oe,
+  createBiTheme: d,
+  selectDefaultVisualizer: C
+});
+var plugin = createStudioClientPlugin({ React: import_react2.default, Primitives, Bi, sharedStyles: styles_default });
 var name = plugin.name;
 var inject = plugin.inject;
 var apply = plugin.apply;

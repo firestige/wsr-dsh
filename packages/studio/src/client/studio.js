@@ -33,24 +33,138 @@ const viewStyle = {
 const controlStyle = { minHeight: "44px", minWidth: "44px" };
 const listStyle = { maxHeight: "min(42vh, 480px)", overflow: "auto", overflowWrap: "anywhere" };
 
-function visualizerFor(metric) {
-  if (!Array.isArray(metric?.slices) || metric.slices.length !== 1) return "table@1";
-  const value = metric.slices[0]?.value;
-  if (value?.kind === "RATIO" && value.unit === "ratio") return "ratio-bar@1";
-  if (value?.kind === "BOOLEAN") return "badge@1";
-  return "numeric-card@1";
+const DEFAULT_LAYOUT = Object.freeze({
+  schemaVersion: "wsr-dsh.studio-layout@1",
+  columns: Object.freeze({ desktop: 12, tablet: 6, mobile: 1 }),
+  panels: Object.freeze([
+    ["operational-latency", 3, 2, 3, 2, 1, 2],
+    ["delivery-cycle-time", 3, 2, 3, 2, 1, 2],
+    ["usage-availability", 3, 2, 3, 2, 1, 2],
+    ["cohort-eligibility", 3, 2, 3, 2, 1, 2],
+    ["role-template-rework-rate", 6, 3, 3, 3, 1, 3],
+    ["role-model-task-outcome-rate", 6, 3, 3, 3, 1, 3],
+    ["delivery-stage-reach", 12, 4, 6, 4, 1, 4],
+  ].map(([id, dw, dh, tw, th, mw, mh]) => Object.freeze({
+    id,
+    desktop: Object.freeze({ w: dw, h: dh }),
+    tablet: Object.freeze({ w: tw, h: th }),
+    mobile: Object.freeze({ w: mw, h: mh }),
+  }))),
+});
+const DASHBOARD_STORAGE_KEY = "wsr.studio.dashboard-layout@1";
+
+export function createDefaultStudioLayout() {
+  return DEFAULT_LAYOUT;
 }
 
-function metricResultCompatible(metric) {
-  return typeof metric?.metric_id === "string" && typeof metric.metric_version === "string" &&
-    Array.isArray(metric.slices) && metric.slices.every((slice) =>
-      slice !== null && typeof slice === "object" &&
-      slice.slice_key !== null && typeof slice.slice_key === "object" && !Array.isArray(slice.slice_key) &&
-      typeof slice.state === "string" &&
-      slice.measures !== null && typeof slice.measures === "object" && !Array.isArray(slice.measures) &&
-      (slice.coverage === null || typeof slice.coverage === "object") &&
-      slice.compatibility !== null && typeof slice.compatibility === "object" && !Array.isArray(slice.compatibility) &&
-      Array.isArray(slice.exclusions) && Array.isArray(slice.missing_inputs) && Array.isArray(slice.provenance_refs));
+export function createStudioTheme(mode) {
+  if (mode !== "light" && mode !== "dark") throw new Error("UNKNOWN_STUDIO_THEME");
+  return Object.freeze({ mode, density: "compact", containerBorderStyle: "solid" });
+}
+
+export function createStudioDashboardState(panelIds) {
+  if (!Array.isArray(panelIds) || new Set(panelIds).size !== panelIds.length ||
+      !panelIds.every((id) => typeof id === "string" && id.length > 0)) {
+    throw new Error("INVALID_STUDIO_PANELS");
+  }
+  return Object.freeze({
+    defaults: Object.freeze([...panelIds]),
+    order: Object.freeze([...panelIds]),
+    hidden: Object.freeze([]),
+    sizes: Object.freeze({}),
+  });
+}
+
+export function reduceStudioDashboardState(state, action) {
+  if (action.type === "RESET" || action.type === "PRESET") {
+    if (action.type === "PRESET" && action.preset !== "default") throw new Error("UNKNOWN_STUDIO_LAYOUT_PRESET");
+    return createStudioDashboardState(state.defaults);
+  }
+  const known = state.order.includes(action.panelId);
+  if (!known) throw new Error("UNKNOWN_STUDIO_PANEL");
+  if (action.type === "REMOVE") return Object.freeze({
+    ...state,
+    hidden: Object.freeze([...new Set([...state.hidden, action.panelId])]),
+  });
+  if (action.type === "ADD") return Object.freeze({
+    ...state,
+    hidden: Object.freeze(state.hidden.filter((id) => id !== action.panelId)),
+  });
+  if (action.type === "RESIZE") {
+    if (!["compact", "wide", "full"].includes(action.size)) throw new Error("UNKNOWN_STUDIO_PANEL_SIZE");
+    return Object.freeze({ ...state, sizes: Object.freeze({ ...state.sizes, [action.panelId]: action.size }) });
+  }
+  if (action.type === "MOVE") {
+    if (!state.order.includes(action.beforePanelId)) throw new Error("UNKNOWN_STUDIO_PANEL");
+    const order = state.order.filter((id) => id !== action.panelId);
+    order.splice(order.indexOf(action.beforePanelId), 0, action.panelId);
+    return Object.freeze({ ...state, order: Object.freeze(order) });
+  }
+  throw new Error("UNKNOWN_STUDIO_LAYOUT_ACTION");
+}
+
+function validDashboardState(value) {
+  const uniqueStrings = (items) => Array.isArray(items) &&
+    items.every((item) => typeof item === "string" && item.length > 0) &&
+    new Set(items).size === items.length;
+  return value !== null && typeof value === "object" && !Array.isArray(value) &&
+    uniqueStrings(value.defaults) && uniqueStrings(value.order) && uniqueStrings(value.hidden) &&
+    value.defaults.every((id) => value.order.includes(id)) &&
+    value.hidden.every((id) => value.order.includes(id)) &&
+    value.sizes !== null && typeof value.sizes === "object" && !Array.isArray(value.sizes) &&
+    Object.entries(value.sizes).every(([id, size]) => value.order.includes(id) && ["compact", "wide", "full"].includes(size));
+}
+
+export function createStudioLayoutStore(storage) {
+  return Object.freeze({
+    load(fallback) {
+      if (storage === undefined) return fallback;
+      try {
+        const encoded = storage.getItem(DASHBOARD_STORAGE_KEY);
+        if (encoded === null) return fallback;
+        const parsed = JSON.parse(encoded);
+        if (!validDashboardState(parsed)) return fallback;
+        return Object.freeze({
+          defaults: Object.freeze([...parsed.defaults]),
+          order: Object.freeze([...parsed.order]),
+          hidden: Object.freeze([...parsed.hidden]),
+          sizes: Object.freeze({ ...parsed.sizes }),
+        });
+      } catch {
+        return fallback;
+      }
+    },
+    save(state) {
+      if (!validDashboardState(state)) throw new Error("INVALID_STUDIO_LAYOUT_STATE");
+      storage?.setItem(DASHBOARD_STORAGE_KEY, JSON.stringify(state));
+    },
+  });
+}
+
+const hostStyles = `
+#wsr-studio-view [data-wsr-dashboard-layout] { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:12px; }
+#wsr-studio-view [data-wsr-dashboard-panel] { grid-column:span var(--studio-panel-desktop-columns,3); min-width:0; }
+#wsr-studio-view [data-wsr-studio-region="header"], #wsr-studio-view [data-wsr-studio-region="footer"] { border:1px solid var(--dsw-alias-border-l2); padding:12px; }
+#wsr-studio-view .studio-title-row, #wsr-studio-view .studio-controls { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
+@media (max-width:900px) { #wsr-studio-view [data-wsr-dashboard-layout] { grid-template-columns:repeat(6,minmax(0,1fr)); } #wsr-studio-view [data-wsr-dashboard-panel] { grid-column:span var(--studio-panel-tablet-columns,3); } }
+@media (max-width:560px) { #wsr-studio-view [data-wsr-dashboard-layout] { grid-template-columns:1fr; } #wsr-studio-view [data-wsr-dashboard-panel] { grid-column:span 1 !important; } }
+`;
+
+function platformThemeMode(explicitMode) {
+  if (explicitMode === "light" || explicitMode === "dark") return explicitMode;
+  if (typeof document !== "undefined" && document.body?.hasAttribute("data-ds-dark-theme")) return "dark";
+  if (typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+  return "light";
+}
+
+function studioPanelPlacement(panelId, size) {
+  if (size === "full") return { desktop: 12, tablet: 6, mobile: 1 };
+  if (size === "wide") return { desktop: 6, tablet: 6, mobile: 1 };
+  if (size === "compact") return { desktop: 3, tablet: 3, mobile: 1 };
+  const configured = DEFAULT_LAYOUT.panels.find(({ id }) => id === panelId);
+  return configured === undefined
+    ? { desktop: 3, tablet: 3, mobile: 1 }
+    : { desktop: configured.desktop.w, tablet: configured.tablet.w, mobile: configured.mobile.w };
 }
 
 function sliceIdentity(sliceKey) {
@@ -92,57 +206,14 @@ function factRow(fact) {
   };
 }
 
-function traceViewModel(Bi, items, selectedId) {
-  const structure = Bi.projectRecordedStructure(items);
-  const endpointId = (endpoint) => `${endpoint.trace_id}:${endpoint.span_id}`;
-  return {
-    status: structure.status,
-    errors: structure.errors,
-    model: {
-      depthGroups: structure.depthGroups.map((group) => ({
-        depth: group.depth,
-        nodes: group.nodes.map((node) => ({
-          id: node.id,
-          endpointId: endpointId(node.endpoint),
-          label: node.label,
-          state: "AVAILABLE",
-        })),
-      })),
-      parentEdges: structure.parentEdges.map((edge) => ({
-        id: edge.id,
-        sourceId: endpointId(edge.from),
-        targetId: endpointId(edge.to),
-      })),
-      links: structure.links.map((link) => ({
-        id: link.id,
-        sourceId: endpointId(link.from),
-        targetId: endpointId(link.to),
-        state: "AVAILABLE",
-      })),
-      orphans: [
-        ...structure.unresolvedNodes.map((node) => ({
-          id: node.id,
-          label: `${node.label} — unresolved parent`,
-          state: "UNRESOLVED",
-        })),
-        ...structure.orphans.map((orphan) => ({
-          id: orphan.id,
-          label: `Missing endpoint ${orphan.endpoint.span_id}`,
-          state: "UNRESOLVED",
-        })),
-      ],
-      selectedId,
-    },
-  };
-}
-
-function StudioView(React, Primitives, Bi, sharedStyles, controller) {
+function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThemeMode, layoutStorage) {
   const Button = Primitives.Button ?? "button";
   const DisclosureRow = Primitives.DisclosureRow;
   const JsonTree = Primitives.JsonTree;
   return function StudioConversationView() {
     const [technicalDetailsOpen, setTechnicalDetailsOpen] = React.useState(false);
-    const [selectedTraceId, setSelectedTraceId] = React.useState(undefined);
+    const [traceView, setTraceView] = React.useState("waterfall");
+    const [editingDashboard, setEditingDashboard] = React.useState(false);
     const snapshot = React.useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
     React.useEffect(() => {
       if (snapshot.drilldown.phase !== "idle") return;
@@ -161,11 +232,12 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller) {
     let recorded;
     if (snapshot.route.page === "trace" && presentation.trace.length > 0) {
       try {
-        recorded = traceViewModel(Bi, presentation.trace, selectedTraceId ?? snapshot.route.spanId);
+        recorded = Bi.compileTraceView(presentation.trace);
       } catch {
         recorded = undefined;
       }
     }
+    const theme = Bi.createBiTheme(createStudioTheme(platformThemeMode(explicitThemeMode)));
     const json = (data, label) => JsonTree === undefined
       ? React.createElement("pre", { "aria-label": label }, JSON.stringify(data, null, 2))
       : React.createElement(JsonTree, { data, label, copyable: true, expandTopLevel: true });
@@ -173,6 +245,21 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller) {
     const current = snapshot.selection?.mode === "single" ? snapshot.selection.taskIds : [];
     const before = snapshot.selection?.mode === "compare" ? snapshot.selection.leftTaskIds : [];
     const after = snapshot.selection?.mode === "compare" ? snapshot.selection.rightTaskIds : [];
+    const metricPanelIds = presentation.metrics.map((metric) => metric.coordinate.slice(0, metric.coordinate.lastIndexOf("@")));
+    const layoutStore = createStudioLayoutStore(layoutStorage);
+    const [dashboardState, setDashboardState] = React.useState(() =>
+      layoutStore.load(createStudioDashboardState(DEFAULT_LAYOUT.panels.map(({ id }) => id))));
+    const [savedDashboardState, setSavedDashboardState] = React.useState(dashboardState);
+    const expandedDashboardState = dashboardState.order === undefined ? dashboardState : {
+      ...dashboardState,
+      order: [...dashboardState.order, ...metricPanelIds.filter((id) => !dashboardState.order.includes(id))],
+    };
+    const dashboardMetrics = [...presentation.metrics]
+      .filter((metric) => !expandedDashboardState.hidden.includes(metric.coordinate.slice(0, metric.coordinate.lastIndexOf("@"))))
+      .sort((left, right) => expandedDashboardState.order.indexOf(left.coordinate.slice(0, left.coordinate.lastIndexOf("@"))) -
+        expandedDashboardState.order.indexOf(right.coordinate.slice(0, right.coordinate.lastIndexOf("@"))));
+    const updateDashboard = (action) => setDashboardState(
+      reduceStudioDashboardState(expandedDashboardState, action));
     const setTask = (id, checked) => {
       const taskIds = checked ? [...new Set([...current, id])] : current.filter((value) => value !== id);
       if (taskIds.length > 0) controller.setSelection({ mode: "single", taskIds });
@@ -199,12 +286,41 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller) {
       id: "wsr-studio-view", role: "region", "aria-labelledby": "wsr-studio-title",
       "data-wsr-studio-view": "evaluate", style: viewStyle,
     },
-    React.createElement("header", null,
-      React.createElement("p", null, "Workflow Self-Recursive"),
-      React.createElement("h1", { id: "wsr-studio-title" }, "WSR Studio")),
-    React.createElement("nav", { "aria-label": "Studio" }, ...STUDIO_PAGES.map((page) =>
-      React.createElement("span", { key: page.id, "aria-current": page.id === "evaluate" ? "page" : undefined }, page.label))),
-    React.createElement("main", { tabIndex: -1 },
+    React.createElement("style", { "data-wsr-studio-host-styles": "wsr-dsh@1" }, hostStyles),
+    React.createElement("header", { "data-wsr-studio-region": "header" },
+      React.createElement("div", { className: "studio-title-row" },
+        React.createElement("div", null,
+          React.createElement("p", null, "Single evaluation · current receipt"),
+          React.createElement("h1", { id: "wsr-studio-title" }, "WSR Studio")),
+        React.createElement("div", { className: "studio-controls" },
+          React.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Dashboard"),
+          React.createElement(Button, { type: "button", disabled: snapshot.route.page !== "facts" }, "Evidence"),
+          React.createElement(Button, { type: "button", disabled: snapshot.route.page !== "trace" }, "Recorded Trace"),
+          React.createElement(Button, { type: "button", onClick: () => setDashboardState(reduceStudioDashboardState(expandedDashboardState, { type: "PRESET", preset: "default" })) }, "Default overview"),
+          editingDashboard
+            ? React.createElement(React.Fragment, null,
+              React.createElement(Button, { type: "button", onClick: () => setDashboardState(reduceStudioDashboardState(expandedDashboardState, { type: "RESET" })) }, "Reset layout"),
+              React.createElement(Button, { type: "button", onClick: () => {
+                layoutStore.save(expandedDashboardState);
+                setSavedDashboardState(expandedDashboardState);
+                setEditingDashboard(false);
+              } }, "Save layout"),
+              React.createElement(Button, { type: "button", onClick: () => {
+                setDashboardState(savedDashboardState);
+                setEditingDashboard(false);
+              } }, "Cancel editing"))
+            : React.createElement(Button, { type: "button", "aria-pressed": false, onClick: () => {
+              setSavedDashboardState(expandedDashboardState);
+              setEditingDashboard(true);
+            } }, "Edit dashboard"))),
+      editingDashboard && metricPanelIds.some((id) => expandedDashboardState.hidden.includes(id))
+        ? React.createElement("div", { className: "studio-controls", "aria-label": "Add dashboard panels" },
+          ...metricPanelIds.filter((id) => expandedDashboardState.hidden.includes(id)).map((panelId) =>
+            React.createElement(Button, { key: panelId, type: "button", onClick: () => updateDashboard({ type: "ADD", panelId }) }, `Add ${panelId}`)))
+        : null,
+      React.createElement("nav", { "aria-label": "Studio" }, ...STUDIO_PAGES.map((page) =>
+        React.createElement("span", { key: page.id, "aria-current": page.id === "evaluate" ? "page" : undefined }, page.label)))),
+    React.createElement("main", { tabIndex: -1, "data-wsr-studio-region": "main" },
       snapshot.phase === "loading" || snapshot.refreshing
         ? React.createElement("p", { role: "status", "aria-live": "polite" }, snapshot.refreshing ? "Refreshing evaluation…" : "Loading evaluation…") : null,
       snapshot.error === undefined ? null
@@ -244,10 +360,31 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller) {
         : React.createElement("section", { "aria-label": snapshot.result.mode === "COMPARE" ? "Compared Metric Results" : "Metric Results" },
           snapshot.phase === "partial" ? React.createElement("p", { role: "status" }, "Partial comparison: the available side remains visible.") : null,
           React.createElement(Button, { type: "button", style: controlStyle, onClick: () => controller.openReceipt() }, "View receipt"),
-          React.createElement(Bi.BiSurface, null,
+          React.createElement(Bi.BiSurface, { theme },
             sharedStyles === undefined ? null : React.createElement("style", { "data-wsr-bi-styles": "wsr-ui-core@0.1.0-rc.0" }, sharedStyles),
-            ...presentation.metrics.filter((metric) => snapshot.result.mode !== "COMPARE" || !deltaCoordinates.has(metric.coordinate))
-              .map((metric) => React.createElement("article", { key: metric.coordinate, "data-wsr-bi-metric": metric.coordinate },
+            React.createElement("div", {
+              "data-wsr-dashboard-layout": DEFAULT_LAYOUT.schemaVersion,
+            }, ...dashboardMetrics.filter((metric) => snapshot.result.mode !== "COMPARE" || !deltaCoordinates.has(metric.coordinate))
+              .map((metric) => {
+                const panelId = metric.coordinate.slice(0, metric.coordinate.lastIndexOf("@"));
+                const placement = studioPanelPlacement(panelId, expandedDashboardState.sizes[panelId]);
+                return React.createElement("article", {
+                  key: metric.coordinate,
+                  "data-wsr-bi-metric": metric.coordinate,
+                  "data-wsr-dashboard-panel": panelId,
+                  style: {
+                    "--studio-panel-desktop-columns": placement.desktop,
+                    "--studio-panel-tablet-columns": placement.tablet,
+                    "--studio-panel-mobile-columns": placement.mobile,
+                  },
+                },
+              editingDashboard ? React.createElement("div", { className: "studio-controls", "aria-label": `${panelId} layout controls` },
+                React.createElement(Button, { type: "button", onClick: () => updateDashboard({ type: "RESIZE", panelId, size: placement.desktop >= 12 ? "compact" : placement.desktop >= 6 ? "full" : "wide" }) }, "Resize panel"),
+                React.createElement(Button, { type: "button", onClick: () => {
+                  const index = expandedDashboardState.order.indexOf(panelId);
+                  if (index > 0) updateDashboard({ type: "MOVE", panelId, beforePanelId: expandedDashboardState.order[index - 1] });
+                } }, "Move earlier"),
+                React.createElement(Button, { type: "button", onClick: () => updateDashboard({ type: "REMOVE", panelId }) }, "Remove panel")) : null,
               snapshot.result.mode === "COMPARE" ? React.createElement("h3", null, metric.coordinate) : null,
               ...metric.sides.map(({ side, slices }) => {
                 const result = {
@@ -257,19 +394,12 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller) {
                 };
                 return React.createElement("section", { key: side, "aria-label": `${side} Metric Result` },
                   snapshot.result.mode === "COMPARE" ? React.createElement("h4", null, `${side} side`) : null,
-                  metricResultCompatible(result)
-                    ? React.createElement(Bi.MetricPanel, {
-                      result,
-                      visualizer: visualizerFor(result),
-                      onEvidence: () => controller.openFacts(metric.coordinate),
-                    })
-                    : React.createElement(Bi.ScopedError, {
-                      announce: "assertive",
-                      detail: metric.coordinate,
-                      retryable: false,
-                      title: "Studio received an incompatible formal Metric Result shape",
-                    }));
-              }))),
+                  React.createElement(Bi.MetricPanel, {
+                    result,
+                    onEvidence: () => controller.openFacts(metric.coordinate),
+                  }));
+              }));
+              })),
             ...(snapshot.result.mode === "COMPARE" ? presentation.deltas.map((delta) => {
               const before = metricSlice(snapshot.result.left, delta.metric_coordinate, delta.slice_key);
               const after = metricSlice(snapshot.result.right, delta.metric_coordinate, delta.slice_key);
@@ -283,7 +413,11 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller) {
                 delta,
                 onRetryFailedSide: () => controller.refresh(),
                 onEvidence: (_side) => controller.openFacts(delta.metric_coordinate),
-                visualizer: visualizerFor({ slices: [before ?? after].filter(Boolean) }),
+                visualizer: Bi.selectDefaultVisualizer({
+                  metric_id: delta.metric_coordinate.slice(0, delta.metric_coordinate.lastIndexOf("@")),
+                  metric_version: delta.metric_coordinate.slice(delta.metric_coordinate.lastIndexOf("@") + 1),
+                  slices: [before ?? after].filter(Boolean),
+                }),
               });
             }) : [])),
           React.createElement("details", {
@@ -297,7 +431,7 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller) {
         ? React.createElement("section", { "aria-label": "Evaluation receipts" },
           React.createElement("h2", null, "Receipts"),
           React.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Metric Results"),
-          React.createElement(Bi.BiSurface, null,
+          React.createElement(Bi.BiSurface, { theme },
             ...presentation.receipts.map(({ side, receipt }) => React.createElement(Bi.ReceiptView, {
               key: side,
               receipt,
@@ -309,7 +443,7 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller) {
       snapshot.route.page === "facts"
         ? React.createElement("section", { "aria-label": "Fact drill-down" },
           React.createElement(Button, { type: "button", onClick: () => controller.backToResults() }, "Back to Metric Results"),
-          React.createElement(Bi.BiSurface, null,
+          React.createElement(Bi.BiSurface, { theme },
             React.createElement(Bi.EvidenceConsoleFoundation, {
               scope: snapshot.route.scope,
               state: presentation.drilldownError !== undefined
@@ -347,19 +481,28 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller) {
           recorded === undefined
             ? React.createElement("p", { role: presentation.trace.length > 0 ? "alert" : "status" },
               presentation.trace.length > 0 ? "Studio received an incompatible formal Trace shape" : "No recorded Trace items")
-            : React.createElement(Bi.BiSurface, null,
+            : React.createElement(Bi.BiSurface, { theme },
               recorded.status === "INVALID" ? React.createElement("p", { role: "alert" }, recorded.errors.join("; ")) : null,
-              React.createElement(Bi.RecordedStructureFoundation, { model: recorded.model, onSelect: setSelectedTraceId }))) : null));
+              React.createElement("div", { className: "studio-controls", role: "group", "aria-label": "Trace view" },
+                React.createElement(Button, { type: "button", "aria-pressed": traceView === "waterfall", onClick: () => setTraceView("waterfall") }, "Waterfall"),
+                React.createElement(Button, { type: "button", "aria-pressed": traceView === "tree", onClick: () => setTraceView("tree") }, "Tree")),
+              traceView === "tree"
+                ? React.createElement(Bi.TraceTree, { trace: recorded })
+                : React.createElement(Bi.TraceWaterfall, { trace: recorded }))) : null),
+      React.createElement("footer", { "data-wsr-studio-region": "footer" },
+        React.createElement("strong", null, presentation.trace.length > 0 ? "Recorded Trace is available" : "Recorded Trace availability follows current Evidence"),
+        React.createElement("span", null, " · exact recorded identities only; no inferred ordering")));
   };
 }
 
-export function createStudioClientPlugin({ React, Primitives = {}, Bi, sharedStyles, initialContext, storage } = {}) {
+export function createStudioClientPlugin({ React, Primitives = {}, Bi, sharedStyles, initialContext, storage, themeMode } = {}) {
   if (React === undefined) throw new Error("STUDIO_REACT_REQUIRED");
   const component = (value) => typeof value === "function" || typeof value === "string";
   if (Bi === undefined || !component(Bi.BiSurface) || !component(Bi.MetricPanel) ||
       !component(Bi.CompareResultFrame) || !component(Bi.ReceiptView) || !component(Bi.ScopedError) ||
-      !component(Bi.EvidenceConsoleFoundation) || !component(Bi.RecordedStructureFoundation) ||
-      typeof Bi.projectRecordedStructure !== "function") {
+      !component(Bi.EvidenceConsoleFoundation) || !component(Bi.TraceWaterfall) || !component(Bi.TraceTree) ||
+      typeof Bi.compileTraceView !== "function" || typeof Bi.selectDefaultVisualizer !== "function" ||
+      typeof Bi.createBiTheme !== "function") {
     throw new Error("STUDIO_BI_REQUIRED");
   }
   return {
@@ -376,7 +519,7 @@ export function createStudioClientPlugin({ React, Primitives = {}, Bi, sharedSty
       ctx.slots.inject("conversation.view", () => {
         dispose = ctx.slots.register({
           name: "conversation.view", id: "wsr-studio", order: 30, label: "WSR Studio",
-        }, StudioView(React, Primitives, Bi, sharedStyles, controller));
+        }, StudioView(React, Primitives, Bi, sharedStyles, controller, themeMode, resolvedStorage));
       });
       return Object.assign(() => dispose?.(), { controller });
     },
