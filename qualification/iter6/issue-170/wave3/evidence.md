@@ -2,8 +2,9 @@
 
 ## Candidate identity
 
-- Exact qualified `wsr-dsh` commit: `2efcd8363c7340f364e0847ab50dc713c200c461`
+- Exact qualified `wsr-dsh` commit: `80c365aa780d0ba8f224b87fb8f34dddd0ae9a3a`
 - Product commits: `06f45dc474d9e29e6279f74deebf44afc438505f`, `413ece9ecfbbc7a2da97afec5f97026d377bcba2`
+- Qualification commits: `2efcd8363c7340f364e0847ab50dc713c200c461`, `71852efb6e21ff9370b71e4b9f6936f073d6a29b`, `80c365aa780d0ba8f224b87fb8f34dddd0ae9a3a`
 - Fixed DSH: `0.1.1-rc.2`
 - Execution bundle SHA-256: `fa6ecb2aea1e6ccdc81468032513086a45ebd73a95f0727a3f9479cd82703b06`
 - Consumer lock SHA-256: `66f899db76e7c32f4d5708237c9c1937549601dac290293f4e88c37c3435879e`
@@ -30,6 +31,14 @@ queries left four summary columns in a 320px container. The final candidate uses
 `minmax(0, 1fr) auto` for value/action rows and container-responsive `auto-fit`
 grids. Both defects are locked by source and real-browser assertions.
 
+The real-Harness RED also found that selecting a terminal row after submitting
+the qualification command moved to an empty Session, where DSH correctly omits
+conversation tabs. The fixed fixture gives each terminal Delivery its own
+Session and selects the fixed `delivery-completed` / `SUCCEEDED` Session before
+submission. A later repeated-screenshot RED caught DSH sidebar transition
+frames; the Harness now waits for stable Delivery/composer geometry before each
+capture instead of weakening the visual threshold.
+
 Fixtures cover RUNNING, SUCCEEDED, FAILED, detached, stale, UNBOUND, long
 identities, absent optional data, and long localized content. Detached and stale
 inputs continue to fail closed. No projection, gateway, network, or lifecycle
@@ -41,7 +50,7 @@ without executing a command or adding a request.
 A detached worktree at the exact candidate passed:
 
 ```text
-npm ci --ignore-scripts --no-audit --no-fund  PASS
+npm ci                                       PASS (316 packages, 0 vulnerabilities)
 npm test                                      PASS (126 tests)
 npm run build                                 PASS
 npm run boundaries:check                      PASS
@@ -62,10 +71,18 @@ unit path separately proves that an accepted write receives the exact value.
 
 ## Visual evidence
 
-- `screenshots/delivery-desktop.png` — `d1a404c79104f8b1a3e6b5bf3ff5f3b12545a543af1552e8e9df50b62938c350`
-- `screenshots/delivery-identities-expanded.png` — `e9cdd1c705b7e099144a725abd16f99ca1725ecfd24183d457e0db366c61c67c`
-- `screenshots/delivery-narrow-320.png` — `820243559d10304fad5e2688492b594d3720172f7a2e23af0828bc2f38fe978d`
-- `screenshots/delivery-zoom-200.png` — `c236c09eec48b843423cf86b384e74b3bf73254314ecc9dddd134ddde3fa72ad`
+- `screenshots/delivery-desktop.png` — `d9ac7de5ac1ad45ea2f5e802708b2d49c687eba8cba80f754150ad8e0ec145be`
+- `screenshots/delivery-identities-expanded.png` — `4397faea43552c3160fbafd80c2240d4f260c2495700249237cebc47c1c8d332`
+- `screenshots/delivery-narrow-320.png` — `ec8af2cfde1fc633a28f20d40122f6d7ceaa12de12dc16b882956059bdc61e42`
+- `screenshots/delivery-zoom-200.png` — `dfbdeee074b12dcfe965ef7b9398aea952d5443944cb65ca8dd9b2771d7cbf13`
+
+The exact clean candidate was captured twice in independent real-Harness runs.
+For each pair, FFmpeg computed absolute pixel difference, treated grayscale
+differences above 4/255 as changed pixels, and divided the binary-mask mean by
+255. Ratios were `0.000000000` (desktop), `0.000292969` (expanded),
+`0.000000000` (320px), and `0.000000000` (200% zoom), all below the acceptance
+manifest's `maxDiffPixelRatio: 0.005`. The small expanded-only difference is
+limited to characters in the per-run temporary Worktree path.
 
 The screenshots use the fixed DSH chrome, typography, tokens, StateDot, Pill,
 DisclosureRow, Tooltip, and toolbar Button surfaces. Visual inspection confirms
