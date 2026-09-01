@@ -420,18 +420,29 @@ try {
   await cdp.command("Input.dispatchKeyEvent", {
     type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 36,
   });
+  await waitFor(async () => cdp.evaluate(`(() => {
+    const label = [...document.querySelectorAll('*')]
+      .find((node) => node.childElementCount === 0 && node.textContent.trim() === 'Workflow presentation');
+    const trigger = label?.closest('button,[role="button"]');
+    if (!trigger || !trigger.textContent.includes('TASK_PROMPT_REQUIRED')) return undefined;
+    trigger.click();
+    return true;
+  })()`), "HARNESS_COMMAND_DISCLOSURE_UNAVAILABLE");
   const commandDiagnostic = await waitFor(async () => cdp.evaluate(`(() => {
     const presentations = [...document.querySelectorAll('[data-wsr-presentation="true"]')];
+    if (presentations.length !== 1) return undefined;
     const detail = presentations[0]?.querySelector('details');
-    if (presentations.length !== 1 || !document.body.innerText.includes('Add a Task instruction') || !detail?.textContent.includes('TASK_PROMPT_REQUIRED')) return undefined;
     const inputs = [...document.querySelectorAll('*')]
       .filter((node) => node.textContent.includes('/wsr') && node.textContent.includes('create hello-world-workflow@0.2.0'))
       .sort((left, right) => left.textContent.length - right.textContent.length);
     const ordered = inputs.length > 0
       && Boolean(inputs[0].compareDocumentPosition(presentations[0]) & Node.DOCUMENT_POSITION_FOLLOWING);
-    if (!ordered) return undefined;
-    return { presentations: presentations.length, technicalDetails: true, userBeforePresentation: true };
+    return { presentations: presentations.length, technicalDetails: detail !== null, userBeforePresentation: ordered,
+      presentationText: presentations[0].textContent, errorCode: document.body.textContent.includes('TASK_PROMPT_REQUIRED') };
   })()`), "HARNESS_COMMAND_DIAGNOSTIC_UNAVAILABLE");
+  if (!commandDiagnostic.presentationText.includes("Add a Task instruction") || !commandDiagnostic.errorCode || !commandDiagnostic.userBeforePresentation) {
+    throw new Error(`HARNESS_COMMAND_DIAGNOSTIC_INVALID: ${JSON.stringify(commandDiagnostic)}`);
+  }
 
   const shell = await waitFor(async () => cdp.evaluate(`(() => {
     const resource = document.querySelector('[data-wsr-sidebar-resources="true"]');
@@ -501,9 +512,9 @@ try {
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'View receipt').click(); })()`);
   await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Evaluation receipt') && document.body.innerText.includes('/v1/evidence/facts')`), "HARNESS_STUDIO_RECEIPT_FAILED");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Back to Metric Results').click(); })()`);
-  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Fact drill-down').click(); })()`);
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'View evidence').click(); })()`);
   await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('EVENT_CONTRIBUTION') && document.body.innerText.includes('fact-1')`), "HARNESS_STUDIO_FACT_FAILED");
-  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Open recorded trace').click(); })()`);
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.includes(${JSON.stringify(traceId)})).click(); })()`);
   const trace = await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Recorded structure') && document.body.innerText.includes('Qualification evaluate')`), "HARNESS_STUDIO_TRACE_FAILED");
   const storedLocation = await cdp.evaluate(`sessionStorage.getItem('wsr.studio.location@1')`);
   const urlLocation = await cdp.evaluate(`new URL(location.href).searchParams.get('wsr-studio')`);
