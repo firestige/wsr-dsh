@@ -122,6 +122,29 @@ async function captureScreenshot(cdp, name) {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
+async function waitForStableDeliveryLayout(cdp, label) {
+  let previous;
+  let stableSamples = 0;
+  return waitFor(async () => {
+    const bounds = await cdp.evaluate(`(() => {
+      const view = document.querySelector('[data-wsr-delivery-id]');
+      const composer = document.querySelector('textarea:not(:disabled)')?.closest('form');
+      if (!view) return undefined;
+      const sample = (node) => {
+        if (!node) return null;
+        const rect = node.getBoundingClientRect();
+        return [rect.x, rect.width].map((value) => Math.round(value));
+      };
+      return { view: sample(view), composer: sample(composer) };
+    })()`);
+    if (bounds === undefined) return undefined;
+    const serialized = JSON.stringify(bounds);
+    stableSamples = serialized === previous ? stableSamples + 1 : 0;
+    previous = serialized;
+    return stableSamples >= 2 ? bounds : undefined;
+  }, label);
+}
+
 const temporary = await mkdtemp(join(tmpdir(), "wsr-dsh-real-harness-"));
 let harness;
 let chrome;
@@ -524,6 +547,7 @@ try {
     if (firstFold === null || !firstFold.visible || firstFold.display !== "grid" || firstFold.documentOverflow || firstFold.viewOverflow) {
       throw new Error(`HARNESS_DELIVERY_FIRST_FOLD_FAILED: ${JSON.stringify(firstFold)}`);
     }
+    await waitForStableDeliveryLayout(cdp, "HARNESS_DELIVERY_DESKTOP_LAYOUT_UNSTABLE");
     const desktopScreenshot = await captureScreenshot(cdp, "delivery-desktop");
     const disclosure = await cdp.evaluate(`(() => {
       const control = document.querySelector('[data-wsr-delivery-id] [data-disclosure-row][role="button"]');
@@ -550,6 +574,7 @@ try {
     if (copyControls.count < 7 || new Set(copyControls.labels).size !== copyControls.count || !copyControls.focused || !copyFeedback) {
       throw new Error(`HARNESS_DELIVERY_COPY_FAILED: ${JSON.stringify(copyControls)}`);
     }
+    await waitForStableDeliveryLayout(cdp, "HARNESS_DELIVERY_EXPANDED_LAYOUT_UNSTABLE");
     const expandedScreenshot = await captureScreenshot(cdp, "delivery-identities-expanded");
     const narrowDelivery = await cdp.evaluate(`(() => {
       const view = document.querySelector('[data-wsr-delivery-id]');
@@ -565,6 +590,7 @@ try {
       };
     })()`);
     if (!narrowDelivery?.pass) throw new Error(`HARNESS_DELIVERY_NARROW_OVERFLOW: ${JSON.stringify(narrowDelivery)}`);
+    await waitForStableDeliveryLayout(cdp, "HARNESS_DELIVERY_NARROW_LAYOUT_UNSTABLE");
     const narrowScreenshot = await captureScreenshot(cdp, "delivery-narrow-320");
     await cdp.evaluate(`document.querySelector('[data-wsr-delivery-id]').style.width = ''`);
     await cdp.command("Emulation.setDeviceMetricsOverride", { width: 640, height: 400, deviceScaleFactor: 2, mobile: false });
@@ -573,6 +599,7 @@ try {
       return Boolean(view && view.scrollWidth <= view.clientWidth && view.getBoundingClientRect().right <= window.innerWidth);
     })()`);
     if (!zoomDelivery) throw new Error("HARNESS_DELIVERY_ZOOM_OVERFLOW");
+    await waitForStableDeliveryLayout(cdp, "HARNESS_DELIVERY_ZOOM_LAYOUT_UNSTABLE");
     const zoomScreenshot = await captureScreenshot(cdp, "delivery-zoom-200");
     await cdp.command("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
     await cdp.command("Page.reload", { ignoreCache: true });
