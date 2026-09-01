@@ -14,6 +14,7 @@ const root = resolve(new URL("../", import.meta.url).pathname);
 const chromeBinary = process.env.WSR_CHROME_BINARY ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.2.1/wsr-execution-0.2.1.tgz";
 const terminalFixture = process.env.WSR_QUALIFY_TERMINAL === "1";
+const screenshotDirectory = process.env.WSR_QUALIFY_SCREENSHOT_DIR;
 
 function run(command, args, options = {}) {
   const answer = spawnSync(command, args, { encoding: "utf8", ...options });
@@ -109,6 +110,16 @@ async function stop(child) {
     new Promise((accept) => setTimeout(accept, 5_000)),
   ]);
   if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+}
+
+async function captureScreenshot(cdp, name) {
+  const screenshot = await cdp.command("Page.captureScreenshot", { format: "png", fromSurface: true });
+  const bytes = Buffer.from(screenshot.data, "base64");
+  if (screenshotDirectory !== undefined) {
+    await mkdir(screenshotDirectory, { recursive: true });
+    await writeFile(join(screenshotDirectory, `${name}.png`), bytes);
+  }
+  return createHash("sha256").update(bytes).digest("hex");
 }
 
 const temporary = await mkdtemp(join(tmpdir(), "wsr-dsh-real-harness-"));
@@ -462,6 +473,7 @@ try {
   }
   let terminalView;
   if (terminalFixture) {
+    await cdp.command("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
     await cdp.evaluate(`(() => { [...document.querySelectorAll('[role="tab"]')].find((node) => node.textContent.trim() === 'Delivery').click(); })()`);
     terminalView = await waitFor(async () => cdp.evaluate(`(() => {
       const view = document.querySelector('[data-wsr-delivery-id]');
@@ -473,9 +485,84 @@ try {
     if (expectedOutcome === undefined || !terminalView.text.includes(expectedOutcome)) {
       throw new Error(`HARNESS_TERMINAL_SESSION_VIEW_INVALID: ${JSON.stringify(terminalView)}`);
     }
+    const firstFold = await cdp.evaluate(`(() => {
+      const view = document.querySelector('[data-wsr-delivery-id]');
+      const summary = view?.querySelector('[data-wsr-delivery-summary="true"]');
+      const disclosure = view?.querySelector('[data-disclosure-row][role="button"]');
+      if (!view || !summary || !disclosure) return null;
+      const viewportBottom = Math.min(window.innerHeight, view.closest('[role="tabpanel"]')?.getBoundingClientRect().bottom ?? window.innerHeight);
+      const items = [...summary.children].map((item) => ({
+        label: item.querySelector('dt')?.textContent.trim(),
+        top: item.getBoundingClientRect().top,
+        bottom: item.getBoundingClientRect().bottom,
+      }));
+      const required = ['Status', 'Workflow', 'Outcome', 'Elapsed'];
+      const visible = required.every((label) => items.some((item) => item.label === label && item.top >= 0 && item.bottom <= viewportBottom));
+      const style = getComputedStyle(summary);
+      return { visible, required, items, display: style.display, columns: style.gridTemplateColumns,
+        documentOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+        viewOverflow: view.scrollWidth > view.clientWidth, disclosureExpanded: disclosure.getAttribute('aria-expanded') };
+    })()`);
+    if (firstFold === null || !firstFold.visible || firstFold.display !== "grid" || firstFold.documentOverflow || firstFold.viewOverflow) {
+      throw new Error(`HARNESS_DELIVERY_FIRST_FOLD_FAILED: ${JSON.stringify(firstFold)}`);
+    }
+    const desktopScreenshot = await captureScreenshot(cdp, "delivery-desktop");
+    const disclosure = await cdp.evaluate(`(() => {
+      const control = document.querySelector('[data-wsr-delivery-id] [data-disclosure-row][role="button"]');
+      if (!control) return null;
+      control.focus();
+      control.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true, cancelable: true }));
+      return { focused: document.activeElement === control, expanded: control.getAttribute('aria-expanded') };
+    })()`);
+    const expanded = await waitFor(async () => cdp.evaluate(`document.querySelector('[data-wsr-delivery-id] [data-disclosure-row]')?.getAttribute('aria-expanded') === 'true'`), "HARNESS_DELIVERY_DISCLOSURE_FAILED");
+    if (disclosure === null || !disclosure.focused || !expanded) throw new Error(`HARNESS_DELIVERY_DISCLOSURE_FAILED: ${JSON.stringify(disclosure)}`);
+    await cdp.command("Browser.grantPermissions", { origin, permissions: ["clipboardReadWrite"] });
+    const copyControls = await cdp.evaluate(`(() => {
+      const buttons = [...document.querySelectorAll('[data-wsr-delivery-id] button[aria-label^="Copy "]')];
+      const labels = buttons.map((button) => button.getAttribute('aria-label'));
+      if (buttons.length === 0) return { count: 0, labels, focused: false };
+      buttons[0].focus();
+      buttons[0].click();
+      return { count: buttons.length, labels, focused: document.activeElement === buttons[0] };
+    })()`);
+    const copyFeedback = await waitFor(async () => cdp.evaluate(`(() => {
+      const text = document.querySelector('[data-wsr-delivery-id] [role="status"][aria-live="polite"]')?.textContent.trim();
+      return text && (text.endsWith('copied') || text.endsWith('copy failed')) ? text : undefined;
+    })()`), "HARNESS_DELIVERY_COPY_FAILED");
+    if (copyControls.count < 7 || new Set(copyControls.labels).size !== copyControls.count || !copyControls.focused || !copyFeedback) {
+      throw new Error(`HARNESS_DELIVERY_COPY_FAILED: ${JSON.stringify(copyControls)}`);
+    }
+    const expandedScreenshot = await captureScreenshot(cdp, "delivery-identities-expanded");
+    const narrowDelivery = await cdp.evaluate(`(() => {
+      const view = document.querySelector('[data-wsr-delivery-id]');
+      if (!view) return false;
+      view.style.width = '320px';
+      const summary = view.querySelector('[data-wsr-delivery-summary="true"]');
+      const identities = view.querySelector('.wsr-delivery-identities');
+      const columns = (node) => getComputedStyle(node).gridTemplateColumns.split(' ').filter(Boolean).length;
+      return {
+        pass: document.documentElement.scrollWidth <= document.documentElement.clientWidth && view.scrollWidth <= view.clientWidth
+          && view.getBoundingClientRect().width <= 320 && columns(summary) === 1 && columns(identities) === 1,
+        summaryColumns: columns(summary), identityColumns: columns(identities), width: view.getBoundingClientRect().width,
+      };
+    })()`);
+    if (!narrowDelivery?.pass) throw new Error(`HARNESS_DELIVERY_NARROW_OVERFLOW: ${JSON.stringify(narrowDelivery)}`);
+    const narrowScreenshot = await captureScreenshot(cdp, "delivery-narrow-320");
+    await cdp.evaluate(`document.querySelector('[data-wsr-delivery-id]').style.width = ''`);
+    await cdp.command("Emulation.setDeviceMetricsOverride", { width: 640, height: 400, deviceScaleFactor: 2, mobile: false });
+    const zoomDelivery = await cdp.evaluate(`(() => {
+      const view = document.querySelector('[data-wsr-delivery-id]');
+      return Boolean(view && view.scrollWidth <= view.clientWidth && view.getBoundingClientRect().right <= window.innerWidth);
+    })()`);
+    if (!zoomDelivery) throw new Error("HARNESS_DELIVERY_ZOOM_OVERFLOW");
+    const zoomScreenshot = await captureScreenshot(cdp, "delivery-zoom-200");
+    await cdp.command("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
     await cdp.command("Page.reload", { ignoreCache: true });
     await waitFor(async () => cdp.evaluate(`document.querySelector('[data-wsr-delivery-id=${JSON.stringify(terminalView.deliveryId)}]')?.textContent.includes(${JSON.stringify(expectedOutcome)})`), "HARNESS_TERMINAL_RELOAD_FAILED", 30_000);
-    terminalView = { ...terminalView, reload: expectedOutcome };
+    terminalView = { ...terminalView, reload: expectedOutcome, qualification: {
+      firstFold, narrowDelivery, zoomDelivery, copyControls: copyControls.count, copyFeedback,
+      desktopScreenshot, expandedScreenshot, narrowScreenshot, zoomScreenshot,
+    } };
   }
   await cdp.command("Page.bringToFront");
   const before = await cdp.evaluate(`(() => {
@@ -522,8 +609,12 @@ try {
     throw new Error(`HARNESS_STUDIO_LOCATION_FAILED: ${JSON.stringify({ storedLocation, urlLocation })}`);
   }
   await cdp.command("Emulation.setDeviceMetricsOverride", { width: 360, height: 720, deviceScaleFactor: 1, mobile: false });
-  const narrow = await cdp.evaluate(`(() => { const view = document.querySelector('[data-wsr-studio-view="evaluate"]'); return view.scrollWidth <= view.clientWidth; })()`);
-  if (!narrow) throw new Error("HARNESS_STUDIO_NARROW_OVERFLOW");
+  const narrow = await waitFor(async () => cdp.evaluate(`(() => {
+    const view = document.querySelector('[data-wsr-studio-view="evaluate"]');
+    if (view === null) return undefined;
+    const result = { pass: view.scrollWidth <= view.clientWidth, scrollWidth: view.scrollWidth, clientWidth: view.clientWidth, innerWidth: window.innerWidth };
+    return result.pass ? result : undefined;
+  })()`), "HARNESS_STUDIO_NARROW_OVERFLOW", 3_000);
   await cdp.command("Page.reload", { ignoreCache: true });
   const restored = await waitFor(async () => cdp.evaluate(`(() => {
     const view = document.querySelector('[data-wsr-studio-view="evaluate"]');

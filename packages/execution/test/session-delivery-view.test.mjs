@@ -203,6 +203,10 @@ test("defines scoped compact, narrow, zoom-safe and reduced-motion layout rules"
   const sourceText = await readFile(new URL("../src/client/delivery/session-delivery-view.js", import.meta.url), "utf8");
   assert.match(sourceText, /\.wsr-delivery-summary\s*\{[^}]*display:\s*grid/su);
   assert.match(sourceText, /\.wsr-delivery-identities\s*\{[^}]*display:\s*grid/su);
+  assert.match(sourceText, /grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(min\(100%,\s*180px\),\s*1fr\)\)/u);
+  assert.match(sourceText, /grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(min\(100%,\s*260px\),\s*1fr\)\)/u);
+  assert.match(sourceText, /\.wsr-delivery-identity dd\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto/su);
+  assert.match(sourceText, /\.wsr-delivery-preview\s*\{[^}]*margin-inline-start:\s*8px/su);
   assert.match(sourceText, /minmax\(0,\s*1fr\)/u);
   assert.match(sourceText, /text-overflow:\s*ellipsis/u);
   assert.match(sourceText, /overflow-wrap:\s*anywhere/u);
