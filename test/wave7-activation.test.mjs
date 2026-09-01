@@ -89,7 +89,7 @@ test("generated clients use one module identity and no private source or direct 
       window: { __ModuleLoader__: { load(value) { definition = value; } } },
     });
     assert.equal(definition.id, expected);
-    const React = {};
+    const React = { memo(component) { return component; } };
     const loaded = definition.factory((name) => {
       if (name === "react") return React;
       if (name === "react/jsx-runtime") return { jsx() {}, jsxs() {} };

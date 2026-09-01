@@ -39,6 +39,7 @@ for (const bundle of bundles) {
     minify: false,
     platform: "browser",
     target: "es2022",
+    loader: { ".css": "text" },
     write: false,
   });
   if (result.outputFiles.length !== 1) throw new Error(`CLIENT_BUNDLE_OUTPUT_INVALID: ${bundle.id}`);

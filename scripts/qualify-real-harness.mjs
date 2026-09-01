@@ -191,8 +191,21 @@ try {
         { task_id: "task-a", display_name: "Alpha Task" }, { task_id: "task-b", display_name: "Beta Task" },
       ], next_cursor: null,
     }); return; }
-    if (request.url?.startsWith("/v1/evidence/facts")) { json(200, { items: [{ id: "fact-1", kind: "EVENT_CONTRIBUTION", provenance: { accepted_digest: "digest-fact-1" }, source: { trace_id: traceId, span_id: "b".repeat(16) } }] }); return; }
-    if (request.url?.startsWith("/v1/evidence/traces")) { json(200, { items: [{ id: "trace-node-1", kind: "NODE", trace_id: traceId }] }); return; }
+    if (request.url?.startsWith("/v1/evidence/facts")) { json(200, { items: [{
+      id: "fact-1", kind: "EVENT_CONTRIBUTION", recorded_at: "2026-09-01T00:00:00Z",
+      provenance: { accepted_digest: "digest-fact-1", profile_version: "1.0.0", family_schema: null, owner_key: [] },
+      compatibility: { family_schema: null, event_name: "qualification", completeness: "FINAL", dimensions: [] },
+      truth: { completeness: "FINAL", availability: "AVAILABLE", expiry: "ACTIVE", expires_at: null },
+      source: { kind: "SPAN", trace_id: traceId, span_id: "b".repeat(16) }, fields: [], relationships: [],
+    }] }); return; }
+    if (request.url?.startsWith("/v1/evidence/traces")) { json(200, { items: [{
+      id: "trace-node-1", kind: "NODE", trace_id: traceId, recorded_at: "2026-09-01T00:00:00Z",
+      source: { kind: "SPAN", trace_id: traceId, span_id: "b".repeat(16) },
+      truth: { completeness: "FINAL", availability: "AVAILABLE", expiry: "ACTIVE", expires_at: null },
+      node: { span_id: "b".repeat(16), span_name: "Qualification evaluate", span_kind: "INTERNAL",
+        start_time_unix_nano: "1000000000", end_time_unix_nano: "2000000000", span_status: "OK",
+        span_flags: 1, trace_state: null, fields: [] }, edge: null,
+    }] }); return; }
     if (request.url === "/api/evolution/v1/evaluations:compute") {
       let body = "";
       request.on("data", (chunk) => { body += chunk; });
@@ -200,9 +213,20 @@ try {
         if (body === "{}") { json(400, { error: { code: "INVALID_REQUEST", retryable: false } }); return; }
         const input = JSON.parse(body);
         const side = (selection) => ({ tag: "SIDE_RESULT", receipt: {
-          selection, population_state: "COMPLETE", evidence_bindings: [{ route: "/v1/evidence/facts", canonical_filter: { delivery_id: "delivery-a" } }],
-          task_population: selection.task_ids.map((task_id) => ({ task_id, memberships: [{ delivery_id: "delivery-a" }] })), input_refs: [],
-        }, metric_results: [{ metric_id: "delivery-cycle-time-ms", metric_version: "2.0.0", slices: [{ slice_key: {}, state: "AVAILABLE", value: { kind: "DURATION_MS", value: "12", unit: "ms" }, provenance_refs: ["digest-fact-1"] }] }] });
+          context_version: 1, selection, as_of: "2026-09-01T00:00:00Z", resolved_at: "2026-09-01T00:00:01Z",
+          population_state: "COMPLETE", catalog: { catalog_id: "agentops.evaluation.metric-catalog", version: "2.0.0",
+            semantic_digest: "sha256:catalog", observation_profile: "1.0.0" },
+          evidence_bindings: [{ route: "/v1/evidence/facts", canonical_filter: { delivery_id: "delivery-a" },
+            contract_revision: "0.1.0", observation_profile: "1.0.0", read_model_revision: "1.0.0",
+            route_snapshot: "qualification", completion_state: "COMPLETE" }],
+          task_population: selection.task_ids.map((task_id) => ({ task_id, cohort_coordinates: {}, exclusions: [], memberships: [{
+            delivery_id: "delivery-a", manifest_digest: "sha256:manifest", accepted_digest: "sha256:accepted",
+            profile_version: "2.0.0", source_identity: "qualification", recorded_at: "2026-09-01T00:00:00Z",
+          }] })), input_refs: [{ kind: "FACT", identity: "fact-1", provenance_ref: "digest-fact-1" }], workflow_resolutions: [],
+        }, metric_results: [{ metric_id: "delivery-cycle-time-ms", metric_version: "2.0.0", slices: [{
+          slice_key: {}, state: "AVAILABLE", value: { kind: "DURATION_MS", value: "12", unit: "ms" },
+          measures: {}, coverage: null, compatibility: {}, exclusions: [], missing_inputs: [], provenance_refs: ["digest-fact-1"],
+        }] }] });
         json(200, input.mode === "SINGLE" ? { api_version: 1, mode: "SINGLE", result: side(input.selection) } : {
           api_version: 1, mode: "COMPARE", status: "FULL_COMPARE", left: side(input.left), right: side(input.right), deltas: [],
         });
@@ -475,12 +499,12 @@ try {
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Evaluate selection').click(); })()`);
   await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('delivery-cycle-time-ms@2.0.0') && document.body.innerText.includes('left side') && document.body.innerText.includes('right side')`), "HARNESS_STUDIO_COMPARE_METRIC_FAILED");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'View receipt').click(); })()`);
-  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Evidence bindings: 1')`), "HARNESS_STUDIO_RECEIPT_FAILED");
+  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Evaluation receipt') && document.body.innerText.includes('/v1/evidence/facts')`), "HARNESS_STUDIO_RECEIPT_FAILED");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Back to Metric Results').click(); })()`);
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Fact drill-down').click(); })()`);
-  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('EVENT_CONTRIBUTION · fact-1')`), "HARNESS_STUDIO_FACT_FAILED");
+  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('EVENT_CONTRIBUTION') && document.body.innerText.includes('fact-1')`), "HARNESS_STUDIO_FACT_FAILED");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Open recorded trace').click(); })()`);
-  const trace = await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('NODE · trace-node-1')`), "HARNESS_STUDIO_TRACE_FAILED");
+  const trace = await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Recorded structure') && document.body.innerText.includes('Qualification evaluate')`), "HARNESS_STUDIO_TRACE_FAILED");
   const storedLocation = await cdp.evaluate(`sessionStorage.getItem('wsr.studio.location@1')`);
   const urlLocation = await cdp.evaluate(`new URL(location.href).searchParams.get('wsr-studio')`);
   if (!storedLocation?.startsWith('/evaluate/trace/') || urlLocation !== null) {
@@ -492,7 +516,7 @@ try {
   await cdp.command("Page.reload", { ignoreCache: true });
   const restored = await waitFor(async () => cdp.evaluate(`(() => {
     const view = document.querySelector('[data-wsr-studio-view="evaluate"]');
-    return Boolean(view && document.body.innerText.includes('NODE · trace-node-1'));
+    return Boolean(view && document.body.innerText.includes('Recorded structure') && document.body.innerText.includes('Qualification evaluate'));
   })()`), "HARNESS_STUDIO_REFRESH_RECOVERY_FAILED", 30_000);
   fixtureAvailable = false;
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Back to Metric Results').click(); })()`);
