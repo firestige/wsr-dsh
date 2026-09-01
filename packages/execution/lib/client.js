@@ -3014,6 +3014,36 @@ var LIFECYCLES = /* @__PURE__ */ new Set([
   "TERMINAL_HANDLING",
   "TERMINAL"
 ]);
+var DELIVERY_STYLE_ID = "dsh-wsr-execution-delivery-view";
+var DELIVERY_CSS = `
+.wsr-delivery-view { box-sizing: border-box; width: 100%; max-width: 960px; margin: 0 auto; padding: 20px; color: var(--dsw-alias-label-primary); }
+.wsr-delivery-heading { margin: 0 0 16px; font-size: 20px; line-height: 28px; }
+.wsr-delivery-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0 0 16px; }
+.wsr-delivery-summary-item { min-width: 0; padding: 10px 12px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 8px; background: var(--dsw-alias-bg-layer-1); }
+.wsr-delivery-summary-item dt, .wsr-delivery-identity dt { margin: 0 0 3px; color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 16px; }
+.wsr-delivery-summary-item dd, .wsr-delivery-identity dd { min-width: 0; margin: 0; font-size: 13px; line-height: 20px; overflow-wrap: anywhere; }
+.wsr-delivery-status { display: inline-flex; min-width: 0; align-items: center; gap: 6px; }
+.wsr-delivery-status > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wsr-delivery-identities { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; margin: 8px 0 0; }
+.wsr-delivery-identity { min-width: 0; margin: 0; }
+.wsr-delivery-identity code { display: block; max-width: 100%; overflow: hidden; color: inherit; font-family: var(--dsw-font-family-mono, ui-monospace, monospace); text-overflow: ellipsis; white-space: nowrap; }
+.wsr-delivery-identity-full { display: grid; gap: 4px; max-width: min(560px, calc(100vw - 32px)); overflow-wrap: anywhere; }
+.wsr-delivery-condition { margin-top: 12px; padding: 10px 12px; border-left: 3px solid var(--dsw-alias-state-warn-primary); border-radius: 4px; background: var(--dsw-alias-bg-layer-1); }
+.wsr-delivery-condition h3 { margin: 0 0 4px; font-size: 13px; line-height: 20px; }
+.wsr-delivery-condition code, .wsr-delivery-state code { overflow-wrap: anywhere; }
+.wsr-delivery-state { display: grid; gap: 8px; }
+.wsr-delivery-state p { margin: 0; }
+@media (max-width: 720px) { .wsr-delivery-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .wsr-delivery-view { padding: 12px; } .wsr-delivery-summary, .wsr-delivery-identities { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .wsr-delivery-view, .wsr-delivery-view * { scroll-behavior: auto !important; transition: none !important; } }
+`;
+function ensureDeliveryStyles() {
+  if (typeof document === "undefined" || document.getElementById(DELIVERY_STYLE_ID) !== null) return;
+  const tag = document.createElement("style");
+  tag.id = DELIVERY_STYLE_ID;
+  tag.textContent = DELIVERY_CSS;
+  document.head.appendChild(tag);
+}
 function nonEmpty(value) {
   return typeof value === "string" && value.length > 0;
 }
@@ -3040,88 +3070,162 @@ function safeSubscribe(source, notify) {
     return () => void 0;
   }
 }
-function pair(React2, label, value) {
-  return [
-    React2.createElement("dt", { key: `${label}-label` }, label),
-    React2.createElement("dd", { key: `${label}-value` }, value)
-  ];
+function summaryItem(React2, label, value, extra = {}) {
+  return React2.createElement(
+    "div",
+    { className: "wsr-delivery-summary-item", ...extra },
+    React2.createElement("dt", null, label),
+    React2.createElement("dd", null, value)
+  );
 }
-function statePanel(React2, role, code, message2) {
+function statePanel(React2, StateDot2, role, code, message2) {
   return React2.createElement(
     "section",
     {
+      className: "wsr-delivery-view wsr-delivery-state",
       "aria-labelledby": "wsr-delivery-view-title",
       "aria-live": role === "alert" ? "assertive" : "polite",
       "data-wsr-delivery-view": "true",
       role
     },
-    React2.createElement("h2", { id: "wsr-delivery-view-title" }, "Delivery"),
-    React2.createElement("p", null, message2),
+    React2.createElement("h2", { className: "wsr-delivery-heading", id: "wsr-delivery-view-title" }, "Delivery"),
+    React2.createElement(
+      "p",
+      null,
+      React2.createElement(StateDot2, { state: role === "alert" ? "error" : "ongoing", size: 10 }),
+      " ",
+      message2
+    ),
     code === void 0 ? null : React2.createElement("code", null, code)
   );
 }
-function createSessionDeliveryView(React2) {
+function statusState(delivery, failed) {
+  if (failed) return "error";
+  if (delivery.terminal?.outcome === "SUCCEEDED") return "done";
+  if (delivery.terminal !== null || ["START_UNCERTAIN", "RESULT_UNRESOLVED", "START_FAILED"].includes(delivery.lifecycle)) return "warning";
+  return "ongoing";
+}
+function identityCard(React2, HoverCard2, label, value, displayValue = value) {
+  const anchor = React2.createElement("code", {
+    "aria-label": `${label}: ${value}`,
+    "data-wsr-delivery-identity": label,
+    title: value
+  }, displayValue);
+  const content = React2.createElement(
+    "span",
+    { className: "wsr-delivery-identity-full" },
+    React2.createElement("strong", null, label),
+    React2.createElement("code", null, value)
+  );
+  return React2.createElement(
+    "div",
+    { className: "wsr-delivery-identity", key: label },
+    React2.createElement("dt", null, label),
+    React2.createElement("dd", null, React2.createElement(HoverCard2, {
+      anchor,
+      content,
+      copyLabel: `Copy ${label}`,
+      copiedLabel: `${label} copied`,
+      copyText: value
+    }))
+  );
+}
+function createSessionDeliveryView(React2, primitives = {}) {
   if (typeof React2?.createElement !== "function" || typeof React2?.useSyncExternalStore !== "function") {
     throw new TypeError("DELIVERY_VIEW_REACT_INVALID");
   }
+  const DisclosureRow2 = primitives.DisclosureRow ?? "div";
+  const HoverCard2 = primitives.HoverCard ?? "span";
+  const Pill2 = primitives.Pill ?? "span";
+  const StateDot2 = primitives.StateDot ?? "span";
+  ensureDeliveryStyles();
   return function SessionDeliveryView({ sessionId, source }) {
+    const [identitiesOpen, setIdentitiesOpen] = typeof React2.useState === "function" ? React2.useState(false) : [false, () => void 0];
     const state = React2.useSyncExternalStore(
       (notify) => safeSubscribe(source, notify),
       () => safeSnapshot(source),
       () => safeSnapshot(source)
     );
-    if (state.kind === "loading") return statePanel(React2, "status", void 0, "Loading Delivery\u2026");
-    if (state.kind === "error") return statePanel(React2, "alert", state.code ?? "DELIVERY_PROJECTION_UNAVAILABLE", state.message ?? "Execution projection unavailable");
+    if (state.kind === "loading") return statePanel(React2, StateDot2, "status", void 0, "Loading Delivery\u2026");
+    if (state.kind === "error") return statePanel(React2, StateDot2, "alert", state.code ?? "DELIVERY_PROJECTION_UNAVAILABLE", state.message ?? "Execution projection unavailable");
     const view = state.view;
     if (state.kind !== "ready" || view?.sessionCorrelation !== sessionId) {
-      return statePanel(React2, "alert", "DELIVERY_PROJECTION_CORRUPT", "Delivery projection invalid");
+      return statePanel(React2, StateDot2, "alert", "DELIVERY_PROJECTION_CORRUPT", "Delivery projection invalid");
     }
-    if (view.kind === "UNBOUND") return statePanel(React2, "status", void 0, "No Delivery bound to this Session");
+    if (view.kind === "UNBOUND") return statePanel(React2, StateDot2, "status", void 0, "No Delivery bound to this Session");
     if (view.kind !== "BOUND" || !validDelivery(view.delivery, sessionId)) {
-      return statePanel(React2, "alert", "DELIVERY_PROJECTION_CORRUPT", "Delivery projection invalid");
+      return statePanel(React2, StateDot2, "alert", "DELIVERY_PROJECTION_CORRUPT", "Delivery projection invalid");
     }
     const delivery = view.delivery;
     const failed = delivery.terminal?.outcome === "FAILED" || delivery.error !== null;
     const identityRows = [
-      ...pair(React2, "Delivery", delivery.deliveryId),
-      ...pair(React2, "Task", delivery.task.displayName ?? delivery.task.identity),
-      ...pair(React2, "Workflow", delivery.workflow.identity),
-      ...pair(React2, "Package", `${delivery.workflow.packageName}@${delivery.workflow.exactPackageVersion}`),
-      ...pair(React2, "Package digest", delivery.workflow.packageDigest),
-      ...pair(React2, "Snapshot", delivery.workflow.snapshotIdentity),
-      ...pair(React2, "Snapshot digest", delivery.workflow.snapshotDigest),
-      ...pair(React2, "Binding", delivery.deliveryBindingIdentity)
+      ["Delivery", delivery.deliveryId],
+      ["Task", delivery.task.identity, delivery.task.displayName === null ? delivery.task.identity : `${delivery.task.displayName} \xB7 ${delivery.task.identity}`],
+      ["Workflow", delivery.workflow.identity],
+      ["Package", `${delivery.workflow.packageName}@${delivery.workflow.exactPackageVersion}`],
+      ["Package digest", delivery.workflow.packageDigest],
+      ["Snapshot", delivery.workflow.snapshotIdentity],
+      ["Snapshot digest", delivery.workflow.snapshotDigest],
+      ["Binding", delivery.deliveryBindingIdentity],
+      ...nonEmpty(delivery.worktree) ? [["Worktree", delivery.worktree]] : []
     ];
-    const lifecycleRows = [
-      ...pair(React2, "Lifecycle", delivery.lifecycle),
-      ...pair(React2, "Recoverable", delivery.recoverable ? "yes" : "no"),
-      ...delivery.current === null ? [] : pair(React2, delivery.current.kind === "ACTION" ? "Current Action" : "Current Intervention", delivery.current.identity),
-      ...pair(React2, "Started", new Date(delivery.timing.startedAt).toISOString()),
-      ...pair(React2, "Elapsed", duration(delivery.timing.elapsedMs)),
-      ...delivery.terminal === null ? [] : [
-        ...pair(React2, "Ended", new Date(delivery.terminal.finishedAt).toISOString()),
-        ...pair(React2, "Outcome", delivery.terminal.outcome)
-      ],
-      ...delivery.error === null ? [] : pair(React2, "Error", delivery.error.code)
+    const statusLabel = delivery.terminal?.outcome ?? delivery.lifecycle;
+    const workflowLabel = `${delivery.workflow.identity} \xB7 ${delivery.workflow.packageName}@${delivery.workflow.exactPackageVersion}`;
+    const summary = [
+      summaryItem(React2, "Status", React2.createElement(
+        "span",
+        { className: "wsr-delivery-status" },
+        React2.createElement(StateDot2, { state: statusState(delivery, failed), size: 10 }),
+        React2.createElement(Pill2, { "aria-label": `Delivery status ${statusLabel}` }, statusLabel)
+      )),
+      summaryItem(React2, "Workflow", workflowLabel),
+      ...delivery.current === null ? [] : [summaryItem(
+        React2,
+        delivery.current.kind === "ACTION" ? "Current Action" : "Current Intervention",
+        delivery.current.identity,
+        { "data-wsr-delivery-conditional": "current" }
+      )],
+      ...delivery.terminal === null ? [] : [summaryItem(React2, "Outcome", delivery.terminal.outcome, { "data-wsr-delivery-conditional": "terminal" })],
+      summaryItem(React2, "Elapsed", duration(delivery.timing.elapsedMs)),
+      summaryItem(React2, "Started", new Date(delivery.timing.startedAt).toISOString()),
+      ...delivery.terminal === null ? [] : [summaryItem(React2, "Ended", new Date(delivery.terminal.finishedAt).toISOString())]
     ];
     return React2.createElement(
       "section",
       {
+        className: "wsr-delivery-view",
         "aria-labelledby": "wsr-delivery-view-title",
         "aria-live": failed ? "assertive" : "polite",
         "data-wsr-delivery-id": delivery.deliveryId,
         "data-wsr-delivery-view": "true",
         role: failed ? "alert" : "region"
       },
-      React2.createElement("h2", { id: "wsr-delivery-view-title" }, "Delivery"),
-      React2.createElement("dl", { "aria-label": "Delivery identity" }, identityRows),
-      React2.createElement("dl", { "aria-label": "Delivery lifecycle" }, lifecycleRows)
+      React2.createElement("h2", { className: "wsr-delivery-heading", id: "wsr-delivery-view-title" }, "Delivery"),
+      React2.createElement("dl", { "aria-label": "Delivery summary", "data-wsr-delivery-summary": "true", className: "wsr-delivery-summary" }, summary),
+      React2.createElement(DisclosureRow2, {
+        title: "Identity details",
+        icon: React2.createElement(StateDot2, { state: statusState(delivery, failed), size: 10 }),
+        open: identitiesOpen,
+        expandable: true,
+        expandOnRowClick: true,
+        onToggle: () => setIdentitiesOpen((open) => !open),
+        collapsedContent: React2.createElement("code", null, delivery.deliveryId)
+      }, React2.createElement(
+        "dl",
+        { "aria-label": "Delivery identity", className: "wsr-delivery-identities" },
+        identityRows.map(([label, value, displayValue]) => identityCard(React2, HoverCard2, label, value, displayValue))
+      )),
+      delivery.error === null ? null : React2.createElement("section", {
+        className: "wsr-delivery-condition",
+        "data-wsr-delivery-conditional": "error",
+        role: "alert"
+      }, React2.createElement("h3", null, "Failure diagnostic"), React2.createElement("code", null, delivery.error.code))
     );
   };
 }
 function registerSessionDeliveryView(ctx, options) {
   if (typeof ctx?.slots?.inject !== "function" || typeof ctx?.slots?.register !== "function" || typeof options?.bindProjection !== "function") throw new TypeError("DELIVERY_VIEW_REGISTRATION_INVALID");
-  const View = createSessionDeliveryView(options.React);
+  const View = createSessionDeliveryView(options.React, options);
   ctx.slots.inject("conversation.view", () => ctx.slots.register({
     name: "conversation.view",
     id: DELIVERY_VIEW_ID,
@@ -3321,6 +3425,10 @@ function apply(ctx) {
   applyDeliverySidebar(ctx, { React: import_react.default, workspaceUi, inventory: controlPlane.inventory });
   registerSessionDeliveryView(ctx, {
     React: import_react.default,
+    DisclosureRow: import_dsh_client_ui_primitives.DisclosureRow,
+    HoverCard: import_dsh_client_ui_primitives.HoverCard,
+    Pill: import_dsh_client_ui_primitives.Pill,
+    StateDot: import_dsh_client_ui_primitives.StateDot,
     bindProjection(sessionId) {
       const source = controlPlane.bindSession(String(sessionId));
       void source.refresh();
