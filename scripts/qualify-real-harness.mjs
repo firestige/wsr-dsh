@@ -482,7 +482,7 @@ try {
     })()`), "HARNESS_TERMINAL_BASELINE_SELECTION_FAILED");
     await cdp.evaluate(`(() => { [...document.querySelectorAll('[role="tab"]')].find((node) => node.textContent.trim() === 'Delivery').click(); })()`);
     terminalView = await waitFor(async () => cdp.evaluate(`(() => {
-      const view = document.querySelector('[data-wsr-delivery-id]');
+      const view = document.querySelector('[data-wsr-delivery-id="delivery-completed"]');
       if (!view) return undefined;
       return { deliveryId: view.getAttribute('data-wsr-delivery-id'), text: view.textContent };
     })()`), "HARNESS_TERMINAL_SESSION_VIEW_UNAVAILABLE");
