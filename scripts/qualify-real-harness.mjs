@@ -474,15 +474,20 @@ try {
   let terminalView;
   if (terminalFixture) {
     await cdp.command("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
+    await waitFor(async () => cdp.evaluate(`(() => {
+      const row = document.querySelector('.wsr-delivery-row[aria-label="delivery-completed, SUCCEEDED"]');
+      if (!row) return undefined;
+      row.click();
+      return true;
+    })()`), "HARNESS_TERMINAL_BASELINE_SELECTION_FAILED");
     await cdp.evaluate(`(() => { [...document.querySelectorAll('[role="tab"]')].find((node) => node.textContent.trim() === 'Delivery').click(); })()`);
     terminalView = await waitFor(async () => cdp.evaluate(`(() => {
       const view = document.querySelector('[data-wsr-delivery-id]');
       if (!view) return undefined;
       return { deliveryId: view.getAttribute('data-wsr-delivery-id'), text: view.textContent };
     })()`), "HARNESS_TERMINAL_SESSION_VIEW_UNAVAILABLE");
-    const expectedOutcome = terminalView.deliveryId === "delivery-cancelled" ? "CANCELLED"
-      : terminalView.deliveryId === "delivery-failed" ? "FAILED" : undefined;
-    if (expectedOutcome === undefined || !terminalView.text.includes(expectedOutcome)) {
+    const expectedOutcome = "SUCCEEDED";
+    if (terminalView.deliveryId !== "delivery-completed" || !terminalView.text.includes(expectedOutcome)) {
       throw new Error(`HARNESS_TERMINAL_SESSION_VIEW_INVALID: ${JSON.stringify(terminalView)}`);
     }
     const firstFold = await cdp.evaluate(`(() => {
