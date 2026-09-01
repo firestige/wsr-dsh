@@ -18,8 +18,10 @@ const DELIVERY_CSS = `
 .wsr-delivery-status > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wsr-delivery-identities { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; margin: 8px 0 0; }
 .wsr-delivery-identity { min-width: 0; margin: 0; }
-.wsr-delivery-identity code { display: block; max-width: 100%; overflow: hidden; color: inherit; font-family: var(--dsw-font-family-mono, ui-monospace, monospace); text-overflow: ellipsis; white-space: nowrap; }
-.wsr-delivery-identity-full { display: grid; gap: 4px; max-width: min(560px, calc(100vw - 32px)); overflow-wrap: anywhere; }
+.wsr-delivery-identity dd { display: flex; align-items: flex-start; gap: 6px; }
+.wsr-delivery-identity code { display: block; min-width: 0; max-width: 100%; color: inherit; font-family: var(--dsw-font-family-mono, ui-monospace, monospace); overflow-wrap: anywhere; white-space: normal; }
+.wsr-delivery-preview { display: block; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wsr-delivery-copy-feedback { min-height: 20px; margin: 8px 0 0; color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 20px; }
 .wsr-delivery-condition { margin-top: 12px; padding: 10px 12px; border-left: 3px solid var(--dsw-alias-state-warn-primary); border-radius: 4px; background: var(--dsw-alias-bg-layer-1); }
 .wsr-delivery-condition h3 { margin: 0 0 4px; font-size: 13px; line-height: 20px; }
 .wsr-delivery-condition code, .wsr-delivery-state code { overflow-wrap: anywhere; }
@@ -101,19 +103,26 @@ function statusState(delivery, failed) {
   return "ongoing";
 }
 
-function identityCard(React, HoverCard, label, value, displayValue = value) {
-  const anchor = React.createElement("code", {
+function identityCard(React, primitives, label, value, displayValue = value) {
+  const { Button, IconCheckOutline16, IconCopyOutline16, Tooltip, onCopy, copiedLabel } = primitives;
+  const exact = React.createElement("code", {
     "aria-label": `${label}: ${value}`,
     "data-wsr-delivery-identity": label,
     title: value,
   }, displayValue);
-  const content = React.createElement("span", { className: "wsr-delivery-identity-full" },
-    React.createElement("strong", null, label), React.createElement("code", null, value));
+  const copied = copiedLabel === label;
+  const control = React.createElement(Tooltip, { label: copied ? `${label} copied` : `Copy ${label}`, side: "bottom" },
+    React.createElement(Button, {
+      "aria-label": `Copy ${label}`,
+      icon: React.createElement(copied ? IconCheckOutline16 : IconCopyOutline16, null),
+      onClick: () => onCopy(label, value),
+      size: "sm",
+      type: "button",
+      variant: "toolbar",
+    }, copied ? "Copied" : "Copy"));
   return React.createElement("div", { className: "wsr-delivery-identity", key: label },
     React.createElement("dt", null, label),
-    React.createElement("dd", null, React.createElement(HoverCard, {
-      anchor, content, copyLabel: `Copy ${label}`, copiedLabel: `${label} copied`, copyText: value,
-    })));
+    React.createElement("dd", null, exact, control));
 }
 
 /** Render the exact owner `SessionDeliveryView` without a shadow projection. */
@@ -122,14 +131,21 @@ export function createSessionDeliveryView(React, primitives = {}) {
     throw new TypeError("DELIVERY_VIEW_REACT_INVALID");
   }
   const DisclosureRow = primitives.DisclosureRow ?? "div";
-  const HoverCard = primitives.HoverCard ?? "span";
+  const Button = primitives.Button ?? "button";
+  const IconCheckOutline16 = primitives.IconCheckOutline16 ?? "span";
+  const IconCopyOutline16 = primitives.IconCopyOutline16 ?? "span";
   const Pill = primitives.Pill ?? "span";
   const StateDot = primitives.StateDot ?? "span";
+  const Tooltip = primitives.Tooltip ?? "span";
+  const writeClipboard = primitives.writeClipboard ?? (async () => false);
   ensureDeliveryStyles();
   return function SessionDeliveryView({ sessionId, source }) {
     const [identitiesOpen, setIdentitiesOpen] = typeof React.useState === "function"
       ? React.useState(false)
       : [false, () => undefined];
+    const [copiedLabel, setCopiedLabel] = typeof React.useState === "function"
+      ? React.useState("")
+      : ["", () => undefined];
     const state = React.useSyncExternalStore(
       (notify) => safeSubscribe(source, notify),
       () => safeSnapshot(source),
@@ -189,9 +205,21 @@ export function createSessionDeliveryView(React, primitives = {}) {
       expandable: true,
       expandOnRowClick: true,
       onToggle: () => setIdentitiesOpen((open) => !open),
-      collapsedContent: React.createElement("code", null, delivery.deliveryId),
+      collapsedContent: React.createElement("code", { className: "wsr-delivery-preview" }, delivery.deliveryId),
     }, React.createElement("dl", { "aria-label": "Delivery identity", className: "wsr-delivery-identities" },
-      identityRows.map(([label, value, displayValue]) => identityCard(React, HoverCard, label, value, displayValue)))),
+      identityRows.map(([label, value, displayValue]) => identityCard(React, {
+        Button,
+        IconCheckOutline16,
+        IconCopyOutline16,
+        Tooltip,
+        copiedLabel,
+        async onCopy(copyLabel, value) {
+          setCopiedLabel(await writeClipboard(value) ? copyLabel : `${copyLabel} copy failed`);
+        },
+      }, label, value, displayValue))),
+    React.createElement("p", {
+      "aria-live": "polite", className: "wsr-delivery-copy-feedback", role: "status",
+    }, copiedLabel === "" ? "" : copiedLabel.endsWith("copy failed") ? copiedLabel : `${copiedLabel} copied`)),
     delivery.error === null ? null : React.createElement("section", {
       className: "wsr-delivery-condition", "data-wsr-delivery-conditional": "error", role: "alert",
     }, React.createElement("h3", null, "Failure diagnostic"), React.createElement("code", null, delivery.error.code)));

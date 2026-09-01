@@ -22,11 +22,18 @@ function harness() {
 }
 
 function primitives() {
+  const copied = [];
   return {
+    Button(props) { return { type: "Button", props }; },
     DisclosureRow(props) { return { type: "DisclosureRow", props }; },
     HoverCard(props) { return { type: "HoverCard", props }; },
+    IconCheckOutline16(props) { return { type: "IconCheckOutline16", props }; },
+    IconCopyOutline16(props) { return { type: "IconCopyOutline16", props }; },
     Pill(props) { return { type: "Pill", props }; },
     StateDot(props) { return { type: "StateDot", props }; },
+    Tooltip(props) { return { type: "Tooltip", props }; },
+    async writeClipboard(value) { copied.push(value); return true; },
+    copied,
   };
 }
 
@@ -135,19 +142,24 @@ test("uses the exact current run position while active and terminal outcome afte
   assert.equal(elements(terminal).some((entry) => entry.props?.["data-wsr-delivery-conditional"] === "current"), false);
 });
 
-test("groups exact long identities in a native disclosure with full-value copy affordances", () => {
+test("groups exact long identities in a native disclosure with keyboard copy affordances", async () => {
   const native = primitives();
   const View = createSessionDeliveryView(harness().React, native);
   const longDeliveryId = `delivery-${"long".repeat(50)}`;
   const tree = View({ sessionId: "session-a", source: source(bound("session-a", delivery({ deliveryId: longDeliveryId }))) });
   const disclosure = elements(tree).find((entry) => entry.type === native.DisclosureRow);
-  const cards = elements(tree).filter((entry) => entry.type === native.HoverCard);
+  const buttons = elements(tree).filter((entry) => entry.type === native.Button);
+  const tooltips = elements(tree).filter((entry) => entry.type === native.Tooltip);
   assert.equal(disclosure?.props.title, "Identity details");
   assert.equal(disclosure?.props.expandable, true);
-  assert.ok(cards.length >= 7);
-  assert.equal(cards.some((entry) => entry.props.copyText === longDeliveryId && entry.props.copyLabel === "Copy Delivery"), true);
-  assert.equal(cards.some((entry) => entry.props.copyText === "task-a" && entry.props.copyLabel === "Copy Task"), true);
-  for (const card of cards) assert.equal(typeof card.props.copyText, "string");
+  assert.ok(buttons.length >= 7);
+  assert.equal(tooltips.length, buttons.length);
+  const deliveryCopy = buttons.find((entry) => entry.props["aria-label"] === "Copy Delivery");
+  assert.equal(typeof deliveryCopy?.props.onClick, "function");
+  assert.equal(buttons.some((entry) => entry.props["aria-label"] === "Copy Task"), true);
+  await deliveryCopy.props.onClick();
+  assert.deepEqual(native.copied, [longDeliveryId]);
+  assert.equal(elements(tree).some((entry) => entry.props?.role === "status" && entry.props?.["aria-live"] === "polite"), true);
 });
 
 test("omits absent optional condition sections instead of reserving empty rows", () => {

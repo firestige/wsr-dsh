@@ -515,6 +515,6 @@ test("projects exactly one final toolbar on each replay render without persisten
 test("the unified Harness binding imports the public primitive root and no private DSH source", async () => {
   const source = await readFile(resolve(import.meta.dirname, "../src/client/browser-entry.js"), "utf8");
   assert.match(source, /import React from ["']react["']/u);
-  assert.match(source, /import \{ DisclosureRow, HoverCard, IconCheckOutline16, IconCopyOutline16, JsonTree, MessageText, Pill, StateDot, Tooltip, writeClipboard \} from ["']@deepseek-ai\/dsh-client-ui-primitives["']/u);
+  assert.match(source, /import \{ Button, DisclosureRow, IconCheckOutline16, IconCopyOutline16, JsonTree, MessageText, Pill, StateDot, Tooltip, writeClipboard \} from ["']@deepseek-ai\/dsh-client-ui-primitives["']/u);
   assert.doesNotMatch(source, /\/src\/|tool\.call\.toolview/u);
 });

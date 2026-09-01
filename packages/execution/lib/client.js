@@ -3026,8 +3026,10 @@ var DELIVERY_CSS = `
 .wsr-delivery-status > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wsr-delivery-identities { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; margin: 8px 0 0; }
 .wsr-delivery-identity { min-width: 0; margin: 0; }
-.wsr-delivery-identity code { display: block; max-width: 100%; overflow: hidden; color: inherit; font-family: var(--dsw-font-family-mono, ui-monospace, monospace); text-overflow: ellipsis; white-space: nowrap; }
-.wsr-delivery-identity-full { display: grid; gap: 4px; max-width: min(560px, calc(100vw - 32px)); overflow-wrap: anywhere; }
+.wsr-delivery-identity dd { display: flex; align-items: flex-start; gap: 6px; }
+.wsr-delivery-identity code { display: block; min-width: 0; max-width: 100%; color: inherit; font-family: var(--dsw-font-family-mono, ui-monospace, monospace); overflow-wrap: anywhere; white-space: normal; }
+.wsr-delivery-preview { display: block; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wsr-delivery-copy-feedback { min-height: 20px; margin: 8px 0 0; color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 20px; }
 .wsr-delivery-condition { margin-top: 12px; padding: 10px 12px; border-left: 3px solid var(--dsw-alias-state-warn-primary); border-radius: 4px; background: var(--dsw-alias-bg-layer-1); }
 .wsr-delivery-condition h3 { margin: 0 0 4px; font-size: 13px; line-height: 20px; }
 .wsr-delivery-condition code, .wsr-delivery-state code { overflow-wrap: anywhere; }
@@ -3105,29 +3107,31 @@ function statusState(delivery, failed) {
   if (delivery.terminal !== null || ["START_UNCERTAIN", "RESULT_UNRESOLVED", "START_FAILED"].includes(delivery.lifecycle)) return "warning";
   return "ongoing";
 }
-function identityCard(React2, HoverCard2, label, value, displayValue = value) {
-  const anchor = React2.createElement("code", {
+function identityCard(React2, primitives, label, value, displayValue = value) {
+  const { Button: Button2, IconCheckOutline16: IconCheckOutline162, IconCopyOutline16: IconCopyOutline162, Tooltip: Tooltip2, onCopy, copiedLabel } = primitives;
+  const exact = React2.createElement("code", {
     "aria-label": `${label}: ${value}`,
     "data-wsr-delivery-identity": label,
     title: value
   }, displayValue);
-  const content = React2.createElement(
-    "span",
-    { className: "wsr-delivery-identity-full" },
-    React2.createElement("strong", null, label),
-    React2.createElement("code", null, value)
+  const copied = copiedLabel === label;
+  const control = React2.createElement(
+    Tooltip2,
+    { label: copied ? `${label} copied` : `Copy ${label}`, side: "bottom" },
+    React2.createElement(Button2, {
+      "aria-label": `Copy ${label}`,
+      icon: React2.createElement(copied ? IconCheckOutline162 : IconCopyOutline162, null),
+      onClick: () => onCopy(label, value),
+      size: "sm",
+      type: "button",
+      variant: "toolbar"
+    }, copied ? "Copied" : "Copy")
   );
   return React2.createElement(
     "div",
     { className: "wsr-delivery-identity", key: label },
     React2.createElement("dt", null, label),
-    React2.createElement("dd", null, React2.createElement(HoverCard2, {
-      anchor,
-      content,
-      copyLabel: `Copy ${label}`,
-      copiedLabel: `${label} copied`,
-      copyText: value
-    }))
+    React2.createElement("dd", null, exact, control)
   );
 }
 function createSessionDeliveryView(React2, primitives = {}) {
@@ -3135,12 +3139,17 @@ function createSessionDeliveryView(React2, primitives = {}) {
     throw new TypeError("DELIVERY_VIEW_REACT_INVALID");
   }
   const DisclosureRow2 = primitives.DisclosureRow ?? "div";
-  const HoverCard2 = primitives.HoverCard ?? "span";
+  const Button2 = primitives.Button ?? "button";
+  const IconCheckOutline162 = primitives.IconCheckOutline16 ?? "span";
+  const IconCopyOutline162 = primitives.IconCopyOutline16 ?? "span";
   const Pill2 = primitives.Pill ?? "span";
   const StateDot2 = primitives.StateDot ?? "span";
+  const Tooltip2 = primitives.Tooltip ?? "span";
+  const writeClipboard2 = primitives.writeClipboard ?? (async () => false);
   ensureDeliveryStyles();
   return function SessionDeliveryView({ sessionId, source }) {
     const [identitiesOpen, setIdentitiesOpen] = typeof React2.useState === "function" ? React2.useState(false) : [false, () => void 0];
+    const [copiedLabel, setCopiedLabel] = typeof React2.useState === "function" ? React2.useState("") : ["", () => void 0];
     const state = React2.useSyncExternalStore(
       (notify) => safeSubscribe(source, notify),
       () => safeSnapshot(source),
@@ -3202,19 +3211,37 @@ function createSessionDeliveryView(React2, primitives = {}) {
       },
       React2.createElement("h2", { className: "wsr-delivery-heading", id: "wsr-delivery-view-title" }, "Delivery"),
       React2.createElement("dl", { "aria-label": "Delivery summary", "data-wsr-delivery-summary": "true", className: "wsr-delivery-summary" }, summary),
-      React2.createElement(DisclosureRow2, {
-        title: "Identity details",
-        icon: React2.createElement(StateDot2, { state: statusState(delivery, failed), size: 10 }),
-        open: identitiesOpen,
-        expandable: true,
-        expandOnRowClick: true,
-        onToggle: () => setIdentitiesOpen((open) => !open),
-        collapsedContent: React2.createElement("code", null, delivery.deliveryId)
-      }, React2.createElement(
-        "dl",
-        { "aria-label": "Delivery identity", className: "wsr-delivery-identities" },
-        identityRows.map(([label, value, displayValue]) => identityCard(React2, HoverCard2, label, value, displayValue))
-      )),
+      React2.createElement(
+        DisclosureRow2,
+        {
+          title: "Identity details",
+          icon: React2.createElement(StateDot2, { state: statusState(delivery, failed), size: 10 }),
+          open: identitiesOpen,
+          expandable: true,
+          expandOnRowClick: true,
+          onToggle: () => setIdentitiesOpen((open) => !open),
+          collapsedContent: React2.createElement("code", { className: "wsr-delivery-preview" }, delivery.deliveryId)
+        },
+        React2.createElement(
+          "dl",
+          { "aria-label": "Delivery identity", className: "wsr-delivery-identities" },
+          identityRows.map(([label, value, displayValue]) => identityCard(React2, {
+            Button: Button2,
+            IconCheckOutline16: IconCheckOutline162,
+            IconCopyOutline16: IconCopyOutline162,
+            Tooltip: Tooltip2,
+            copiedLabel,
+            async onCopy(copyLabel, value2) {
+              setCopiedLabel(await writeClipboard2(value2) ? copyLabel : `${copyLabel} copy failed`);
+            }
+          }, label, value, displayValue))
+        ),
+        React2.createElement("p", {
+          "aria-live": "polite",
+          className: "wsr-delivery-copy-feedback",
+          role: "status"
+        }, copiedLabel === "" ? "" : copiedLabel.endsWith("copy failed") ? copiedLabel : `${copiedLabel} copied`)
+      ),
       delivery.error === null ? null : React2.createElement("section", {
         className: "wsr-delivery-condition",
         "data-wsr-delivery-conditional": "error",
@@ -3425,10 +3452,14 @@ function apply(ctx) {
   applyDeliverySidebar(ctx, { React: import_react.default, workspaceUi, inventory: controlPlane.inventory });
   registerSessionDeliveryView(ctx, {
     React: import_react.default,
+    Button: import_dsh_client_ui_primitives.Button,
     DisclosureRow: import_dsh_client_ui_primitives.DisclosureRow,
-    HoverCard: import_dsh_client_ui_primitives.HoverCard,
+    IconCheckOutline16: import_dsh_client_ui_primitives.IconCheckOutline16,
+    IconCopyOutline16: import_dsh_client_ui_primitives.IconCopyOutline16,
     Pill: import_dsh_client_ui_primitives.Pill,
     StateDot: import_dsh_client_ui_primitives.StateDot,
+    Tooltip: import_dsh_client_ui_primitives.Tooltip,
+    writeClipboard: import_dsh_client_ui_primitives.writeClipboard,
     bindProjection(sessionId) {
       const source = controlPlane.bindSession(String(sessionId));
       void source.refresh();

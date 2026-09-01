@@ -1,5 +1,5 @@
 import React from "react";
-import { DisclosureRow, HoverCard, IconCheckOutline16, IconCopyOutline16, JsonTree, MessageText, Pill, StateDot, Tooltip, writeClipboard } from "@deepseek-ai/dsh-client-ui-primitives";
+import { Button, DisclosureRow, IconCheckOutline16, IconCopyOutline16, JsonTree, MessageText, Pill, StateDot, Tooltip, writeClipboard } from "@deepseek-ai/dsh-client-ui-primitives";
 import * as workspaceUi from "@deepseek-ai/dsh-client-ui-workspace";
 
 import { createWsrCommandView, registerActionPresentation } from "../action-presentation/view.js";
@@ -22,10 +22,14 @@ export function apply(ctx) {
   applyDeliverySidebar(ctx, { React, workspaceUi, inventory: controlPlane.inventory });
   registerSessionDeliveryView(ctx, {
     React,
+    Button,
     DisclosureRow,
-    HoverCard,
+    IconCheckOutline16,
+    IconCopyOutline16,
     Pill,
     StateDot,
+    Tooltip,
+    writeClipboard,
     bindProjection(sessionId) {
       const source = controlPlane.bindSession(String(sessionId));
       void source.refresh();
