@@ -480,7 +480,12 @@ try {
       row.click();
       return true;
     })()`), "HARNESS_TERMINAL_BASELINE_SELECTION_FAILED");
-    await cdp.evaluate(`(() => { [...document.querySelectorAll('[role="tab"]')].find((node) => node.textContent.trim() === 'Delivery').click(); })()`);
+    await waitFor(async () => cdp.evaluate(`(() => {
+      const tab = [...document.querySelectorAll('[role="tab"]')].find((node) => node.textContent.trim() === 'Delivery');
+      if (!tab) return undefined;
+      tab.click();
+      return true;
+    })()`), "HARNESS_TERMINAL_DELIVERY_TAB_UNAVAILABLE");
     terminalView = await waitFor(async () => cdp.evaluate(`(() => {
       const view = document.querySelector('[data-wsr-delivery-id="delivery-completed"]');
       if (!view) return undefined;
