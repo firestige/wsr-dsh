@@ -320,15 +320,17 @@ try {
     fixtureSessions = await Promise.all([
       callApi(origin, "session.create", { workspaceId: workspace.workspace.workspaceId, sessionId: "session-terminal-a" }),
       callApi(origin, "session.create", { workspaceId: workspace.workspace.workspaceId, sessionId: "session-terminal-b" }),
+      callApi(origin, "session.create", { workspaceId: workspace.workspace.workspaceId, sessionId: "session-terminal-c" }),
     ]);
     await Promise.all([
       callApi(origin, "session.rename", { sessionId: fixtureSessions[0].sessionId, title: "Terminal A" }),
       callApi(origin, "session.rename", { sessionId: fixtureSessions[1].sessionId, title: "Terminal B" }),
+      callApi(origin, "session.rename", { sessionId: fixtureSessions[2].sessionId, title: "Terminal C" }),
     ]);
     await stop(harness);
     harness = undefined;
     const terminalRows = [
-      { sessionKey: fixtureSessions[0].sessionId, deliveryId: "delivery-completed", correlation: "intake-completed", outcome: "SUCCEEDED", updatedAt: 180, identity: "d" },
+      { sessionKey: fixtureSessions[2].sessionId, deliveryId: "delivery-completed", correlation: "intake-completed", outcome: "SUCCEEDED", updatedAt: 180, identity: "d" },
       { sessionKey: fixtureSessions[0].sessionId, deliveryId: "delivery-failed", correlation: "intake-failed", outcome: "FAILED", updatedAt: 190, identity: "e" },
       { sessionKey: fixtureSessions[1].sessionId, deliveryId: "delivery-cancelled", correlation: "intake-cancelled", outcome: "CANCELLED", updatedAt: 200, identity: "f" },
     ];
@@ -416,6 +418,18 @@ try {
     const input = document.querySelector('textarea:not(:disabled)');
     return input && !/选择一个工作区开始|Choose a workspace to start/.test(input.placeholder) && document.body.innerText.includes('repository');
   })()`), "HARNESS_SESSION_COMPOSER_UNAVAILABLE");
+  if (terminalFixture) {
+    await waitFor(async () => cdp.evaluate(`(() => {
+      const row = document.querySelector('.wsr-delivery-row[aria-label="delivery-completed, SUCCEEDED"]');
+      if (!row) return undefined;
+      row.click();
+      return true;
+    })()`), "HARNESS_TERMINAL_BASELINE_SELECTION_FAILED");
+    await waitFor(async () => cdp.evaluate(`(() => {
+      const input = document.querySelector('textarea:not(:disabled)');
+      return document.title.includes('Terminal C') && input ? true : undefined;
+    })()`), "HARNESS_TERMINAL_BASELINE_SESSION_UNAVAILABLE");
+  }
   await cdp.evaluate(`document.querySelector('textarea:not(:disabled)').focus()`);
   await cdp.command("Input.insertText", { text: "/wsr create hello-world-workflow@0.2.0" });
   const commandDraft = await cdp.evaluate(`(() => {
@@ -474,12 +488,6 @@ try {
   let terminalView;
   if (terminalFixture) {
     await cdp.command("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
-    await waitFor(async () => cdp.evaluate(`(() => {
-      const row = document.querySelector('.wsr-delivery-row[aria-label="delivery-completed, SUCCEEDED"]');
-      if (!row) return undefined;
-      row.click();
-      return true;
-    })()`), "HARNESS_TERMINAL_BASELINE_SELECTION_FAILED");
     await waitFor(async () => cdp.evaluate(`(() => {
       const tab = [...document.querySelectorAll('[role="tab"]')].find((node) => node.textContent.trim() === 'Delivery');
       if (!tab) return undefined;
