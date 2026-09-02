@@ -73,6 +73,35 @@ test("the real Harness qualification boots the v2 runner with repository Role Pr
   assert.match(source, /"role\.greeter"[\s\S]*provider\.copilot[\s\S]*"role\.reviewer"[\s\S]*provider\.codex/u);
 });
 
+test("the real Harness qualifies the semantic trace DataZoom contract", async () => {
+  const source = await readFile(join(root, "scripts/qualify-real-harness.mjs"), "utf8");
+  assert.match(source, /role="slider"\]\[aria-label="Trace minimap zoom window"\]/u);
+  assert.match(source, /trace-waterfall-minimap-overview/u);
+  assert.match(source, /trace-waterfall-data-zoom-window/u);
+  assert.match(source, /trace-waterfall-data-zoom-handle-left/u);
+  assert.match(source, /trace-waterfall-data-zoom-handle-right/u);
+  assert.match(source, /\.trace-minimap-ruler/u);
+  assert.doesNotMatch(source, /\.trace-ruler i/u);
+  assert.doesNotMatch(source, /input\[type="range"\]/u);
+});
+
+test("the real Harness qualifies the deterministic trace Tree canvas contract", async () => {
+  const source = await readFile(join(root, "scripts/qualify-real-harness.mjs"), "utf8");
+  assert.match(source, /canvas\[aria-label="Recorded span call tree graph"\]/u);
+  assert.match(source, /\[aria-label="Tree minimap navigation"\]/u);
+  assert.match(source, /parentEdgeCount/u);
+  assert.match(source, /linkCount/u);
+  assert.doesNotMatch(source, /svg\[aria-label="Recorded span call tree graph"\]/u);
+  assert.doesNotMatch(source, /\[aria-label="Semantic camera map"\]/u);
+});
+
+test("the real Harness qualifies Statistics with the shared semantic typography scale", async () => {
+  const source = await readFile(join(root, "scripts/qualify-real-harness.mjs"), "utf8");
+  assert.match(source, /\["overline", "h2", "subtitle1", "body1", "body2", "caption"\]/u);
+  assert.doesNotMatch(source, /typography\.includes\("sectionTitle"\)/u);
+  assert.doesNotMatch(source, /typography\.includes\("value"\)/u);
+});
+
 test("generated clients use one module identity and no private source or direct downstream transport", async () => {
   const execution = await readFile(join(root, "packages/execution/lib/client.js"), "utf8");
   const studio = await readFile(join(root, "packages/studio/lib/client.js"), "utf8");

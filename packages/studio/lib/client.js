@@ -57,16 +57,16 @@ function descending(a2, b2) {
 }
 
 // node_modules/d3-array/src/bisector.js
-function bisector(f2) {
+function bisector(f) {
   let compare1, compare2, delta;
-  if (f2.length !== 2) {
+  if (f.length !== 2) {
     compare1 = ascending;
-    compare2 = (d2, x2) => ascending(f2(d2), x2);
-    delta = (d2, x2) => f2(d2) - x2;
+    compare2 = (d2, x2) => ascending(f(d2), x2);
+    delta = (d2, x2) => f(d2) - x2;
   } else {
-    compare1 = f2 === ascending || f2 === descending ? f2 : zero;
-    compare2 = f2;
-    delta = f2;
+    compare1 = f === ascending || f === descending ? f : zero;
+    compare2 = f;
+    delta = f;
   }
   function left(a2, x2, lo = 0, hi = a2.length) {
     if (lo < hi) {
@@ -218,14 +218,14 @@ function range(start2, stop, step) {
 var noop = { value: () => {
 } };
 function dispatch() {
-  for (var i = 0, n2 = arguments.length, _ = {}, t2; i < n2; ++i) {
-    if (!(t2 = arguments[i] + "") || t2 in _ || /[\s.]/.test(t2)) throw new Error("illegal type: " + t2);
-    _[t2] = [];
+  for (var i = 0, n2 = arguments.length, _2 = {}, t2; i < n2; ++i) {
+    if (!(t2 = arguments[i] + "") || t2 in _2 || /[\s.]/.test(t2)) throw new Error("illegal type: " + t2);
+    _2[t2] = [];
   }
-  return new Dispatch(_);
+  return new Dispatch(_2);
 }
-function Dispatch(_) {
-  this._ = _;
+function Dispatch(_2) {
+  this._ = _2;
 }
 function parseTypenames(typenames, types) {
   return typenames.trim().split(/^|\s+/).map(function(t2) {
@@ -238,21 +238,21 @@ function parseTypenames(typenames, types) {
 Dispatch.prototype = dispatch.prototype = {
   constructor: Dispatch,
   on: function(typename, callback) {
-    var _ = this._, T2 = parseTypenames(typename + "", _), t2, i = -1, n2 = T2.length;
+    var _2 = this._, T = parseTypenames(typename + "", _2), t2, i = -1, n2 = T.length;
     if (arguments.length < 2) {
-      while (++i < n2) if ((t2 = (typename = T2[i]).type) && (t2 = get(_[t2], typename.name))) return t2;
+      while (++i < n2) if ((t2 = (typename = T[i]).type) && (t2 = get(_2[t2], typename.name))) return t2;
       return;
     }
     if (callback != null && typeof callback !== "function") throw new Error("invalid callback: " + callback);
     while (++i < n2) {
-      if (t2 = (typename = T2[i]).type) _[t2] = set(_[t2], typename.name, callback);
-      else if (callback == null) for (t2 in _) _[t2] = set(_[t2], typename.name, null);
+      if (t2 = (typename = T[i]).type) _2[t2] = set(_2[t2], typename.name, callback);
+      else if (callback == null) for (t2 in _2) _2[t2] = set(_2[t2], typename.name, null);
     }
     return this;
   },
   copy: function() {
-    var copy2 = {}, _ = this._;
-    for (var t2 in _) copy2[t2] = _[t2].slice();
+    var copy2 = {}, _2 = this._;
+    for (var t2 in _2) copy2[t2] = _2[t2].slice();
     return new Dispatch(copy2);
   },
   call: function(type2, that) {
@@ -932,24 +932,24 @@ function parseTypenames2(typenames) {
 }
 function onRemove(typename) {
   return function() {
-    var on = this.__on;
-    if (!on) return;
-    for (var j2 = 0, i = -1, m2 = on.length, o2; j2 < m2; ++j2) {
-      if (o2 = on[j2], (!typename.type || o2.type === typename.type) && o2.name === typename.name) {
+    var on2 = this.__on;
+    if (!on2) return;
+    for (var j2 = 0, i = -1, m2 = on2.length, o2; j2 < m2; ++j2) {
+      if (o2 = on2[j2], (!typename.type || o2.type === typename.type) && o2.name === typename.name) {
         this.removeEventListener(o2.type, o2.listener, o2.options);
       } else {
-        on[++i] = o2;
+        on2[++i] = o2;
       }
     }
-    if (++i) on.length = i;
+    if (++i) on2.length = i;
     else delete this.__on;
   };
 }
 function onAdd(typename, value, options) {
   return function() {
-    var on = this.__on, o2, listener = contextListener(value);
-    if (on) for (var j2 = 0, m2 = on.length; j2 < m2; ++j2) {
-      if ((o2 = on[j2]).type === typename.type && o2.name === typename.name) {
+    var on2 = this.__on, o2, listener = contextListener(value);
+    if (on2) for (var j2 = 0, m2 = on2.length; j2 < m2; ++j2) {
+      if ((o2 = on2[j2]).type === typename.type && o2.name === typename.name) {
         this.removeEventListener(o2.type, o2.listener, o2.options);
         this.addEventListener(o2.type, o2.listener = listener, o2.options = options);
         o2.value = value;
@@ -958,16 +958,16 @@ function onAdd(typename, value, options) {
     }
     this.addEventListener(typename.type, listener, options);
     o2 = { type: typename.type, name: typename.name, value, listener, options };
-    if (!on) this.__on = [o2];
-    else on.push(o2);
+    if (!on2) this.__on = [o2];
+    else on2.push(o2);
   };
 }
 function on_default(typename, value, options) {
   var typenames = parseTypenames2(typename + ""), i, n2 = typenames.length, t2;
   if (arguments.length < 2) {
-    var on = this.node().__on;
-    if (on) for (var j2 = 0, m2 = on.length, o2; j2 < m2; ++j2) {
-      for (i = 0, o2 = on[j2]; i < n2; ++i) {
+    var on2 = this.node().__on;
+    if (on2) for (var j2 = 0, m2 = on2.length, o2; j2 < m2; ++j2) {
+      for (i = 0, o2 = on2[j2]; i < n2; ++i) {
         if ((t2 = typenames[i]).type === o2.type && t2.name === o2.name) {
           return o2.value;
         }
@@ -975,8 +975,8 @@ function on_default(typename, value, options) {
     }
     return;
   }
-  on = value ? onAdd : onRemove;
-  for (i = 0; i < n2; ++i) this.each(on(typenames[i], value, options));
+  on2 = value ? onAdd : onRemove;
+  for (i = 0; i < n2; ++i) this.each(on2(typenames[i], value, options));
   return this;
 }
 
@@ -1446,14 +1446,14 @@ function linear(a2, d2) {
     return a2 + t2 * d2;
   };
 }
-function exponential(a2, b2, y2) {
-  return a2 = Math.pow(a2, y2), b2 = Math.pow(b2, y2) - a2, y2 = 1 / y2, function(t2) {
-    return Math.pow(a2 + t2 * b2, y2);
+function exponential(a2, b2, y) {
+  return a2 = Math.pow(a2, y), b2 = Math.pow(b2, y) - a2, y = 1 / y, function(t2) {
+    return Math.pow(a2 + t2 * b2, y);
   };
 }
-function gamma(y2) {
-  return (y2 = +y2) === 1 ? nogamma : function(a2, b2) {
-    return b2 - a2 ? exponential(a2, b2, y2) : constant_default2(isNaN(a2) ? b2 : a2);
+function gamma(y) {
+  return (y = +y) === 1 ? nogamma : function(a2, b2) {
+    return b2 - a2 ? exponential(a2, b2, y) : constant_default2(isNaN(a2) ? b2 : a2);
   };
 }
 function nogamma(a2, b2) {
@@ -1462,8 +1462,8 @@ function nogamma(a2, b2) {
 }
 
 // node_modules/d3-interpolate/src/rgb.js
-var rgb_default = (function rgbGamma(y2) {
-  var color2 = gamma(y2);
+var rgb_default = (function rgbGamma(y) {
+  var color2 = gamma(y);
   function rgb2(start2, end) {
     var r = color2((start2 = rgb(start2)).r, (end = rgb(end)).r), g2 = color2(start2.g, end.g), b2 = color2(start2.b, end.b), opacity = nogamma(start2.opacity, end.opacity);
     return function(t2) {
@@ -1623,7 +1623,7 @@ var identity = {
   scaleX: 1,
   scaleY: 1
 };
-function decompose_default(a2, b2, c2, d2, e3, f2) {
+function decompose_default(a2, b2, c2, d2, e3, f) {
   var scaleX, scaleY, skewX;
   if (scaleX = Math.sqrt(a2 * a2 + b2 * b2)) a2 /= scaleX, b2 /= scaleX;
   if (skewX = a2 * c2 + b2 * d2) c2 -= a2 * skewX, d2 -= b2 * skewX;
@@ -1631,7 +1631,7 @@ function decompose_default(a2, b2, c2, d2, e3, f2) {
   if (a2 * d2 < b2 * c2) a2 = -a2, b2 = -b2, skewX = -skewX, scaleX = -scaleX;
   return {
     translateX: e3,
-    translateY: f2,
+    translateY: f,
     rotate: Math.atan2(b2, a2) * degrees,
     skewX: Math.atan(skewX) * degrees,
     scaleX,
@@ -1720,8 +1720,8 @@ var clockLast = 0;
 var clockNow = 0;
 var clockSkew = 0;
 var clock = typeof performance === "object" && performance.now ? performance : Date;
-var setFrame = typeof window === "object" && window.requestAnimationFrame ? window.requestAnimationFrame.bind(window) : function(f2) {
-  setTimeout(f2, 17);
+var setFrame = typeof window === "object" && window.requestAnimationFrame ? window.requestAnimationFrame.bind(window) : function(f) {
+  setTimeout(f, 17);
 };
 function now() {
   return clockNow || (setFrame(clearNow), clockNow = clock.now() + clockSkew);
@@ -2213,8 +2213,8 @@ function start(name2) {
 function onFunction(id2, name2, listener) {
   var on0, on1, sit = start(name2) ? init : set2;
   return function() {
-    var schedule = sit(this, id2), on = schedule.on;
-    if (on !== on0) (on1 = (on0 = on).copy()).on(name2, listener);
+    var schedule = sit(this, id2), on2 = schedule.on;
+    if (on2 !== on0) (on1 = (on0 = on2).copy()).on(name2, listener);
     schedule.on = on1;
   };
 }
@@ -2308,8 +2308,8 @@ function styleFunction2(name2, interpolate, value) {
 function styleMaybeRemove(id2, name2) {
   var on0, on1, listener0, key = "style." + name2, event = "end." + key, remove2;
   return function() {
-    var schedule = set2(this, id2), on = schedule.on, listener = schedule.value[key] == null ? remove2 || (remove2 = styleRemove2(name2)) : void 0;
-    if (on !== on0 || listener0 !== listener) (on1 = (on0 = on).copy()).on(event, listener0 = listener);
+    var schedule = set2(this, id2), on2 = schedule.on, listener = schedule.value[key] == null ? remove2 || (remove2 = styleRemove2(name2)) : void 0;
+    if (on2 !== on0 || listener0 !== listener) (on1 = (on0 = on2).copy()).on(event, listener0 = listener);
     schedule.on = on1;
   };
 }
@@ -2409,9 +2409,9 @@ function end_default() {
       if (--size === 0) resolve();
     } };
     that.each(function() {
-      var schedule = set2(this, id2), on = schedule.on;
-      if (on !== on0) {
-        on1 = (on0 = on).copy();
+      var schedule = set2(this, id2), on2 = schedule.on;
+      if (on2 !== on0) {
+        on1 = (on0 = on2).copy();
         on1._.cancel.push(cancel);
         on1._.interrupt.push(cancel);
         on1._.end.push(end);
@@ -2534,8 +2534,8 @@ var X = {
 var Y = {
   name: "y",
   handles: ["n", "s"].map(type),
-  input: function(y2, e3) {
-    return y2 == null ? null : [[e3[0][0], +y2[0]], [e3[1][0], +y2[1]]];
+  input: function(y, e3) {
+    return y == null ? null : [[e3[0][0], +y[0]], [e3[1][0], +y[1]]];
   },
   output: function(xy) {
     return xy && [xy[0][1], xy[1][1]];
@@ -2559,9 +2559,9 @@ function type(t2) {
 function formatDecimal_default(x2) {
   return Math.abs(x2 = Math.round(x2)) >= 1e21 ? x2.toLocaleString("en").replace(/,/g, "") : x2.toString(10);
 }
-function formatDecimalParts(x2, p2) {
+function formatDecimalParts(x2, p) {
   if (!isFinite(x2) || x2 === 0) return null;
-  var i = (x2 = p2 ? x2.toExponential(p2 - 1) : x2.toExponential()).indexOf("e"), coefficient = x2.slice(0, i);
+  var i = (x2 = p ? x2.toExponential(p - 1) : x2.toExponential()).indexOf("e"), coefficient = x2.slice(0, i);
   return [
     coefficient.length > 1 ? coefficient[0] + coefficient.slice(2) : coefficient,
     +x2.slice(i + 1)
@@ -2653,16 +2653,16 @@ function formatTrim_default(s2) {
 
 // node_modules/d3-format/src/formatPrefixAuto.js
 var prefixExponent;
-function formatPrefixAuto_default(x2, p2) {
-  var d2 = formatDecimalParts(x2, p2);
-  if (!d2) return prefixExponent = void 0, x2.toPrecision(p2);
+function formatPrefixAuto_default(x2, p) {
+  var d2 = formatDecimalParts(x2, p);
+  if (!d2) return prefixExponent = void 0, x2.toPrecision(p);
   var coefficient = d2[0], exponent = d2[1], i = exponent - (prefixExponent = Math.max(-8, Math.min(8, Math.floor(exponent / 3))) * 3) + 1, n2 = coefficient.length;
-  return i === n2 ? coefficient : i > n2 ? coefficient + new Array(i - n2 + 1).join("0") : i > 0 ? coefficient.slice(0, i) + "." + coefficient.slice(i) : "0." + new Array(1 - i).join("0") + formatDecimalParts(x2, Math.max(0, p2 + i - 1))[0];
+  return i === n2 ? coefficient : i > n2 ? coefficient + new Array(i - n2 + 1).join("0") : i > 0 ? coefficient.slice(0, i) + "." + coefficient.slice(i) : "0." + new Array(1 - i).join("0") + formatDecimalParts(x2, Math.max(0, p + i - 1))[0];
 }
 
 // node_modules/d3-format/src/formatRounded.js
-function formatRounded_default(x2, p2) {
-  var d2 = formatDecimalParts(x2, p2);
+function formatRounded_default(x2, p) {
+  var d2 = formatDecimalParts(x2, p);
   if (!d2) return x2 + "";
   var coefficient = d2[0], exponent = d2[1];
   return exponent < 0 ? "0." + new Array(-exponent).join("0") + coefficient : coefficient.length > exponent + 1 ? coefficient.slice(0, exponent + 1) + "." + coefficient.slice(exponent + 1) : coefficient + new Array(exponent - coefficient.length + 2).join("0");
@@ -2670,15 +2670,15 @@ function formatRounded_default(x2, p2) {
 
 // node_modules/d3-format/src/formatTypes.js
 var formatTypes_default = {
-  "%": (x2, p2) => (x2 * 100).toFixed(p2),
+  "%": (x2, p) => (x2 * 100).toFixed(p),
   "b": (x2) => Math.round(x2).toString(2),
   "c": (x2) => x2 + "",
   "d": formatDecimal_default,
-  "e": (x2, p2) => x2.toExponential(p2),
-  "f": (x2, p2) => x2.toFixed(p2),
-  "g": (x2, p2) => x2.toPrecision(p2),
+  "e": (x2, p) => x2.toExponential(p),
+  "f": (x2, p) => x2.toFixed(p),
+  "g": (x2, p) => x2.toPrecision(p),
   "o": (x2) => Math.round(x2).toString(8),
-  "p": (x2, p2) => formatRounded_default(x2 * 100, p2),
+  "p": (x2, p) => formatRounded_default(x2 * 100, p),
   "r": formatRounded_default,
   "s": formatPrefixAuto_default,
   "X": (x2) => Math.round(x2).toString(16).toUpperCase(),
@@ -2753,9 +2753,9 @@ function locale_default(locale2) {
     return format2;
   }
   function formatPrefix2(specifier, value) {
-    var e3 = Math.max(-8, Math.min(8, Math.floor(exponent_default(value) / 3))) * 3, k2 = Math.pow(10, -e3), f2 = newFormat((specifier = formatSpecifier(specifier), specifier.type = "f", specifier), { suffix: prefixes[8 + e3 / 3] });
+    var e3 = Math.max(-8, Math.min(8, Math.floor(exponent_default(value) / 3))) * 3, k2 = Math.pow(10, -e3), f = newFormat((specifier = formatSpecifier(specifier), specifier.type = "f", specifier), { suffix: prefixes[8 + e3 / 3] });
     return function(value2) {
-      return f2(k2 * value2);
+      return f(k2 * value2);
     };
   }
   return {
@@ -2823,20 +2823,20 @@ function ordinal() {
     }
     return range2[i % range2.length];
   }
-  scale.domain = function(_) {
+  scale.domain = function(_2) {
     if (!arguments.length) return domain.slice();
     domain = [], index = new InternMap();
-    for (const value of _) {
+    for (const value of _2) {
       if (index.has(value)) continue;
       index.set(value, domain.push(value) - 1);
     }
     return scale;
   };
-  scale.range = function(_) {
-    return arguments.length ? (range2 = Array.from(_), scale) : range2.slice();
+  scale.range = function(_2) {
+    return arguments.length ? (range2 = Array.from(_2), scale) : range2.slice();
   };
-  scale.unknown = function(_) {
-    return arguments.length ? (unknown = _, scale) : unknown;
+  scale.unknown = function(_2) {
+    return arguments.length ? (unknown = _2, scale) : unknown;
   };
   scale.copy = function() {
     return ordinal(domain, range2).unknown(unknown);
@@ -2861,14 +2861,14 @@ function band() {
     });
     return ordinalRange(reverse ? values.reverse() : values);
   }
-  scale.domain = function(_) {
-    return arguments.length ? (domain(_), rescale()) : domain();
+  scale.domain = function(_2) {
+    return arguments.length ? (domain(_2), rescale()) : domain();
   };
-  scale.range = function(_) {
-    return arguments.length ? ([r0, r1] = _, r0 = +r0, r1 = +r1, rescale()) : [r0, r1];
+  scale.range = function(_2) {
+    return arguments.length ? ([r0, r1] = _2, r0 = +r0, r1 = +r1, rescale()) : [r0, r1];
   };
-  scale.rangeRound = function(_) {
-    return [r0, r1] = _, r0 = +r0, r1 = +r1, round = true, rescale();
+  scale.rangeRound = function(_2) {
+    return [r0, r1] = _2, r0 = +r0, r1 = +r1, round = true, rescale();
   };
   scale.bandwidth = function() {
     return bandwidth;
@@ -2876,20 +2876,20 @@ function band() {
   scale.step = function() {
     return step;
   };
-  scale.round = function(_) {
-    return arguments.length ? (round = !!_, rescale()) : round;
+  scale.round = function(_2) {
+    return arguments.length ? (round = !!_2, rescale()) : round;
   };
-  scale.padding = function(_) {
-    return arguments.length ? (paddingInner = Math.min(1, paddingOuter = +_), rescale()) : paddingInner;
+  scale.padding = function(_2) {
+    return arguments.length ? (paddingInner = Math.min(1, paddingOuter = +_2), rescale()) : paddingInner;
   };
-  scale.paddingInner = function(_) {
-    return arguments.length ? (paddingInner = Math.min(1, _), rescale()) : paddingInner;
+  scale.paddingInner = function(_2) {
+    return arguments.length ? (paddingInner = Math.min(1, _2), rescale()) : paddingInner;
   };
-  scale.paddingOuter = function(_) {
-    return arguments.length ? (paddingOuter = +_, rescale()) : paddingOuter;
+  scale.paddingOuter = function(_2) {
+    return arguments.length ? (paddingOuter = +_2, rescale()) : paddingOuter;
   };
-  scale.align = function(_) {
-    return arguments.length ? (align = Math.max(0, Math.min(1, _)), rescale()) : align;
+  scale.align = function(_2) {
+    return arguments.length ? (align = Math.max(0, Math.min(1, _2)), rescale()) : align;
   };
   scale.copy = function() {
     return band(domain(), [r0, r1]).round(round).paddingInner(paddingInner).paddingOuter(paddingOuter).align(align);
@@ -2977,26 +2977,26 @@ function transformer() {
   function scale(x2) {
     return x2 == null || isNaN(x2 = +x2) ? unknown : (output || (output = piecewise(domain.map(transform2), range2, interpolate)))(transform2(clamp(x2)));
   }
-  scale.invert = function(y2) {
-    return clamp(untransform((input || (input = piecewise(range2, domain.map(transform2), number_default)))(y2)));
+  scale.invert = function(y) {
+    return clamp(untransform((input || (input = piecewise(range2, domain.map(transform2), number_default)))(y)));
   };
-  scale.domain = function(_) {
-    return arguments.length ? (domain = Array.from(_, number3), rescale()) : domain.slice();
+  scale.domain = function(_2) {
+    return arguments.length ? (domain = Array.from(_2, number3), rescale()) : domain.slice();
   };
-  scale.range = function(_) {
-    return arguments.length ? (range2 = Array.from(_), rescale()) : range2.slice();
+  scale.range = function(_2) {
+    return arguments.length ? (range2 = Array.from(_2), rescale()) : range2.slice();
   };
-  scale.rangeRound = function(_) {
-    return range2 = Array.from(_), interpolate = round_default, rescale();
+  scale.rangeRound = function(_2) {
+    return range2 = Array.from(_2), interpolate = round_default, rescale();
   };
-  scale.clamp = function(_) {
-    return arguments.length ? (clamp = _ ? true : identity2, rescale()) : clamp !== identity2;
+  scale.clamp = function(_2) {
+    return arguments.length ? (clamp = _2 ? true : identity2, rescale()) : clamp !== identity2;
   };
-  scale.interpolate = function(_) {
-    return arguments.length ? (interpolate = _, rescale()) : interpolate;
+  scale.interpolate = function(_2) {
+    return arguments.length ? (interpolate = _2, rescale()) : interpolate;
   };
-  scale.unknown = function(_) {
-    return arguments.length ? (unknown = _, scale) : unknown;
+  scale.unknown = function(_2) {
+    return arguments.length ? (unknown = _2, scale) : unknown;
   };
   return function(t2, u2) {
     transform2 = t2, untransform = u2;
@@ -3090,18 +3090,18 @@ function linear2() {
 }
 
 // node_modules/d3-zoom/src/transform.js
-function Transform(k2, x2, y2) {
+function Transform(k2, x2, y) {
   this.k = k2;
   this.x = x2;
-  this.y = y2;
+  this.y = y;
 }
 Transform.prototype = {
   constructor: Transform,
   scale: function(k2) {
     return k2 === 1 ? this : new Transform(this.k * k2, this.x, this.y);
   },
-  translate: function(x2, y2) {
-    return x2 === 0 & y2 === 0 ? this : new Transform(this.k, this.x + this.k * x2, this.y + this.k * y2);
+  translate: function(x2, y) {
+    return x2 === 0 & y === 0 ? this : new Transform(this.k, this.x + this.k * x2, this.y + this.k * y);
   },
   apply: function(point2) {
     return [point2[0] * this.k + this.x, point2[1] * this.k + this.y];
@@ -3109,8 +3109,8 @@ Transform.prototype = {
   applyX: function(x2) {
     return x2 * this.k + this.x;
   },
-  applyY: function(y2) {
-    return y2 * this.k + this.y;
+  applyY: function(y) {
+    return y * this.k + this.y;
   },
   invert: function(location) {
     return [(location[0] - this.x) / this.k, (location[1] - this.y) / this.k];
@@ -3118,14 +3118,14 @@ Transform.prototype = {
   invertX: function(x2) {
     return (x2 - this.x) / this.k;
   },
-  invertY: function(y2) {
-    return (y2 - this.y) / this.k;
+  invertY: function(y) {
+    return (y - this.y) / this.k;
   },
   rescaleX: function(x2) {
     return x2.copy().domain(x2.range().map(this.invertX, this).map(x2.invert, x2));
   },
-  rescaleY: function(y2) {
-    return y2.copy().domain(y2.range().map(this.invertY, this).map(y2.invert, y2));
+  rescaleY: function(y) {
+    return y.copy().domain(y.range().map(this.invertY, this).map(y.invert, y));
   },
   toString: function() {
     return "translate(" + this.x + "," + this.y + ") scale(" + this.k + ")";
@@ -3140,14 +3140,20 @@ function transform(node) {
 
 // node_modules/wsr-ui-core/dist/index.js
 var import_react = require("react");
-function f({ as: e3 = "span", variant: n2, className: r, ...i }) {
+function m({ as: e3 = "span", variant: n2, family: r, weight: i, tone: a2, italic: o2 = false, underline: s2 = false, truncate: c2 = false, className: l2, ...u2 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(e3, {
-    className: ["wsr-typography", r].filter(Boolean).join(" "),
+    className: ["wsr-typography", l2].filter(Boolean).join(" "),
+    "data-family": r,
+    "data-italic": o2 || void 0,
+    "data-tone": a2,
+    "data-truncate": c2 || void 0,
+    "data-underline": s2 || void 0,
     "data-variant": n2,
-    ...i
+    "data-weight": i,
+    ...u2
   });
 }
-function p({ appearance: e3 = "outline", tone: n2 = "neutral", size: r = "compact", selected: i, className: a2, ...o2 }) {
+function h({ appearance: e3 = "outline", tone: n2 = "neutral", size: r = "compact", selected: i, className: a2, ...o2 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
     "aria-pressed": e3 === "segment" ? i : o2["aria-pressed"],
     className: ["wsr-button", a2].filter(Boolean).join(" "),
@@ -3157,8 +3163,8 @@ function p({ appearance: e3 = "outline", tone: n2 = "neutral", size: r = "compac
     ...o2
   });
 }
-function m({ "aria-label": e3, title: n2, children: r, ...i }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(p, {
+function g({ "aria-label": e3, title: n2, children: r, ...i }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(h, {
     "aria-label": e3,
     "data-icon-button": "true",
     title: n2 ?? e3,
@@ -3166,7 +3172,7 @@ function m({ "aria-label": e3, title: n2, children: r, ...i }) {
     children: r
   });
 }
-function h({ segmented: e3 = false, className: n2, ...r }) {
+function _({ segmented: e3 = false, className: n2, ...r }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: ["wsr-button-group", n2].filter(Boolean).join(" "),
     "data-segmented": e3 || void 0,
@@ -3174,7 +3180,7 @@ function h({ segmented: e3 = false, className: n2, ...r }) {
     ...r
   });
 }
-function g({ as: e3 = "section", level: n2 = "section", border: r = "solid", className: i, children: a2, ...o2 }) {
+function v({ as: e3 = "section", level: n2 = "section", border: r = "solid", className: i, children: a2, ...o2 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(e3, {
     className: ["wsr-surface", i].filter(Boolean).join(" "),
     "data-border": r,
@@ -3183,7 +3189,7 @@ function g({ as: e3 = "section", level: n2 = "section", border: r = "solid", cla
     children: a2
   });
 }
-function v({ inputKind: e3 = "search", className: n2, type: r, ...i }) {
+function b({ inputKind: e3 = "search", className: n2, type: r, ...i }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
     className: ["wsr-input", n2].filter(Boolean).join(" "),
     "data-input-kind": e3,
@@ -3191,56 +3197,51 @@ function v({ inputKind: e3 = "search", className: n2, type: r, ...i }) {
     ...i
   });
 }
-function y({ status: e3, className: n2, ...r }) {
+function x({ status: e3, className: n2, ...r }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
     className: ["wsr-status-badge", n2].filter(Boolean).join(" "),
     "data-status": e3,
     ...r
   });
 }
-var b = Object.freeze({
+var S = Object.freeze({
   schemaVersion: "wsr.studio-design@1",
   typography: Object.freeze({
-    pageTitle: Object.freeze({
-      level: "page",
+    h1: Object.freeze({
+      size: "4xl",
       family: "sans",
-      emphasis: "strong"
+      weight: "semibold"
     }),
-    sectionTitle: Object.freeze({
-      level: "section",
+    h2: Object.freeze({
+      size: "xl",
       family: "sans",
-      emphasis: "strong"
+      weight: "semibold"
     }),
-    body: Object.freeze({
-      level: "body",
+    subtitle1: Object.freeze({
+      size: "lg",
       family: "sans",
-      emphasis: "regular"
+      weight: "semibold"
     }),
-    label: Object.freeze({
-      level: "label",
+    body1: Object.freeze({
+      size: "base",
       family: "sans",
-      emphasis: "strong"
+      weight: "regular"
+    }),
+    body2: Object.freeze({
+      size: "sm",
+      family: "sans",
+      weight: "regular"
     }),
     caption: Object.freeze({
-      level: "caption",
+      size: "xs",
       family: "sans",
-      emphasis: "regular"
+      weight: "regular"
     }),
-    eyebrow: Object.freeze({
-      level: "micro",
+    overline: Object.freeze({
+      size: "2xs",
       family: "sans",
-      emphasis: "strong",
+      weight: "bold",
       transform: "uppercase"
-    }),
-    code: Object.freeze({
-      level: "caption",
-      family: "mono",
-      emphasis: "regular"
-    }),
-    value: Object.freeze({
-      level: "value",
-      family: "mono",
-      emphasis: "strong"
     })
   }),
   buttons: Object.freeze({
@@ -3352,22 +3353,14 @@ var b = Object.freeze({
     ])
   })
 });
-function x({ children: e3, className: n2, density: r, theme: i = "system" }) {
-  let a2 = typeof i == "string" ? i : i.mode, o2 = r ?? (typeof i == "string" ? "comfortable" : i.density), s2 = typeof i == "string" ? void 0 : {
-    "--wsr-container-border-style": i.containerBorderStyle,
-    ...i.surfaces === void 0 ? {} : {
-      "--wsr-surface-section": i.surfaces.section,
-      "--wsr-surface-panel": i.surfaces.panel,
-      "--wsr-surface-raised": i.surfaces.raised,
-      "--wsr-surface-inset": i.surfaces.inset
-    },
-    ...i.traceIndentGuides === void 0 ? {} : {
-      "--wsr-trace-indent-0": i.traceIndentGuides[0],
-      "--wsr-trace-indent-1": i.traceIndentGuides[1],
-      "--wsr-trace-indent-2": i.traceIndentGuides[2],
-      "--wsr-trace-indent-3": i.traceIndentGuides[3]
-    }
-  };
+function C({ children: e3, className: n2, density: r, theme: i = "system" }) {
+  let a2 = typeof i == "string" ? i : i.mode, o2 = r ?? (typeof i == "string" ? "comfortable" : i.density), s2;
+  if (typeof i != "string") {
+    let e4 = { "--wsr-container-border-style": i.containerBorderStyle }, t2 = (t3, n4) => {
+      n4 !== void 0 && (e4[t3] = n4);
+    }, n3 = i.palette;
+    t2("--wsr-surface-section", n3?.surface?.section), t2("--wsr-surface-panel", n3?.surface?.panel), t2("--wsr-surface-raised", n3?.surface?.raised), t2("--wsr-surface-inset", n3?.surface?.inset), t2("--content-primary", n3?.content?.primary), t2("--content-secondary", n3?.content?.secondary), t2("--content-muted", n3?.content?.muted), t2("--content-inverse", n3?.content?.inverse), t2("--border-default", n3?.border?.default), t2("--border-strong", n3?.border?.strong), t2("--interaction-accent", n3?.interaction?.accent), t2("--interaction-selection", n3?.interaction?.selection), t2("--interaction-disabled", n3?.interaction?.disabled), t2("--focus-ring", n3?.interaction?.focusRing), t2("--status-available", n3?.status?.available), t2("--status-attention", n3?.status?.attention), t2("--status-warning", n3?.status?.attention), t2("--status-unavailable", n3?.status?.unavailable), t2("--status-expired", n3?.status?.expired), t2("--status-incompatible", n3?.status?.incompatible), t2("--status-error", n3?.status?.error), n3?.data !== void 0 && Array.from({ length: 6 }, (e6, r2) => t2(`--data-series-${r2 + 1}`, n3.data?.[r2 % n3.data.length])), t2("--wsr-font-family", i.typography?.fontFamily), t2("--wsr-code-font-family", i.typography?.codeFontFamily), t2("--wsr-type-h1", i.typography?.h1), t2("--wsr-type-h2", i.typography?.h2), t2("--wsr-type-subtitle1", i.typography?.subtitle1), t2("--wsr-type-body1", i.typography?.body1), t2("--wsr-type-body2", i.typography?.body2), t2("--wsr-type-caption", i.typography?.caption), t2("--wsr-type-overline", i.typography?.overline), s2 = e4;
+  }
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: ["wsr-bi", n2].filter(Boolean).join(" "),
     "data-density": o2,
@@ -3376,46 +3369,56 @@ function x({ children: e3, className: n2, density: r, theme: i = "system" }) {
     children: e3
   });
 }
-function w({ mode: e3, density: t2 = "comfortable", containerBorderStyle: n2 = "solid", surfaces: r, traceIndentGuides: i }) {
+function E(e3) {
+  return Object.freeze({
+    ...e3.surface === void 0 ? {} : { surface: Object.freeze({ ...e3.surface }) },
+    ...e3.content === void 0 ? {} : { content: Object.freeze({ ...e3.content }) },
+    ...e3.border === void 0 ? {} : { border: Object.freeze({ ...e3.border }) },
+    ...e3.interaction === void 0 ? {} : { interaction: Object.freeze({ ...e3.interaction }) },
+    ...e3.status === void 0 ? {} : { status: Object.freeze({ ...e3.status }) },
+    ...e3.data === void 0 ? {} : { data: Object.freeze([...e3.data]) }
+  });
+}
+function D({ mode: e3, density: t2 = "comfortable", containerBorderStyle: n2 = "solid", palette: r, typography: i }) {
   return Object.freeze({
     mode: e3,
     density: t2,
     containerBorderStyle: n2,
-    ...r === void 0 ? {} : { surfaces: Object.freeze({ ...r }) },
-    ...i === void 0 ? {} : { traceIndentGuides: Object.freeze([...i]) }
+    ...r === void 0 ? {} : { palette: E(r) },
+    ...i === void 0 ? {} : { typography: Object.freeze({ ...i }) }
   });
 }
-function T(e3) {
+function O(e3) {
   let t2 = e3.startsWith("-"), n2 = (t2 ? e3.slice(1) : e3).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return t2 ? `-${n2}` : n2;
 }
-function ee(e3) {
+function k(e3) {
   let [t2, n2] = e3.split("/");
   return [BigInt(t2), BigInt(n2 ?? "1")];
 }
-function E(e3) {
-  let [t2, n2] = ee(e3), r = t2 < 0n, i = (r ? -t2 : t2) * 10000n, a2 = i / n2;
+function ee(e3) {
+  let [t2, n2] = k(e3), r = t2 < 0n, i = (r ? -t2 : t2) * 10000n, a2 = i / n2;
   i % n2 * 2n >= n2 && (a2 += 1n);
   let o2 = a2 / 100n, s2 = String(a2 % 100n).padStart(2, "0");
   return `${r ? "-" : ""}${o2}.${s2}%`;
 }
-function D(e3) {
+function A(e3) {
   let t2 = `${String(e3.value)} ${e3.unit}`;
   return e3.kind === "RATIO" ? {
-    display: E(e3.value),
+    display: ee(e3.value),
     exact: t2
   } : e3.kind === "BOOLEAN" ? {
     display: t2,
     exact: t2
   } : /^-?(?:0|[1-9][0-9]*)$/.test(e3.value) ? {
-    display: `${T(e3.value)} ${e3.unit}`,
+    display: `${O(e3.value)} ${e3.unit}`,
     exact: t2
   } : {
     display: t2,
     exact: t2
   };
 }
-var O = {
+var j = {
   "role-template-rework-rate@2.0.0": {
     definition: "Role-template rework rate",
     valueSemantics: "Ratio of covered terminal Delivery/template exposures with at least one recorded FINDING_FIX relationship.",
@@ -3514,7 +3517,7 @@ var O = {
     limits: "Availability does not state Usage amount; do not turn missing Usage into zero."
   }
 };
-var k = /* @__PURE__ */ new Set([
+var te = /* @__PURE__ */ new Set([
   "AVAILABLE",
   "LOWER_BOUND",
   "NOT_APPLICABLE",
@@ -3522,7 +3525,7 @@ var k = /* @__PURE__ */ new Set([
   "EXPIRED",
   "INCOMPATIBLE"
 ]);
-var A = /* @__PURE__ */ new Set([
+var M = /* @__PURE__ */ new Set([
   "COUNT",
   "QUANTITY",
   "RATIO",
@@ -3530,7 +3533,7 @@ var A = /* @__PURE__ */ new Set([
   "DURATION_MS",
   "BOOLEAN"
 ]);
-var j = /* @__PURE__ */ new Set([
+var N = /* @__PURE__ */ new Set([
   "SAMPLE_INSUFFICIENT",
   "MISSING_INPUT",
   "NO_APPLICABLE_POPULATION",
@@ -3539,23 +3542,23 @@ var j = /* @__PURE__ */ new Set([
   "EXPIRED_INPUT",
   "INCOMPATIBLE_INPUT"
 ]);
-var M = /* @__PURE__ */ new Set([
+var P = /* @__PURE__ */ new Set([
   "NO_POPULATION",
   "NO_COVERAGE",
   "PARTIAL",
   "FULL"
 ]);
-var N = (e3) => typeof e3 == "object" && !!e3 && !Array.isArray(e3);
-var P = (e3) => Array.isArray(e3) && e3.every((e4) => typeof e4 == "string");
-function F(e3) {
-  return !N(e3) || typeof e3.metric_id != "string" || e3.metric_id.length === 0 || e3.metric_version !== "2.0.0" || !Array.isArray(e3.slices) ? false : e3.slices.every((e4) => {
-    let t2 = typeof e4 == "object" && !!e4 && (e4.coverage === null || N(e4.coverage) && typeof e4.coverage.numerator == "string" && typeof e4.coverage.denominator == "string" && (e4.coverage.raw_ratio === null || typeof e4.coverage.raw_ratio == "string") && typeof e4.coverage.state == "string" && M.has(e4.coverage.state) && (e4.coverage.alert === null || e4.coverage.alert === "LOW_COVERAGE"));
-    return !N(e4) || !N(e4.slice_key) || typeof e4.state != "string" || !k.has(e4.state) || !N(e4.measures) || !N(e4.compatibility) || !P(e4.exclusions) || !P(e4.missing_inputs) || !P(e4.provenance_refs) || !t2 || e4.numerator !== void 0 && typeof e4.numerator != "string" || e4.denominator !== void 0 && typeof e4.denominator != "string" || e4.contributing_count !== void 0 && typeof e4.contributing_count != "string" || e4.reading !== void 0 && typeof e4.reading != "string" ? false : e4.value === void 0 ? typeof e4.withholding_reason == "string" && j.has(e4.withholding_reason) : !N(e4.value) || typeof e4.value.kind != "string" || !A.has(e4.value.kind) || typeof e4.value.unit != "string" ? false : e4.value.kind === "BOOLEAN" ? typeof e4.value.value == "boolean" : typeof e4.value.value == "string" ? e4.value.kind === "RATIO" ? /^-?(?:0|[1-9][0-9]*)(?:\/[1-9][0-9]*)?$/u.test(e4.value.value) : /^-?(?:0|[1-9][0-9]*)$/u.test(e4.value.value) || e4.value.kind === "MONEY" || e4.value.kind === "QUANTITY" : false;
+var F = (e3) => typeof e3 == "object" && !!e3 && !Array.isArray(e3);
+var I = (e3) => Array.isArray(e3) && e3.every((e4) => typeof e4 == "string");
+function L(e3) {
+  return !F(e3) || typeof e3.metric_id != "string" || e3.metric_id.length === 0 || e3.metric_version !== "2.0.0" || !Array.isArray(e3.slices) ? false : e3.slices.every((e4) => {
+    let t2 = typeof e4 == "object" && !!e4 && (e4.coverage === null || F(e4.coverage) && typeof e4.coverage.numerator == "string" && typeof e4.coverage.denominator == "string" && (e4.coverage.raw_ratio === null || typeof e4.coverage.raw_ratio == "string") && typeof e4.coverage.state == "string" && P.has(e4.coverage.state) && (e4.coverage.alert === null || e4.coverage.alert === "LOW_COVERAGE"));
+    return !F(e4) || !F(e4.slice_key) || typeof e4.state != "string" || !te.has(e4.state) || !F(e4.measures) || !F(e4.compatibility) || !I(e4.exclusions) || !I(e4.missing_inputs) || !I(e4.provenance_refs) || !t2 || e4.numerator !== void 0 && typeof e4.numerator != "string" || e4.denominator !== void 0 && typeof e4.denominator != "string" || e4.contributing_count !== void 0 && typeof e4.contributing_count != "string" || e4.reading !== void 0 && typeof e4.reading != "string" ? false : e4.value === void 0 ? typeof e4.withholding_reason == "string" && N.has(e4.withholding_reason) : !F(e4.value) || typeof e4.value.kind != "string" || !M.has(e4.value.kind) || typeof e4.value.unit != "string" ? false : e4.value.kind === "BOOLEAN" ? typeof e4.value.value == "boolean" : typeof e4.value.value == "string" ? e4.value.kind === "RATIO" ? /^-?(?:0|[1-9][0-9]*)(?:\/[1-9][0-9]*)?$/u.test(e4.value.value) : /^-?(?:0|[1-9][0-9]*)$/u.test(e4.value.value) || e4.value.kind === "MONEY" || e4.value.kind === "QUANTITY" : false;
   });
 }
-var I = (e3) => e3;
-var te = {
-  "numeric-card@1": I({
+var ne = (e3) => e3;
+var re2 = {
+  "numeric-card@1": ne({
     id: "numeric-card@1",
     arity: "ONE_SLICE",
     channels: ["value"],
@@ -3572,7 +3575,7 @@ var te = {
     fallback: "table@1",
     transforms: ["DISPLAY_ROUNDING", "RATIO_TO_PERCENT"]
   }),
-  "badge@1": I({
+  "badge@1": ne({
     id: "badge@1",
     arity: "ONE_SLICE",
     channels: ["value"],
@@ -3583,7 +3586,7 @@ var te = {
     fallback: "table@1",
     transforms: []
   }),
-  "ratio-bar@1": I({
+  "ratio-bar@1": ne({
     id: "ratio-bar@1",
     arity: "ONE_SLICE",
     channels: ["value", "domain"],
@@ -3594,7 +3597,7 @@ var te = {
     fallback: "table@1",
     transforms: ["RATIO_TO_PERCENT", "SCALE_LAYOUT"]
   }),
-  "table@1": I({
+  "table@1": ne({
     id: "table@1",
     arity: "ANY",
     channels: ["published-result"],
@@ -3610,17 +3613,17 @@ var te = {
     ]
   })
 };
-function ne(e3) {
+function ie(e3) {
   if (e3.value === void 0) return ["numeric-card@1", "table@1"];
   let t2 = [];
   return e3.value.kind === "BOOLEAN" ? t2.push("badge@1") : t2.push("numeric-card@1"), e3.value.kind === "RATIO" && e3.value.unit === "ratio" && t2.push("ratio-bar@1"), t2.push("table@1"), t2;
 }
-function L(e3) {
+function ae(e3) {
   if (e3.slices.length !== 1) return "table@1";
   let t2 = e3.slices[0]?.value;
   return t2?.kind === "BOOLEAN" ? "badge@1" : t2?.kind === "RATIO" && t2.unit === "ratio" ? "ratio-bar@1" : "numeric-card@1";
 }
-var re2 = {
+var R = {
   AVAILABLE: {
     label: "Available",
     marker: "\u2713",
@@ -3652,8 +3655,8 @@ var re2 = {
     tone: "incompatible"
   }
 };
-function R({ state: e3, withholdingReason: r, reading: i, detail: a2 = "full" }) {
-  let o2 = re2[e3];
+function oe({ state: e3, withholdingReason: r, reading: i, detail: a2 = "full" }) {
+  let o2 = R[e3];
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "status-stack",
     "data-state": e3,
@@ -3662,8 +3665,12 @@ function R({ state: e3, withholdingReason: r, reading: i, detail: a2 = "full" })
         className: `status-label status-${o2.tone}`,
         children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           "aria-hidden": "true",
+          className: "status-label-marker",
           children: o2.marker
-        }), o2.label]
+        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+          className: "status-label-text",
+          children: o2.label
+        })]
       }),
       a2 === "label" || r === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
         className: "status-reason",
@@ -3676,13 +3683,13 @@ function R({ state: e3, withholdingReason: r, reading: i, detail: a2 = "full" })
     ]
   });
 }
-var ie = {
+var se = {
   NO_POPULATION: "No applicable population",
   NO_COVERAGE: "No coverage",
   PARTIAL: "Partial coverage",
   FULL: "Full coverage"
 };
-var ae = {
+var ce = {
   NO_POPULATION: {
     marker: "\u25CB",
     tone: "unavailable"
@@ -3700,7 +3707,7 @@ var ae = {
     tone: "available"
   }
 };
-function oe({ coverage: e3 }) {
+function le({ coverage: e3 }) {
   if (e3 === null) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "coverage-label",
     "data-coverage": "UNAVAILABLE",
@@ -3712,7 +3719,7 @@ function oe({ coverage: e3 }) {
       }), "Coverage unavailable"]
     })
   });
-  let r = ae[e3.state];
+  let r = ce[e3.state];
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "coverage-label",
     "data-coverage": e3.state,
@@ -3722,7 +3729,7 @@ function oe({ coverage: e3 }) {
         children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           "aria-hidden": "true",
           children: r.marker
-        }), ie[e3.state]]
+        }), se[e3.state]]
       }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
         className: "numeric-exact",
@@ -3739,10 +3746,10 @@ function oe({ coverage: e3 }) {
     ]
   });
 }
-var z = (e3) => e3.toLowerCase().replaceAll("_", " ");
-function B(e3) {
+var ue = (e3) => e3.toLowerCase().replaceAll("_", " ");
+function z(e3) {
   if (e3.traceState !== void 0) {
-    let r2 = e3.traceState === "PARTIAL" ? "partial recorded data" : z(e3.traceState), i = e3.traceState === "AVAILABLE" ? "available" : e3.traceState === "EXPIRED" ? "expired" : e3.traceState === "PARTIAL" ? "attention" : "unavailable";
+    let r2 = e3.traceState === "PARTIAL" ? "partial recorded data" : ue(e3.traceState), i = e3.traceState === "AVAILABLE" ? "available" : e3.traceState === "EXPIRED" ? "expired" : e3.traceState === "PARTIAL" ? "attention" : "unavailable";
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
       className: `status-label status-${i}`,
       children: [
@@ -3759,13 +3766,13 @@ function B(e3) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "lifecycle-grid",
     children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Completeness: ", z(r.completeness ?? "UNSPECIFIED")] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Availability: ", z(r.availability)] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Expiry: ", z(r.expiry)] })
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Completeness: ", ue(r.completeness ?? "UNSPECIFIED")] }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Availability: ", ue(r.availability)] }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Expiry: ", ue(r.expiry)] })
     ]
   });
 }
-function V({ title: e3, detail: r, correlation: i, retryable: a2, onRetry: o2, announce: s2 }) {
+function B({ title: e3, detail: r, correlation: i, retryable: a2, onRetry: o2, announce: s2 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-live": s2,
     className: "scoped-error",
@@ -3792,9 +3799,9 @@ function V({ title: e3, detail: r, correlation: i, retryable: a2, onRetry: o2, a
     ]
   });
 }
-function se({ slice: e3 }) {
+function de({ slice: e3 }) {
   if (e3.value === void 0) return null;
-  let r = D(e3.value), i = ` ${e3.value.unit}`, a2 = r.display.endsWith(i) ? r.display.slice(0, -i.length) : r.display;
+  let r = A(e3.value), i = ` ${e3.value.unit}`, a2 = r.display.endsWith(i) ? r.display.slice(0, -i.length) : r.display;
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "metric-value",
     children: [
@@ -3813,7 +3820,7 @@ function se({ slice: e3 }) {
     ]
   });
 }
-function ce({ slice: e3 }) {
+function fe({ slice: e3 }) {
   let r = Object.entries(e3.measures), i = [
     ["Numerator", e3.numerator],
     ["Denominator", e3.denominator],
@@ -3830,7 +3837,7 @@ function ce({ slice: e3 }) {
     })] }, e4))]
   });
 }
-function le({ slice: e3 }) {
+function pe({ slice: e3 }) {
   let r = Object.entries(e3.compatibility);
   return e3.state !== "INCOMPATIBLE" || r.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Incompatible coordinates",
@@ -3845,7 +3852,7 @@ function le({ slice: e3 }) {
     }) }, e4)) })]
   });
 }
-function ue({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvidence: s2, onRecover: c2, focusEvidenceAction: l2 = false, recoveryLabel: u2 = "Recover result" }) {
+function V({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvidence: s2, onRecover: c2, focusEvidenceAction: l2 = false, recoveryLabel: u2 = "Recover result" }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
     "aria-label": r,
     className: "metric-frame",
@@ -3854,7 +3861,7 @@ function ue({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvi
       children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
         className: "text-heading metric-coordinate",
         children: r
-      }), i.tag === "RESULT" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(R, {
+      }), i.tag === "RESULT" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(oe, {
         reading: i.slice.reading,
         state: i.slice.state,
         withholdingReason: i.slice.withholding_reason
@@ -3864,18 +3871,18 @@ function ue({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvi
       className: "loading-state",
       role: "status",
       children: "Loading metric\u2026"
-    }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(V, {
+    }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(B, {
       announce: "assertive",
       detail: i.detail,
       onRetry: i.onRetry,
       retryable: i.retryable,
       title: "Metric request failed"
     }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(se, { slice: i.slice }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(de, { slice: i.slice }),
       i.slice.value === void 0 ? null : a2,
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ce, { slice: i.slice }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(le, { slice: i.slice }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(oe, { coverage: i.slice.coverage }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(fe, { slice: i.slice }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(pe, { slice: i.slice }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(le, { coverage: i.slice.coverage }),
       i.slice.missing_inputs.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
         className: "status-reading",
         children: ["Missing inputs: ", i.slice.missing_inputs.join(", ")]
@@ -3907,7 +3914,7 @@ function ue({ coordinate: r, content: i, visualization: a2, onExplain: o2, onEvi
     ] })]
   });
 }
-function fe({ onExplain: e3, onEvidence: r, focusEvidenceAction: i = false }) {
+function he({ onExplain: e3, onEvidence: r, focusEvidenceAction: i = false }) {
   return e3 === void 0 && r === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("footer", {
     className: "metric-actions",
     children: [e3 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
@@ -3924,7 +3931,7 @@ function fe({ onExplain: e3, onEvidence: r, focusEvidenceAction: i = false }) {
     })]
   });
 }
-function U({ coordinate: e3, slices: r, label: i = "Result data" }) {
+function ge({ coordinate: e3, slices: r, label: i = "Result data" }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "bounded-table",
     children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", {
@@ -3978,7 +3985,7 @@ function U({ coordinate: e3, slices: r, label: i = "Result data" }) {
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: e4.state }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
             className: "numeric-exact",
-            children: e4.value === void 0 ? e4.withholding_reason : D(e4.value).exact
+            children: e4.value === void 0 ? e4.withholding_reason : A(e4.value).exact
           }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("td", {
             className: "numeric-exact",
@@ -4010,7 +4017,7 @@ function U({ coordinate: e3, slices: r, label: i = "Result data" }) {
     })
   });
 }
-function pe(e3) {
+function _e(e3) {
   let [t2, n2 = "1"] = e3.split("/");
   try {
     let e4 = BigInt(t2), r = BigInt(n2);
@@ -4019,9 +4026,9 @@ function pe(e3) {
     return false;
   }
 }
-function me({ slice: e3 }) {
+function ve({ slice: e3 }) {
   if (e3.value?.kind !== "RATIO") return null;
-  let [i, a2] = e3.value.value.split("/"), o2 = BigInt(a2 ?? "1"), s2 = Number(BigInt(i) * 10000n / o2), c2 = linear2().domain([0, 1e4]).range([8, 198])(s2), l2 = D(e3.value);
+  let [i, a2] = e3.value.value.split("/"), o2 = BigInt(a2 ?? "1"), s2 = Number(BigInt(i) * 10000n / o2), c2 = linear2().domain([0, 1e4]).range([8, 198])(s2), l2 = A(e3.value);
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
     className: "visual-with-fallback",
     children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
@@ -4060,7 +4067,7 @@ function me({ slice: e3 }) {
     })]
   });
 }
-function he({ slice: e3 }) {
+function ye({ slice: e3 }) {
   return e3.value?.kind === "BOOLEAN" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
     "aria-label": "Boolean result",
     className: "status-label",
@@ -4075,7 +4082,7 @@ function he({ slice: e3 }) {
     ]
   }) : null;
 }
-function ge({ coordinate: e3, slices: r }) {
+function be({ coordinate: e3, slices: r }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "bounded-table",
     children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", {
@@ -4102,24 +4109,24 @@ function ge({ coordinate: e3, slices: r }) {
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: e4.state }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
           className: "numeric-exact",
-          children: e4.value === void 0 ? e4.withholding_reason : D(e4.value).exact
+          children: e4.value === void 0 ? e4.withholding_reason : A(e4.value).exact
         })
       ] }, JSON.stringify(e4.slice_key))) })]
     })
   });
 }
-function _e({ result: e3, visualizer: r, size: i, onEvidence: a2 }) {
-  if (!F(e3)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
+function xe({ result: e3, visualizer: r, size: i, onEvidence: a2 }) {
+  if (!L(e3)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
     className: "panel-card",
     "data-presentation": "dashboard",
-    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(V, {
+    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(B, {
       announce: "assertive",
       detail: "The supplied value does not satisfy the formal Metric Result 2.0.0 contract.",
       retryable: false,
       title: "Metric Result incompatible"
     })
   });
-  let o2 = `${e3.metric_id}@${e3.metric_version}`, s2 = Object.hasOwn(O, o2) ? O[o2].definition : o2, c2 = r ?? L(e3), l2 = e3.slices[0];
+  let o2 = `${e3.metric_id}@${e3.metric_version}`, s2 = Object.hasOwn(j, o2) ? j[o2].definition : o2, c2 = r ?? ae(e3), l2 = e3.slices[0];
   if (c2 === "table@1" || e3.slices.length !== 1) return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
     "aria-label": s2,
     className: "dashboard-metric-panel",
@@ -4132,13 +4139,13 @@ function _e({ result: e3, visualizer: r, size: i, onEvidence: a2 }) {
         className: "dashboard-panel-head",
         children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", { children: s2 })
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ge, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(be, {
         coordinate: o2,
         slices: e3.slices
       }),
       a2 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("footer", {
         className: "dashboard-panel-actions",
-        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(p, {
+        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(h, {
           onClick: (e4) => a2(e4.currentTarget),
           type: "button",
           children: "View evidence"
@@ -4147,18 +4154,22 @@ function _e({ result: e3, visualizer: r, size: i, onEvidence: a2 }) {
     ]
   });
   if (l2 === void 0) return null;
-  let u2 = l2.value === void 0 ? void 0 : D(l2.value), d2 = l2.value?.kind === "RATIO" && pe(l2.value.value) ? Number(BigInt(l2.value.value.split("/")[0]) * 10000n / BigInt(l2.value.value.split("/")[1] ?? "1")) / 100 : void 0;
+  let u2 = l2.value === void 0 ? void 0 : A(l2.value), d2 = l2.value?.kind === "RATIO" && _e(l2.value.value) ? Number(BigInt(l2.value.value.split("/")[0]) * 10000n / BigInt(l2.value.value.split("/")[1] ?? "1")) / 100 : void 0;
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
     "aria-label": s2,
     className: "dashboard-metric-panel",
     "data-metric-coordinate": o2,
     "data-panel-size": i,
     "data-presentation": "dashboard",
+    "data-scrollable": c2 === "numeric-card@1" ? "false" : void 0,
     "data-visualizer": c2,
     children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
         className: "dashboard-panel-head",
-        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", { children: s2 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(R, {
+        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+          className: "dashboard-panel-title",
+          children: s2
+        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(oe, {
           detail: "label",
           reading: l2.reading,
           state: l2.state,
@@ -4175,12 +4186,12 @@ function _e({ result: e3, visualizer: r, size: i, onEvidence: a2 }) {
           " / ",
           l2.coverage.denominator
         ]
-      }) : c2 === "badge@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(he, { slice: l2 }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+      }) : c2 === "badge@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ye, { slice: l2 }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
         className: "metric-value",
         children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           className: "metric-number",
           children: u2?.display
-        }), c2 === "ratio-bar@1" ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+        }), c2 === "ratio-bar@1" || c2 === "numeric-card@1" ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
           className: "numeric-exact",
           children: ["Exact value: ", u2?.exact]
         })]
@@ -4191,7 +4202,7 @@ function _e({ result: e3, visualizer: r, size: i, onEvidence: a2 }) {
         role: "img",
         children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", { style: { width: `${d2}%` } })
       }) : null,
-      l2.numerator === void 0 || l2.denominator === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+      i === "SMALL" || c2 === "numeric-card@1" || l2.numerator === void 0 || l2.denominator === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
         className: "dashboard-panel-meta",
         children: [
           l2.numerator,
@@ -4200,9 +4211,21 @@ function _e({ result: e3, visualizer: r, size: i, onEvidence: a2 }) {
           " exact"
         ]
       }),
-      i === "SMALL" || a2 === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("footer", {
+      a2 === void 0 ? null : c2 === "numeric-card@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("footer", {
         className: "dashboard-panel-actions",
-        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(p, {
+        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(g, {
+          appearance: "ghost",
+          "aria-label": "View evidence",
+          onClick: (e4) => a2(e4.currentTarget),
+          type: "button",
+          children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+            "aria-hidden": "true",
+            className: "dashboard-evidence-icon icon-[tabler--file-search]"
+          })
+        })
+      }) : i === "SMALL" ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("footer", {
+        className: "dashboard-panel-actions",
+        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(h, {
           onClick: (e4) => a2(e4.currentTarget),
           type: "button",
           children: "View evidence"
@@ -4211,28 +4234,28 @@ function _e({ result: e3, visualizer: r, size: i, onEvidence: a2 }) {
     ]
   });
 }
-function ve({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvidenceAction: o2 = false }) {
-  if (!F(e3)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
+function Se({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvidenceAction: o2 = false }) {
+  if (!L(e3)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
     className: "panel-card",
-    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(V, {
+    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(B, {
       announce: "assertive",
       detail: "The supplied value does not satisfy the formal Metric Result 2.0.0 contract.",
       retryable: false,
       title: "Metric Result incompatible"
     })
   });
-  let s2 = r ?? L(e3), c2 = `${e3.metric_id}@${e3.metric_version}`;
-  return e3.slices.every((e4) => e4.value === void 0 || ne(e4).includes(s2) && (s2 !== "ratio-bar@1" || e4.value.kind === "RATIO" && pe(e4.value.value))) ? s2 === "table@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+  let s2 = r ?? ae(e3), c2 = `${e3.metric_id}@${e3.metric_version}`;
+  return e3.slices.every((e4) => e4.value === void 0 || ie(e4).includes(s2) && (s2 !== "ratio-bar@1" || e4.value.kind === "RATIO" && _e(e4.value.value))) ? s2 === "table@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     className: "panel-card",
-    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(U, {
+    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ge, {
       coordinate: c2,
       slices: e3.slices
-    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(fe, {
+    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(he, {
       focusEvidenceAction: o2,
       onEvidence: a2,
       onExplain: i
     })]
-  }) : e3.slices.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ue, {
+  }) : e3.slices.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(V, {
     content: {
       tag: "RESULT",
       slice: e4
@@ -4241,22 +4264,22 @@ function ve({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvid
     onEvidence: a2,
     onExplain: i,
     focusEvidenceAction: o2,
-    visualization: s2 === "ratio-bar@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(me, { slice: e4 }) : s2 === "badge@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(he, { slice: e4 }) : void 0
+    visualization: s2 === "ratio-bar@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ve, { slice: e4 }) : s2 === "badge@1" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ye, { slice: e4 }) : void 0
   }, JSON.stringify(e4.slice_key))) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     className: "panel-card",
     children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(V, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(B, {
         announce: "polite",
         detail: `${s2} cannot consume the published Result shape without inventing a domain or value.`,
         retryable: false,
         title: "Visualizer binding incompatible"
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(U, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ge, {
         coordinate: c2,
         label: "Fallback result data",
         slices: e3.slices
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(fe, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(he, {
         focusEvidenceAction: o2,
         onEvidence: a2,
         onExplain: i
@@ -4264,9 +4287,9 @@ function ve({ result: e3, visualizer: r, onExplain: i, onEvidence: a2, focusEvid
     ]
   });
 }
-function ye({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRetry: s2, onExplain: c2, onEvidence: l2, focusEvidenceAction: u2, visualizer: d2 }) {
-  let f2 = r.lastIndexOf("@"), p2 = i === void 0 ? void 0 : {
-    metric_id: r.slice(0, f2),
+function Ce({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRetry: s2, onExplain: c2, onEvidence: l2, focusEvidenceAction: u2, visualizer: d2 }) {
+  let f = r.lastIndexOf("@"), p = i === void 0 ? void 0 : {
+    metric_id: r.slice(0, f),
     metric_version: "2.0.0",
     slices: [i]
   };
@@ -4276,7 +4299,7 @@ function ye({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRe
     children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
       className: "text-label",
       children: e3
-    }), p2 === void 0 ? a2 !== void 0 && o2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(V, {
+    }), p === void 0 ? a2 !== void 0 && o2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(B, {
       announce: "assertive",
       detail: `${a2.code}: ${a2.detail}`,
       onRetry: s2,
@@ -4292,8 +4315,8 @@ function ye({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRe
         " side unresolved: ",
         a2.code
       ]
-    }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ve, {
-      result: p2,
+    }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Se, {
+      result: p,
       visualizer: d2,
       focusEvidenceAction: u2,
       onEvidence: l2,
@@ -4301,7 +4324,7 @@ function ye({ label: e3, coordinate: r, slice: i, error: a2, ownsError: o2, onRe
     })]
   });
 }
-function be({ delta: e3 }) {
+function we({ delta: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Delta result",
     className: "compare-delta",
@@ -4313,7 +4336,7 @@ function be({ delta: e3 }) {
       children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           className: "metric-number",
-          children: D(e3.value).display
+          children: A(e3.value).display
         }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           className: "status-reading",
@@ -4321,7 +4344,7 @@ function be({ delta: e3 }) {
         }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
           className: "numeric-exact",
-          children: ["Exact delta: ", D(e3.value).exact]
+          children: ["Exact delta: ", A(e3.value).exact]
         })
       ]
     }) : e3.state === "SIDE_UNRESOLVED" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -4333,44 +4356,44 @@ function be({ delta: e3 }) {
     })]
   });
 }
-function xe({ coordinate: e3, before: r, after: i, beforeError: a2, afterError: o2, delta: s2, onRetryFailedSide: c2, ownsFailedSide: l2 = true, focusEvidenceSide: u2, onExplain: d2, onEvidence: f2, visualizer: p2 = "numeric-card@1" }) {
+function Te({ coordinate: e3, before: r, after: i, beforeError: a2, afterError: o2, delta: s2, onRetryFailedSide: c2, ownsFailedSide: l2 = true, focusEvidenceSide: u2, onExplain: d2, onEvidence: f, visualizer: p = "numeric-card@1" }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
     "aria-label": `Compare ${e3}`,
     className: "compare-result",
     children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ye, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ce, {
         coordinate: e3,
         error: a2,
         focusEvidenceAction: u2 === "left",
         label: "Before",
         ownsError: l2,
-        onEvidence: f2 === void 0 ? void 0 : (e4) => f2("left", e4),
+        onEvidence: f === void 0 ? void 0 : (e4) => f("left", e4),
         onExplain: d2 === void 0 ? void 0 : (e4) => d2("left", e4),
         onRetry: a2 === void 0 ? void 0 : c2,
         slice: r,
-        visualizer: p2
+        visualizer: p
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ye, {
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ce, {
         coordinate: e3,
         error: o2,
         focusEvidenceAction: u2 === "right",
         label: "After",
         ownsError: l2,
-        onEvidence: f2 === void 0 ? void 0 : (e4) => f2("right", e4),
+        onEvidence: f === void 0 ? void 0 : (e4) => f("right", e4),
         onExplain: d2 === void 0 ? void 0 : (e4) => d2("right", e4),
         onRetry: o2 === void 0 ? void 0 : c2,
         slice: i,
-        visualizer: p2
+        visualizer: p
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(be, { delta: s2 })
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(we, { delta: s2 })
     ]
   });
 }
-function Se({ values: e3 }) {
+function Ee({ values: e3 }) {
   let n2 = Object.entries(e3);
   return n2.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "None" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: n2.map(([e4, t2]) => `${e4}=${t2}`).join(", ") });
 }
-function Ce({ membership: e3 }) {
+function De({ membership: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
       className: "text-code",
@@ -4392,7 +4415,7 @@ function Ce({ membership: e3 }) {
     })
   ] });
 }
-function Te({ population: e3 }) {
+function ke({ population: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
     className: "text-heading",
     children: "Task population"
@@ -4407,18 +4430,18 @@ function Te({ population: e3 }) {
           children: e4.task_id
         }) : null,
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [e4.memberships.length, " Delivery memberships"] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Cohort: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Se, { values: e4.cohort_coordinates })] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Cohort: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ee, { values: e4.cohort_coordinates })] }),
         e4.terminal_reading === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Terminal reading: ", e4.terminal_reading] }),
         e4.exclusions.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Exclusions: ", e4.exclusions.join(", ")] }),
         e4.memberships.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
           className: "detail-rows",
-          children: e4.memberships.map((e6) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ce, { membership: e6 }, e6.delivery_id))
+          children: e4.memberships.map((e6) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(De, { membership: e6 }, e6.delivery_id))
         })
       ] }, e4.task_id);
     })
   })] });
 }
-function Ee({ resolution: e3 }) {
+function Ae({ resolution: e3 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: e3.state }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
@@ -4491,7 +4514,7 @@ function Ee({ resolution: e3 }) {
     })
   ] });
 }
-function De({ receipt: e3, side: r }) {
+function je({ receipt: e3, side: r }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     className: "detail-view",
     children: [
@@ -4545,7 +4568,7 @@ function De({ receipt: e3, side: r }) {
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Catalog observation profile" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: e3.catalog.observation_profile })] })
         ]
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Te, { population: e3.task_population }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ke, { population: e3.task_population }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
         className: "text-heading",
         children: "Evidence bindings"
@@ -4556,7 +4579,7 @@ function De({ receipt: e3, side: r }) {
             className: "text-code",
             children: e4.route
           }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Filter: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Se, { values: e4.canonical_filter })] }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Filter: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ee, { values: e4.canonical_filter })] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Contract revision ", e4.contract_revision] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Observation profile ", e4.observation_profile] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Read model revision ", e4.read_model_revision] }),
@@ -4596,12 +4619,12 @@ function De({ receipt: e3, side: r }) {
         children: "No Workflow resolutions."
       }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
         className: "detail-rows",
-        children: e3.workflow_resolutions.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ee, { resolution: e4 }, e4.manifest_digest))
+        children: e3.workflow_resolutions.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ae, { resolution: e4 }, e4.manifest_digest))
       })] })
     ]
   });
 }
-var Oe = [
+var Me = [
   {
     id: "result",
     label: "Result evidence"
@@ -4615,12 +4638,12 @@ var Oe = [
     label: "Resolved read set"
   }
 ];
-var ke = {
+var Ne = {
   result: "Exact provenance identities cited by this Metric Result; non-Fact detail may remain unresolved.",
   related: "Related Facts match the context but are not claimed as calculation contributors.",
   "read-set": "Every bounded identity recorded by this receipt; this view only hydrates matching Fact rows."
 };
-function Ae({ rows: e3 }) {
+function Pe({ rows: e3 }) {
   return e3.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "table-scroll",
     children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", {
@@ -4662,8 +4685,8 @@ function Ae({ rows: e3 }) {
     })
   });
 }
-function je({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
-  let s2 = Oe.find((e3) => e3.id === r).label;
+function Fe({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
+  let s2 = Me.find((e3) => e3.id === r).label;
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     className: "table-scroll",
     children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", {
@@ -4706,8 +4729,8 @@ function je({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("td", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
               className: "text-code",
               children: r2.provenance
-            }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(B, { truth: r2.truth })] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: r2.trace === void 0 ? "No Trace reference" : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [r2.trace.state === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Trace lifecycle not loaded" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(B, { traceState: r2.trace.state }), o2 === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
+            }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(z, { truth: r2.truth })] }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { children: r2.trace === void 0 ? "No Trace reference" : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [r2.trace.state === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Trace lifecycle not loaded" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(z, { traceState: r2.trace.state }), o2 === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
               className: "text-code",
               children: [r2.trace.traceId, r2.trace.spanId === void 0 ? "" : ` / ${r2.trace.spanId}`]
             }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
@@ -4726,7 +4749,7 @@ function je({ scope: r, rows: i, focusedFactId: a2, onOpenTrace: o2 }) {
     })
   });
 }
-function Me({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: s2, onScopeChange: c2, onOpenTrace: l2 }) {
+function Ie({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: s2, onScopeChange: c2, onOpenTrace: l2 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     className: "evidence-console",
     children: [
@@ -4740,7 +4763,7 @@ function Me({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: 
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", {
         "aria-label": "Evidence scope",
         className: "scope-tabs",
-        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { children: Oe.map((e3) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { children: Me.map((e3) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
           "aria-current": r === e3.id ? "page" : void 0,
           className: "scope-tab",
           onClick: () => c2?.(e3.id),
@@ -4750,13 +4773,13 @@ function Me({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: 
       }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
         className: "scope-note",
-        children: ke[r]
+        children: Ne[r]
       }),
       i.tag === "LOADING" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
         "aria-live": "polite",
         role: "status",
         children: "Loading Evidence\u2026"
-      }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(V, {
+      }) : i.tag === "ERROR" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(B, {
         announce: "assertive",
         detail: i.detail,
         onRetry: i.onRetry,
@@ -4775,18 +4798,18 @@ function Me({ scope: r, state: i, rows: a2, references: o2 = [], focusedFactId: 
           className: "status-banner status-expired",
           children: "Evidence detail expired"
         }) : null,
-        a2.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(je, {
+        a2.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Fe, {
           focusedFactId: s2,
           onOpenTrace: l2,
           rows: a2,
           scope: r
         }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ae, { rows: o2 })
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Pe, { rows: o2 })
       ] })
     ]
   });
 }
-var Pe = (0, import_react.memo)(function({ model: e3 }) {
+var Re = (0, import_react.memo)(function({ model: e3 }) {
   let r = /* @__PURE__ */ new Map();
   for (let t2 of e3.depthGroups) {
     let e4 = t2.nodes.map((e6) => e6.endpointId ?? e6.id), n2 = point().domain(e4).range([80, 880]);
@@ -4838,63 +4861,205 @@ var Pe = (0, import_react.memo)(function({ model: e3 }) {
       ]
     })
   });
-}, Fe);
-function Fe(e3, t2) {
+}, ze);
+function ze(e3, t2) {
   return e3.model.depthGroups === t2.model.depthGroups && e3.model.parentEdges === t2.model.parentEdges && e3.model.links === t2.model.links;
 }
-var Be = (e3, t2) => e3 < t2 ? -1 : +(e3 > t2);
-function W(e3, t2) {
+function We(e3, t2) {
+  return !(e3.i === t2.i || e3.x + e3.w <= t2.x || e3.x >= t2.x + t2.w || e3.y + e3.h <= t2.y || e3.y >= t2.y + t2.h);
+}
+function Ge(e3, t2) {
+  for (let n2 = 0; n2 < e3.length; n2++) {
+    let r = e3[n2];
+    if (r !== void 0 && We(r, t2)) return r;
+  }
+}
+function Ke(e3) {
+  return [...e3].sort((e4, t2) => e4.y === t2.y ? e4.x - t2.x : e4.y - t2.y);
+}
+function qe(e3) {
+  return [...e3].sort((e4, t2) => e4.x === t2.x ? e4.y - t2.y : e4.x - t2.x);
+}
+function Je(e3) {
+  let t2 = 0;
+  for (let n2 = 0; n2 < e3.length; n2++) {
+    let r = e3[n2];
+    if (r !== void 0) {
+      let e4 = r.y + r.h;
+      e4 > t2 && (t2 = e4);
+    }
+  }
+  return t2;
+}
+function Ye(e3) {
+  return e3.filter((e4) => e4.static === true);
+}
+function Xe(e3) {
+  return {
+    i: e3.i,
+    x: e3.x,
+    y: e3.y,
+    w: e3.w,
+    h: e3.h,
+    minW: e3.minW,
+    maxW: e3.maxW,
+    minH: e3.minH,
+    maxH: e3.maxH,
+    moved: !!e3.moved,
+    static: !!e3.static,
+    isDraggable: e3.isDraggable,
+    isResizable: e3.isResizable,
+    resizeHandles: e3.resizeHandles,
+    constraints: e3.constraints,
+    isBounded: e3.isBounded
+  };
+}
+function Ze(e3) {
+  let t2 = Array(e3.length);
+  for (let n2 = 0; n2 < e3.length; n2++) {
+    let r = e3[n2];
+    r !== void 0 && (t2[n2] = Xe(r));
+  }
+  return t2;
+}
+function et(e3, t2, n2, r, i) {
+  let a2 = r === "x" ? "w" : "h";
+  t2[r] += 1;
+  let o2 = e3.findIndex((e4) => e4.i === t2.i), s2 = i ?? Ye(e3).length > 0;
+  for (let i2 = o2 + 1; i2 < e3.length; i2++) {
+    let o3 = e3[i2];
+    if (o3 !== void 0 && !o3.static) {
+      if (!s2 && o3.y > t2.y + t2.h) break;
+      We(t2, o3) && et(e3, o3, n2 + t2[a2], r, s2);
+    }
+  }
+  t2[r] = n2;
+}
+function tt(e3, t2, n2, r) {
+  for (t2.x = Math.max(t2.x, 0), t2.y = Math.max(t2.y, 0), t2.y = Math.min(r, t2.y); t2.y > 0 && !Ge(e3, t2); ) t2.y--;
+  let i;
+  for (; (i = Ge(e3, t2)) !== void 0; ) et(n2, t2, i.y + i.h, "y");
+  return t2.y = Math.max(t2.y, 0), t2;
+}
+function nt(e3, t2, n2, r) {
+  for (t2.x = Math.max(t2.x, 0), t2.y = Math.max(t2.y, 0); t2.x > 0 && !Ge(e3, t2); ) t2.x--;
+  let i;
+  for (; (i = Ge(e3, t2)) !== void 0; ) if (et(r, t2, i.x + i.w, "x"), t2.x + t2.w > n2) for (t2.x = n2 - t2.w, t2.y++; t2.x > 0 && !Ge(e3, t2); ) t2.x--;
+  return t2.x = Math.max(t2.x, 0), t2;
+}
+var rt = {
+  type: "vertical",
+  allowOverlap: false,
+  compact(e3, t2) {
+    let n2 = Ye(e3), r = Je(n2), i = Ke(e3), a2 = Array(e3.length);
+    for (let t3 = 0; t3 < i.length; t3++) {
+      let o2 = i[t3];
+      if (o2 === void 0) continue;
+      let s2 = Xe(o2);
+      s2.static || (s2 = tt(n2, s2, i, r), r = Math.max(r, s2.y + s2.h), n2.push(s2));
+      let c2 = e3.indexOf(o2);
+      a2[c2] = s2, s2.moved = false;
+    }
+    return a2;
+  }
+};
+var it = {
+  type: "horizontal",
+  allowOverlap: false,
+  compact(e3, t2) {
+    let n2 = Ye(e3), r = qe(e3), i = Array(e3.length);
+    for (let a2 = 0; a2 < r.length; a2++) {
+      let o2 = r[a2];
+      if (o2 === void 0) continue;
+      let s2 = Xe(o2);
+      s2.static || (s2 = nt(n2, s2, t2, r), n2.push(s2));
+      let c2 = e3.indexOf(o2);
+      i[c2] = s2, s2.moved = false;
+    }
+    return i;
+  }
+};
+var at = {
+  type: null,
+  allowOverlap: false,
+  compact(e3, t2) {
+    return Ze(e3);
+  }
+};
+({ ...rt }, { ...it }), { ...at };
+var ot = [
+  "role-template-rework-rate@2.0.0",
+  "role-template-trajectory-partial-cost@2.0.0",
+  "role-model-task-outcome-rate@2.0.0",
+  "operational-latency-ms@2.0.0",
+  "trajectory-partial-cost@2.0.0",
+  "task-cohort-comparison-eligibility@2.0.0",
+  "delivery-stage-reach@2.0.0",
+  "delivery-terminal-outcome-rate@2.0.0",
+  "delivery-cycle-time-ms@2.0.0",
+  "operational-token-usage@2.0.0",
+  "operational-attributable-cost@2.0.0",
+  "operational-usage-availability@2.0.0"
+];
+new TextEncoder();
+var dt = (e3, t2) => ({
+  panel_id: e3.slice(0, e3.lastIndexOf("@")),
+  metric_coordinate: e3,
+  visualizer: "table@1",
+  size: "WIDE",
+  channels: { "published-result": "slices" },
+  transforms: [
+    "DISPLAY_ROUNDING",
+    "RATIO_TO_PERCENT",
+    "STABLE_AUTHORITATIVE_SORT"
+  ],
+  grid: t2
+});
+dt("delivery-stage-reach@2.0.0", {
+  x: 0,
+  y: 2,
+  w: 3,
+  h: 2
+}), dt("operational-token-usage@2.0.0", {
+  x: 0,
+  y: 4,
+  w: 3,
+  h: 2
+}), ot.map((e3, t2) => dt(e3, {
+  x: 0,
+  y: t2 * 2,
+  w: 3,
+  h: 2
+}));
+var bt = (e3, t2) => e3 < t2 ? -1 : +(e3 > t2);
+var xt = 6;
+var St = /* @__PURE__ */ new Set();
+function U(e3, t2) {
   let n2 = BigInt(t2);
   return n2 <= 0n ? 0 : Number(BigInt(e3) * 10000n / n2) / 100;
 }
-function G(e3) {
+function W(e3) {
   let t2 = BigInt(e3);
   return t2 >= 1000000000n ? `${Number(t2 / 1000000n) / 1e3} s` : t2 >= 1000000n ? `${Number(t2 / 1000n) / 1e3} ms` : t2 >= 1000n ? `${Number(t2) / 1e3} \u03BCs` : `${e3} ns`;
 }
-function K(e3, t2) {
+function G(e3) {
+  let t2 = BigInt(e3);
+  return t2 === 0n ? "0 ms" : t2 < 1000000n ? "<1 ms" : W(e3);
+}
+function Ct(e3, t2) {
   return String(BigInt(e3) * BigInt(Math.round(t2 * 100)) / 10000n);
 }
-function Ve(e3) {
+function wt(e3) {
   let t2 = BigInt(e3) / 1000000n;
-  return t2 < 86400000n ? G(e3) : new Date(Number(t2)).toISOString().slice(11, 23);
+  return t2 < 86400000n ? W(e3) : new Date(Number(t2)).toISOString().slice(11, 23);
 }
-function He(e3, t2, n2, r) {
-  let i = Math.max(e3, n2), a2 = Math.min(e3 + t2, r), o2 = r - n2;
-  return a2 <= i || o2 <= 0 ? {
-    visible: false,
-    start: 0,
-    width: 0
-  } : {
-    visible: true,
-    start: (i - n2) / o2 * 100,
-    width: (a2 - i) / o2 * 100
-  };
-}
-function Ue(e3) {
+function Tt(e3) {
   return e3.length <= 12 ? e3 : `${e3.slice(0, 8)}\u2026${e3.slice(-4)}`;
 }
-function We(e3, t2) {
+function Et(e3, t2) {
   return e3.nodes.filter((e4) => e4.parentId === t2.id);
 }
-function Ge(e3) {
-  let t2 = new Set(e3.map(({ id: e4 }) => e4)), n2 = [];
-  return e3.forEach((r, i) => {
-    let a2 = i;
-    for (; a2 + 1 < e3.length && e3[a2 + 1].depth > r.depth; ) a2 += 1;
-    (r.parentId === void 0 || !t2.has(r.parentId)) && n2.push({
-      depth: r.depth,
-      start: i,
-      end: a2,
-      key: `${r.id}:root`
-    }), a2 > i && n2.push({
-      depth: r.depth + 1,
-      start: i + 1,
-      end: a2,
-      key: `${r.id}:children`
-    });
-  }), n2;
-}
-function Ke() {
+function Dt() {
   let e3 = "(max-width: 40rem)", [t2, n2] = (0, import_react.useState)(() => typeof matchMedia == "function" && matchMedia(e3).matches);
   return (0, import_react.useEffect)(() => {
     if (typeof matchMedia != "function") return;
@@ -4902,11 +5067,54 @@ function Ke() {
     return r(), t3.addEventListener("change", r), () => t3.removeEventListener("change", r);
   }, []), t2;
 }
-function q({ node: e3, trace: r, children: i }) {
-  let a2 = Object.fromEntries(e3.fields.map(({ field: e4, value: t2 }) => [e4, t2])), o2 = r === void 0 ? [] : We(r, e3), s2 = r === void 0 ? [] : r.links.filter((t2) => t2.from.span_id === e3.id || t2.to.span_id === e3.id);
+var Ot = 32;
+var K = 48;
+var kt = 800;
+var At = 384;
+var jt = 3;
+var Mt = 6;
+var Nt = 7;
+var Pt = 6;
+var Ft = 7;
+var It = 280;
+function Lt(e3, t2, n2) {
+  return n2 - t2 >= Mt + e3.length * Nt;
+}
+function Rt(e3, t2) {
+  let n2 = Math.max(0, t2 - 12), r = Math.floor(n2 / Ft);
+  return e3.length <= r ? e3 : r <= 0 ? "" : r === 1 ? "\u2026" : `${e3.slice(0, r - 1)}\u2026`;
+}
+function zt(e3, t2, n2, i) {
+  let a2 = t2 * n2[0] / 100, o2 = t2 * n2[1] / 100, s2 = Number(e3.startOffsetNano), c2 = s2 + Number(e3.durationNano), l2 = Math.max(s2, a2), u2 = Math.min(c2, o2), d2 = u2 > l2 && o2 > a2, f = linear2([a2, o2], [0, i]), p = d2 ? f(l2) : 0;
+  return {
+    visible: d2,
+    width: d2 ? Math.max(1, f(u2) - p) : 0,
+    x: p
+  };
+}
+function Bt(e3) {
+  return e3 > 32 ? 0.5 : e3 > 16 ? 1 : 2;
+}
+function Vt(e3) {
+  let t2 = (0, import_react.useRef)(null), [n2, r] = (0, import_react.useState)(e3);
+  return (0, import_react.useEffect)(() => {
+    let e4 = t2.current;
+    if (e4 === null) return;
+    let n3 = () => {
+      let t3 = e4.getBoundingClientRect().width;
+      t3 > 0 && r(t3);
+    };
+    if (n3(), typeof ResizeObserver != "function") return;
+    let i = new ResizeObserver(n3);
+    return i.observe(e4), () => i.disconnect();
+  }, []), [t2, n2];
+}
+function Ht({ node: e3, trace: r, children: i }) {
+  let a2 = Object.fromEntries(e3.fields.map(({ field: e4, value: t2 }) => [e4, t2])), o2 = r === void 0 ? [] : Et(r, e3), s2 = r === void 0 ? [] : r.links.filter((t2) => t2.from.span_id === e3.id || t2.to.span_id === e3.id);
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Span passport",
     className: "span-passport",
+    "data-testid": "span-passport",
     children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
       className: "trace-passport-head",
       children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Span Passport" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Exact focus" })]
@@ -4917,7 +5125,7 @@ function q({ node: e3, trace: r, children: i }) {
           className: "trace-passport-title",
           children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
             "aria-hidden": "true",
-            className: `trace-passport-sigil trace-kind-${e3.kind.toLowerCase()}`,
+            className: `trace-passport-sigil trace-kind-${e3.kind.toLowerCase()}${e3.status === "ERROR" ? " trace-status-error" : ""}`,
             children: e3.kind === "CLIENT" ? "\u2197" : "\u25C6"
           }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
             className: "trace-passport-name",
@@ -4940,7 +5148,7 @@ function q({ node: e3, trace: r, children: i }) {
             /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Recorded duration" }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
               className: "numeric-exact",
-              children: `${G(e3.durationNano)} \xB7 ${e3.durationNano} ns exact`
+              children: `${W(e3.durationNano)} \xB7 ${e3.durationNano} ns exact`
             }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Status / truth" }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: `${e3.status} \xB7 ${e3.truth.completeness ?? "UNKNOWN"} \xB7 ${e3.truth.availability}` }),
@@ -4967,96 +5175,75 @@ function q({ node: e3, trace: r, children: i }) {
     })]
   });
 }
-function J({ trace: e3 }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(V, {
+function Ut({ trace: e3 }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(B, {
     announce: "polite",
     detail: e3.errors.join(" \xB7 ") || "Recorded Trace IR is invalid.",
     retryable: false,
     title: "Recorded Trace unavailable"
   });
 }
-function Y2({ trace: e3, node: n2 }) {
+function Wt({ trace: e3, node: n2 }) {
   let r = n2 ? e3.links.filter((e4) => e4.from.span_id === n2.id || e4.to.span_id === n2.id) : e3.links;
   return r.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
     "aria-label": "Recorded span links",
-    className: "trace-link-list",
+    className: "trace-link-list trace-sr-only",
     children: r.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", {
       className: "text-code",
       children: `Recorded LINK \u2192 ${e4.to.trace_id}:${e4.to.span_id}`
     }, e4.id))
   });
 }
-function qe({ durationNano: e3, position: r, playing: i, reducedMotion: a2, onPlayingChange: o2, onPositionChange: s2 }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("footer", {
-    className: "trace-motion",
-    children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-        className: "trace-motion-actions",
-        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-          disabled: a2,
-          onClick: () => o2(!i),
-          type: "button",
-          children: a2 ? "Reduced motion: Still" : i ? "Pause" : "Play recorded time"
-        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-          onClick: () => {
-            o2(false), s2(0);
-          },
-          type: "button",
-          children: "Restart"
-        })]
-      }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-        className: "trace-motion-copy",
-        children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: i ? "Playing \xB7 exact recorded time" : "Still \xB7 complete trace" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-            "aria-label": "Recorded time position",
-            "aria-valuemax": 100,
-            "aria-valuemin": 0,
-            max: 100,
-            min: 0,
-            onChange: (e4) => s2(Number(e4.currentTarget.value)),
-            type: "range",
-            value: r
-          }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Finite reader-controlled visualization; not a running execution." })
-        ]
-      }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: `${Math.round(r)}% / ${G(e3)}` })
-    ]
-  });
-}
-var Je = (0, import_react.memo)(function({ node: e3, selected: r, current: i, playing: a2, start: o2, width: s2, visible: c2, row: l2, hasChildren: u2, collapsed: d2, onToggle: f2, onSelect: p2 }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+var Gt = (0, import_react.memo)(function({ node: e3, selected: r, hasChildren: i, collapsed: a2, onToggle: o2, onSelect: s2, positionInSet: c2, setSize: l2 }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
     "aria-level": e3.depth + 1,
-    className: `trace-waterfall-row${r ? " is-selected" : ""}${i && a2 ? " is-current" : ""}`,
+    "aria-posinset": c2,
+    "aria-selected": r,
+    "aria-setsize": l2,
+    className: `trace-waterfall-row${r ? " is-selected" : ""}`,
+    "data-testid": "trace-waterfall-row",
     "data-timeline-span-id": e3.id,
+    "data-trace-node-id": e3.id,
+    "data-virtual-row": c2 - 1,
+    onClick: () => s2(e3.id),
     role: "treeitem",
-    style: { gridRow: l2 },
-    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+    children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
       className: "trace-node-label",
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-          "aria-hidden": "true",
-          className: "trace-indent-spacer",
-          "data-indent-depth": e3.depth + 1,
-          style: { "--trace-indent-columns": e3.depth + 1 }
-        }),
-        u2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-          "aria-label": `${d2 ? "Expand" : "Collapse"} ${e3.label} descendants`,
+        i ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+          "aria-label": `${a2 ? "Expand" : "Collapse"} ${e3.label} descendants`,
           className: "trace-collapse-control",
-          onClick: () => f2(e3.id),
+          "data-testid": "trace-waterfall-collapse",
+          "data-trace-node-id": e3.id,
+          onClick: (t2) => {
+            t2.stopPropagation(), s2(e3.id), o2(e3.id);
+          },
           type: "button",
-          children: d2 ? "\u25B8" : "\u25BE"
+          children: a2 ? "\u25B8" : "\u25BE"
         }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           "aria-hidden": "true",
           className: "trace-collapse-placeholder"
         }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+          "aria-hidden": "true",
+          className: "trace-indent-items",
+          "data-indent-depth": e3.depth,
+          children: Array.from({ length: e3.depth }, (n2, r2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {
+            className: "trace-indent-item",
+            "data-guide-depth": r2 % xt,
+            "data-guide-owner-id": e3.id,
+            "data-testid": "trace-waterfall-indent-guide",
+            "data-trace-depth": r2
+          }, `${e3.id}:indent:${r2}`))
+        }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
           "aria-label": `${e3.label}, ${e3.durationNano} nanoseconds`,
           className: "recorded-node trace-node-main",
+          "data-testid": "trace-waterfall-node",
           "data-trace-node-id": e3.id,
-          onClick: () => p2(e3.id),
+          onClick: (t2) => {
+            t2.stopPropagation(), s2(e3.id);
+          },
           type: "button",
           children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
             className: "trace-node-title-line",
@@ -5064,132 +5251,206 @@ var Je = (0, import_react.memo)(function({ node: e3, selected: r, current: i, pl
               className: `trace-glyph trace-kind-${e3.kind.toLowerCase()}`,
               children: e3.kind === "CLIENT" ? "\u2197" : "\u25C6"
             }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: e3.label })]
-          }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: `${e3.kind} \xB7 ${Ue(e3.id)}` })]
+          }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: `${e3.kind} \xB7 ${Tt(e3.id)}` })]
         }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
           className: e3.status === "ERROR" ? "trace-error" : "numeric-exact",
-          children: G(e3.durationNano)
+          children: W(e3.durationNano)
         })
       ]
-    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-      "aria-hidden": "true",
-      className: "trace-timeline-track",
-      children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-        className: `trace-timeline-bar trace-kind-${e3.kind.toLowerCase()}${e3.status === "ERROR" ? " trace-status-error" : ""}`,
-        style: {
-          display: c2 ? void 0 : "none",
-          insetInlineStart: `${o2}%`,
-          width: `${s2}%`
-        },
-        children: e3.label
-      })
-    })]
+    })
   });
 });
-function Ye({ trace: e3, reducedMotion: r = false, viewNavigation: i }) {
-  let [a2, c2] = (0, import_react.useState)(), [l2, p2] = (0, import_react.useState)(""), [g2, _] = (0, import_react.useState)(0), [y2, b2] = (0, import_react.useState)(false), [x2, S] = (0, import_react.useState)(() => /* @__PURE__ */ new Set()), [C, w2] = (0, import_react.useState)([0, 100]), T2 = (0, import_react.useRef)(void 0), ee2 = Ke(), E2 = (0, import_react.useCallback)((e4) => c2(e4), []);
-  if ((0, import_react.useEffect)(() => {
-    if (!y2 || r) return;
-    let e4 = window.setInterval(() => {
-      _((e6) => e6 >= 100 ? (b2(false), 100) : Math.min(100, e6 + 2));
-    }, 100);
-    return () => window.clearInterval(e4);
-  }, [y2, r]), e3.status !== "READY" || e3.durationNano === void 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(J, { trace: e3 });
-  let D2 = l2.trim().toLocaleLowerCase(), O2 = e3.nodes.filter((e4) => D2 === "" || e4.label.toLocaleLowerCase().includes(D2) || e4.id.toLocaleLowerCase().includes(D2)).filter((t2) => {
-    if (D2 !== "") return true;
-    let n2 = t2.parentId;
-    for (; n2 !== void 0; ) {
-      if (x2.has(n2)) return false;
-      n2 = e3.nodes.find(({ id: e4 }) => e4 === n2)?.parentId;
+function Kt({ trace: e3, reducedMotion: i = false, viewNavigation: a2 }) {
+  let [f, p] = (0, import_react.useState)(), [h2, v2] = (0, import_react.useState)(""), [y, x2] = (0, import_react.useState)(0), [S2, C2] = (0, import_react.useState)(() => /* @__PURE__ */ new Set()), [w, T] = (0, import_react.useState)([0, 100]), E2 = (0, import_react.useRef)([0, 100]), [D2, O2] = (0, import_react.useState)(() => /* @__PURE__ */ new Map()), k2 = (0, import_react.useRef)(/* @__PURE__ */ new Map()), ee2 = (0, import_react.useId)().replace(/[^a-zA-Z0-9_-]/g, ""), A2 = (0, import_react.useRef)(void 0), j2 = Dt(), [te2, M2] = Vt(kt), N2 = (0, import_react.useCallback)((e4) => p(e4), []), P2 = (0, import_react.useMemo)(() => {
+    let t2 = /* @__PURE__ */ new Map(), n2 = /* @__PURE__ */ new Set(), r = 0;
+    for (let i2 of e3.nodes) t2.set(i2.id, i2), i2.parentId !== void 0 && n2.add(i2.parentId), i2.status === "ERROR" && (r += 1);
+    return {
+      errorCount: r,
+      nodeById: t2,
+      nodesWithChildren: n2
+    };
+  }, [e3.nodes]), F2 = (0, import_react.useMemo)(() => h2.trim().toLocaleLowerCase(), [h2]), I2 = (0, import_react.useMemo)(() => F2 === "" ? e3.nodes : e3.nodes.filter((e4) => e4.label.toLocaleLowerCase().includes(F2) || e4.id.toLocaleLowerCase().includes(F2)), [F2, e3.nodes]), L2 = (0, import_react.useMemo)(() => F2 !== "" || S2.size === 0 ? I2 : I2.filter((e4) => {
+    let t2 = e4.parentId;
+    for (; t2 !== void 0; ) {
+      if (S2.has(t2)) return false;
+      t2 = P2.nodeById.get(t2)?.parentId;
     }
     return true;
-  }), k2 = e3.nodes.find((e4) => e4.id === a2) ?? e3.nodes[0], A2 = e3.nodes.filter(({ status: e4 }) => e4 === "ERROR").length, j2 = new Set(e3.nodes.filter((t2) => We(e3, t2).length > 0).map(({ id: e4 }) => e4)), M2 = (e4, t2) => {
-    if (T2.current === void 0) return;
-    let n2 = e4.currentTarget.getBoundingClientRect(), r2 = Math.max(0, Math.min(100, (e4.clientX - n2.left) / n2.width * 100)), i2 = [Math.min(T2.current, r2), Math.max(T2.current, r2)];
-    i2[1] - i2[0] >= 1 && w2(i2), t2 && (T2.current = void 0);
-  }, N2 = [
+  }), [
+    S2,
+    I2,
+    F2,
+    P2.nodeById
+  ]), ne2 = (0, import_react.useMemo)(() => e3.durationNano === void 0 ? [] : e3.nodes.map((n2, r) => {
+    let i2 = U(n2.startOffsetNano, e3.durationNano), a3 = Math.min(100, i2 + U(n2.durationNano, e3.durationNano)), o2 = r + 0.5;
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("line", {
+      className: `trace-minimap-span trace-kind-${n2.kind.toLowerCase()}${n2.status === "ERROR" ? " trace-status-error" : ""}`,
+      "data-color-index": n2.depth % xt,
+      "data-minimap-row": r,
+      "data-testid": "trace-waterfall-minimap-span",
+      "data-trace-node-id": n2.id,
+      strokeWidth: Bt(e3.nodes.length),
+      x1: i2,
+      x2: a3,
+      y1: o2,
+      y2: o2
+    }, n2.id);
+  }), [e3.durationNano, e3.nodes]);
+  if ((0, import_react.useEffect)(() => () => {
+    for (let e4 of k2.current.values()) window.clearTimeout(e4);
+  }, []), e3.status !== "READY" || e3.durationNano === void 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ut, { trace: e3 });
+  let re3 = P2.nodeById.get(f ?? "") ?? e3.nodes[0], { errorCount: ie2, nodesWithChildren: ae2 } = P2, R2 = (t2, n2) => {
+    let r = E2.current;
+    if (n2 && t2[0] !== r[0] && !i) {
+      let n3 = t2[0] < r[0] ? "right" : "left", i2 = [];
+      e3.nodes.forEach((a3, o2) => {
+        let s2 = zt(a3, Number(e3.durationNano), r, M2), c2 = zt(a3, Number(e3.durationNano), t2, M2);
+        if (s2.visible === c2.visible) return;
+        let l2 = c2.visible ? "enter" : "exit", u2 = l2 === "enter" ? c2 : s2;
+        i2.push([a3.id, {
+          direction: n3,
+          phase: l2,
+          width: u2.width,
+          x: u2.x
+        }]);
+        let d2 = k2.current.get(a3.id);
+        d2 !== void 0 && window.clearTimeout(d2);
+        let f2 = window.setTimeout(() => {
+          k2.current.delete(a3.id), O2((e4) => {
+            if (!e4.has(a3.id)) return e4;
+            let t3 = new Map(e4);
+            return t3.delete(a3.id), t3;
+          });
+        }, It + o2 * 18 + 80);
+        k2.current.set(a3.id, f2);
+      }), i2.length > 0 && O2((e4) => {
+        let t3 = new Map(e4);
+        for (let [e6, n4] of i2) t3.set(e6, n4);
+        return t3;
+      });
+    }
+    E2.current = t2, T(t2);
+  }, oe2 = (e4, t2) => {
+    let n2 = A2.current;
+    if (n2 === void 0) return;
+    let r = e4.currentTarget.getBoundingClientRect(), i2 = Math.max(0, Math.min(100, (e4.clientX - r.left) / r.width * 100));
+    if (n2.mode === "move") {
+      let e6 = n2.zoomStart[1] - n2.zoomStart[0], t3 = Math.max(0, Math.min(100 - e6, n2.zoomStart[0] + i2 - n2.pointerStart));
+      R2([t3, t3 + e6], true);
+    } else if (n2.mode === "resize-left") R2([Math.min(i2, n2.zoomStart[1] - 1), n2.zoomStart[1]], false);
+    else if (n2.mode === "resize-right") R2([n2.zoomStart[0], Math.max(i2, n2.zoomStart[0] + 1)], false);
+    else if (n2.mode === "select") {
+      let e6 = [Math.min(n2.anchor, i2), Math.max(n2.anchor, i2)];
+      e6[1] - e6[0] >= 1 && R2(e6, false);
+    }
+    t2 && (A2.current = void 0);
+  }, se2 = [
     0,
     25,
     50,
     75,
     100
-  ], P2 = Ge(O2);
+  ], ce2 = Number(e3.durationNano), le2 = ce2 * w[0] / 100, ue2 = ce2 * w[1] / 100, z2 = linear2([le2, ue2], [0, M2]), B2 = z2.ticks(Math.max(2, Math.floor(M2 / 96))), de2 = L2.length * K, fe2 = Math.min(At, de2), pe2 = Math.min(y, Math.max(0, de2 - fe2)), V2 = Math.max(0, Math.floor(pe2 / K) - jt), H = Math.min(L2.length, Math.ceil((pe2 + fe2) / K) + jt), me = L2.slice(V2, H).map((e4, t2) => ({
+    node: e4,
+    row: V2 + t2
+  })), he2 = Ot + fe2, ge2 = me.map(({ node: e4, row: t2 }) => {
+    let n2 = zt(e4, ce2, w, M2), r = D2.get(e4.id), i2 = !n2.visible && r?.phase === "exit" ? r : n2;
+    return {
+      ...n2,
+      displayedWidth: i2.width,
+      displayedX: i2.x,
+      label: Rt(e4.label, i2.width),
+      motion: r,
+      node: e4,
+      row: t2,
+      y: Ot + t2 * K - pe2
+    };
+  });
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Recorded trace waterfall",
     className: "trace-view trace-waterfall",
-    "data-motion": r ? "off" : "finite-recorded-time",
+    "data-motion": i ? "off" : "zoom-transition",
+    "data-testid": "trace-waterfall",
     "data-trace-renderer": "waterfall",
     children: [
-      i,
+      a2,
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
-        className: "trace-summary trace-summary-dense",
-        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-          className: "trace-summary-identity",
-          children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-              variant: "eyebrow",
-              children: "Exact recorded timeline"
-            }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-              as: "strong",
-              variant: "sectionTitle",
-              children: e3.nodes[0]?.label ?? e3.traceId
-            }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-              as: "code",
-              variant: "code",
-              children: e3.traceId
-            })
-          ]
-        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-          className: "trace-summary-metrics",
-          children: [
-            [
-              "Duration",
-              G(e3.durationNano),
-              "default"
-            ],
-            [
-              "Start",
-              Ve(e3.startTimeUnixNano),
-              "default"
-            ],
-            [
-              "Spans",
-              String(e3.nodes.length),
-              "default"
-            ],
-            [
-              "Errors",
-              String(A2),
-              A2 > 0 ? "error" : "success"
+        className: "trace-summary trace-summary-dense trace-view-header",
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+            className: "trace-summary-identity trace-view-header-copy",
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                variant: "overline",
+                children: "Exact recorded timeline"
+              }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                as: "strong",
+                variant: "h2",
+                children: e3.nodes[0]?.label ?? e3.traceId
+              }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                variant: "caption",
+                children: e3.traceId
+              })
             ]
-          ].map(([e4, r2, i2]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-            className: "trace-summary-stat",
-            "data-tone": i2,
-            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-              as: "small",
-              variant: "caption",
-              children: e4
-            }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-              as: "strong",
-              className: "numeric-exact",
-              variant: "sectionTitle",
-              children: r2
-            })]
-          }, e4))
-        })]
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+            "aria-hidden": "true",
+            className: "trace-view-header-spacer"
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+            className: "trace-summary-metrics trace-view-header-metrics",
+            children: [
+              [
+                "Duration",
+                W(e3.durationNano),
+                "default"
+              ],
+              [
+                "Start",
+                wt(e3.startTimeUnixNano),
+                "default"
+              ],
+              [
+                "Spans",
+                String(e3.nodes.length),
+                "default"
+              ],
+              [
+                "Errors",
+                String(ie2),
+                ie2 > 0 ? "error" : "success"
+              ]
+            ].map(([e4, r, i2]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+              className: "trace-summary-stat trace-view-header-stat",
+              "data-tone": i2,
+              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                as: "small",
+                variant: "caption",
+                children: e4
+              }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                as: "strong",
+                className: "numeric-exact",
+                variant: "h2",
+                children: r
+              })]
+            }, e4))
+          })
+        ]
       }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
         "aria-label": "Recorded trace minimap",
         className: "trace-minimap",
         children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
           className: "trace-minimap-copy",
-          children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+          children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
             as: "strong",
-            variant: "label",
+            variant: "body2",
+            weight: "bold",
             children: "Trace minimap"
-          }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+          }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
             as: "small",
             variant: "caption",
             children: "Drag to zoom"
@@ -5198,43 +5459,84 @@ function Ye({ trace: e3, reducedMotion: r = false, viewNavigation: i }) {
           "aria-label": "Trace minimap zoom window",
           "aria-valuemax": 100,
           "aria-valuemin": 0,
-          "aria-valuetext": `${G(K(e3.durationNano, C[0]))} to ${G(K(e3.durationNano, C[1]))}`,
+          "aria-valuetext": `${W(Ct(e3.durationNano, w[0]))} to ${W(Ct(e3.durationNano, w[1]))}`,
           className: "trace-minimap-track",
+          "data-testid": "trace-waterfall-data-zoom",
           onPointerDown: (e4) => {
-            let t2 = e4.currentTarget.getBoundingClientRect();
-            T2.current = Math.max(0, Math.min(100, (e4.clientX - t2.left) / t2.width * 100)), w2([T2.current, T2.current]);
+            let t2 = e4.currentTarget.getBoundingClientRect(), n2 = Math.max(0, Math.min(100, (e4.clientX - t2.left) / t2.width * 100)), r = e4.target instanceof Element && e4.target.closest(".trace-minimap-window") !== null, i2 = (e4.target instanceof Element ? e4.target.closest(".trace-minimap-resize-handle") : null)?.dataset.edge;
+            A2.current = i2 === "left" || i2 === "right" ? {
+              mode: `resize-${i2}`,
+              zoomStart: w
+            } : r ? {
+              mode: "move",
+              pointerStart: n2,
+              zoomStart: w
+            } : {
+              mode: "select",
+              anchor: n2
+            }, r || R2([n2, n2], false), e4.currentTarget.setPointerCapture?.(e4.pointerId);
           },
-          onPointerMove: (e4) => M2(e4, false),
-          onPointerUp: (e4) => M2(e4, true),
+          onPointerMove: (e4) => oe2(e4, false),
+          onPointerUp: (e4) => oe2(e4, true),
           role: "slider",
           tabIndex: 0,
-          children: [e3.nodes.map((n2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {
-            className: "trace-minimap-span",
-            style: {
-              insetInlineStart: `${W(n2.startOffsetNano, e3.durationNano)}%`,
-              insetBlockStart: `${0.58 + n2.depth * 0.42}rem`,
-              width: `${W(n2.durationNano, e3.durationNano)}%`
-            }
-          }, n2.id)), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-            className: "trace-minimap-window",
-            "data-full": C[0] === 0 && C[1] === 100 ? "true" : "false",
-            style: {
-              insetInlineStart: `${C[0]}%`,
-              width: `${C[1] - C[0]}%`
-            }
-          })]
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+              "aria-hidden": "true",
+              className: "trace-minimap-ruler",
+              "data-testid": "trace-waterfall-data-zoom-ruler",
+              children: se2.map((n2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+                "data-time-percent": n2,
+                style: { insetInlineStart: `${n2}%` },
+                children: W(Ct(e3.durationNano, n2))
+              }, n2))
+            }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+              "aria-hidden": "true",
+              className: "trace-minimap-overview",
+              "data-testid": "trace-waterfall-minimap-overview",
+              preserveAspectRatio: "none",
+              viewBox: `0 0 100 ${Math.max(1, e3.nodes.length)}`,
+              children: ne2
+            }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+              className: "trace-minimap-window",
+              "data-full": w[0] === 0 && w[1] === 100 ? "true" : "false",
+              "data-testid": "trace-waterfall-data-zoom-window",
+              style: {
+                insetInlineStart: `${w[0]}%`,
+                width: `${w[1] - w[0]}%`
+              },
+              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+                "aria-label": "Resize trace zoom start",
+                className: "trace-minimap-resize-handle",
+                "data-edge": "left",
+                "data-testid": "trace-waterfall-data-zoom-handle-left",
+                role: "separator",
+                tabIndex: 0
+              }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+                "aria-label": "Resize trace zoom end",
+                className: "trace-minimap-resize-handle",
+                "data-edge": "right",
+                "data-testid": "trace-waterfall-data-zoom-handle-right",
+                role: "separator",
+                tabIndex: 0
+              })]
+            })
+          ]
         })]
       }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
         className: "trace-workbench",
-        children: [ee2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+        children: [j2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
           className: "trace-waterfall-mobile",
           children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("header", { children: "Span tree \xB7 exact duration" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
             "aria-label": "Recorded waterfall span outline",
+            "data-testid": "trace-waterfall-span-tree",
             role: "tree",
-            children: O2.map((n2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)($e, {
+            children: L2.map((n2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(tn, {
               node: n2,
-              onSelect: E2,
+              onSelect: N2,
               trace: e3
             }, n2.id))
           })]
@@ -5246,27 +5548,28 @@ function Ye({ trace: e3, reducedMotion: r = false, viewNavigation: i }) {
               children: [
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
                   className: "trace-waterfall-heading",
-                  children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+                  children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
                     as: "strong",
-                    variant: "label",
+                    variant: "body2",
+                    weight: "bold",
                     children: "Span tree"
                   })
                 }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(v, {
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(b, {
                   "aria-label": "Search recorded spans",
-                  onChange: (e4) => p2(e4.currentTarget.value),
+                  onChange: (e4) => v2(e4.currentTarget.value),
                   placeholder: "Search span name or exact identity",
-                  value: l2
+                  value: h2
                 }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(h, {
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(_, {
                   "aria-label": "Span tree actions",
                   className: "trace-waterfall-actions",
                   role: "group",
                   children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(g, {
                       appearance: "ghost",
                       "aria-label": "Expand all spans",
-                      onClick: () => S(/* @__PURE__ */ new Set()),
+                      onClick: () => C2(/* @__PURE__ */ new Set()),
                       type: "button",
                       children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
                         "aria-hidden": "true",
@@ -5274,10 +5577,10 @@ function Ye({ trace: e3, reducedMotion: r = false, viewNavigation: i }) {
                         children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M4 6 8 2l4 4M4 10l4 4 4-4" })
                       })
                     }),
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(g, {
                       appearance: "ghost",
                       "aria-label": "Collapse all spans",
-                      onClick: () => S(new Set(j2)),
+                      onClick: () => C2(new Set(ae2)),
                       type: "button",
                       children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
                         "aria-hidden": "true",
@@ -5285,11 +5588,11 @@ function Ye({ trace: e3, reducedMotion: r = false, viewNavigation: i }) {
                         children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m4 2 4 4 4-4M4 14l4-4 4 4" })
                       })
                     }),
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(g, {
                       appearance: "ghost",
                       "aria-label": "Reset focus",
                       onClick: () => {
-                        c2(e3.nodes[0]?.id), w2([0, 100]);
+                        p(e3.nodes[0]?.id), O2(/* @__PURE__ */ new Map()), R2([0, 100], false);
                       },
                       type: "button",
                       children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
@@ -5303,565 +5606,1082 @@ function Ye({ trace: e3, reducedMotion: r = false, viewNavigation: i }) {
               ]
             }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-              className: "trace-timeline-head",
-              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Span / exact identity" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-                className: "trace-ruler",
-                children: N2.map((n2) => {
-                  let r2 = C[0] + (C[1] - C[0]) * n2 / 100;
-                  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {
-                    style: { insetInlineStart: `${n2}%` },
-                    children: G(K(e3.durationNano, r2))
-                  }, n2);
-                })
+              className: "trace-waterfall-table",
+              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+                className: "trace-waterfall-label-pane",
+                children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+                  className: "trace-waterfall-column-head",
+                  children: "Span / exact identity"
+                }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+                  className: "trace-waterfall-scroll-viewport",
+                  "data-testid": "trace-waterfall-scroll-viewport",
+                  "data-total-rows": L2.length,
+                  "data-virtual-end": H,
+                  "data-virtual-start": V2,
+                  onScroll: (e4) => x2(e4.currentTarget.scrollTop),
+                  style: { height: fe2 },
+                  children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+                    className: "trace-waterfall-scroll-space",
+                    style: { height: de2 },
+                    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+                      "aria-label": "Recorded waterfall span outline",
+                      className: "trace-waterfall-label-rows",
+                      "data-testid": "trace-waterfall-span-tree",
+                      role: "tree",
+                      style: { transform: `translateY(${V2 * K}px)` },
+                      children: me.map(({ node: e4, row: n2 }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Gt, {
+                        collapsed: S2.has(e4.id),
+                        hasChildren: ae2.has(e4.id),
+                        node: e4,
+                        onSelect: N2,
+                        onToggle: (e6) => C2((t2) => {
+                          let n3 = new Set(t2);
+                          return n3.has(e6) ? n3.delete(e6) : n3.add(e6), n3;
+                        }),
+                        positionInSet: n2 + 1,
+                        selected: re3.id === e4.id,
+                        setSize: L2.length
+                      }, e4.id))
+                    })
+                  })
+                })]
+              }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
+                "aria-label": "Recorded waterfall timeline chart",
+                className: "trace-waterfall-chart",
+                "data-total-rows": L2.length,
+                "data-testid": "trace-waterfall-chart",
+                "data-virtual-end": H,
+                "data-virtual-start": V2,
+                height: he2,
+                ref: te2,
+                role: "img",
+                width: "100%",
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("defs", { children: ge2.map(({ displayedWidth: e4, displayedX: n2, node: r, row: i2, y: a3 }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("clipPath", {
+                    id: `${ee2}-timeline-label-${i2}`,
+                    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+                      height: 18,
+                      rx: 4,
+                      width: e4,
+                      x: n2,
+                      y: a3 + 15
+                    })
+                  }, `${r.id}:label-clip`)) }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("line", {
+                    className: "trace-waterfall-axis-line",
+                    x1: 0,
+                    x2: M2,
+                    y1: 31,
+                    y2: 31
+                  }),
+                  ge2.map(({ displayedWidth: e4, displayedX: r, motion: i2, node: a3, row: o2, visible: s2, y: c2 }) => {
+                    let l2 = re3.id === a3.id;
+                    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("g", {
+                      "aria-label": `${a3.label}, ${W(a3.durationNano)}`,
+                      "aria-pressed": l2,
+                      className: "trace-waterfall-lane",
+                      "data-selected": l2,
+                      "data-testid": "trace-waterfall-lane",
+                      "data-trace-node-id": a3.id,
+                      "data-virtual-row": o2,
+                      onClick: () => N2(a3.id),
+                      onKeyDown: (e6) => {
+                        (e6.key === "Enter" || e6.key === " ") && (e6.preventDefault(), N2(a3.id));
+                      },
+                      role: "button",
+                      tabIndex: 0,
+                      children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+                        className: "trace-waterfall-lane-hit-target",
+                        height: K,
+                        width: M2,
+                        x: 0,
+                        y: c2
+                      }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("g", {
+                        className: "trace-waterfall-timeline",
+                        "data-motion-direction": i2?.direction,
+                        "data-motion-phase": i2?.phase,
+                        "data-testid": "trace-waterfall-timeline",
+                        "data-trace-node-id": a3.id,
+                        "data-visible": s2,
+                        style: { animationDelay: `${(o2 - V2) * 18}ms` },
+                        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+                          className: `trace-timeline-bar trace-kind-${a3.kind.toLowerCase()}${a3.status === "ERROR" ? " trace-status-error" : ""}`,
+                          "data-color-index": a3.depth % xt,
+                          "data-testid": "trace-waterfall-bar",
+                          "data-trace-node-id": a3.id,
+                          height: 18,
+                          rx: 4,
+                          width: e4,
+                          x: r,
+                          y: c2 + 15,
+                          children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("title", { children: a3.label })
+                        })
+                      })]
+                    }, a3.id);
+                  }),
+                  B2.map((e4, r) => {
+                    let i2 = z2(e4), a3 = W(String(Math.round(e4))), o2 = B2[r + 1], s2 = Lt(a3, i2, o2 === void 0 ? M2 : z2(o2));
+                    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("g", {
+                      className: "trace-waterfall-axis-tick",
+                      "data-testid": "trace-waterfall-axis-tick",
+                      transform: `translate(${i2} 0)`,
+                      children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("line", {
+                        className: "trace-waterfall-gridline",
+                        y1: 0,
+                        y2: he2
+                      }), s2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+                        textAnchor: "start",
+                        x: Mt,
+                        y: 22,
+                        children: a3
+                      }) : null]
+                    }, e4);
+                  }),
+                  ge2.map(({ displayedWidth: e4, displayedX: n2, label: r, motion: i2, node: a3, row: o2, y: s2 }) => e4 <= 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+                    clipPath: `url(#${ee2}-timeline-label-${o2})`,
+                    className: "trace-timeline-label",
+                    "data-motion-direction": i2?.direction,
+                    "data-motion-phase": i2?.phase,
+                    "data-testid": "trace-waterfall-label",
+                    "data-trace-node-id": a3.id,
+                    dominantBaseline: "middle",
+                    style: { animationDelay: `${(o2 - V2) * 18}ms` },
+                    x: n2 + Pt,
+                    y: s2 + K / 2,
+                    children: r
+                  }, `${a3.id}:label`))
+                ]
               })]
             }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-              "aria-label": "Recorded waterfall span outline",
-              className: "trace-timeline",
-              role: "tree",
-              children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-                  "aria-hidden": "true",
-                  className: "trace-timeline-grid"
-                }),
-                P2.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {
-                  "aria-hidden": "true",
-                  className: "trace-indent-segment",
-                  "data-guide-depth": e4.depth % 4,
-                  style: {
-                    "--trace-indent-column": e4.depth,
-                    gridRow: `${e4.start + 1} / ${e4.end + 2}`
-                  }
-                }, e4.key)),
-                O2.map((n2, r2) => {
-                  let i2 = W(n2.startOffsetNano, e3.durationNano), a3 = i2 + W(n2.durationNano, e3.durationNano), o2 = He(i2, W(n2.durationNano, e3.durationNano), C[0], C[1]);
-                  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Je, {
-                    collapsed: x2.has(n2.id),
-                    current: g2 >= i2 && g2 <= a3,
-                    hasChildren: j2.has(n2.id),
-                    node: n2,
-                    onSelect: E2,
-                    onToggle: (e4) => S((t2) => {
-                      let n3 = new Set(t2);
-                      return n3.has(e4) ? n3.delete(e4) : n3.add(e4), n3;
-                    }),
-                    playing: y2,
-                    row: r2 + 1,
-                    selected: k2.id === n2.id,
-                    start: o2.start,
-                    width: o2.width,
-                    visible: o2.visible
-                  }, n2.id);
-                })
-              ]
-            }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Y2, { trace: e3 })
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Wt, { trace: e3 })
           ]
-        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(q, {
-          node: k2,
+        }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ht, {
+          node: re3,
           trace: e3
         })]
-      }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(qe, {
-        durationNano: e3.durationNano,
-        onPlayingChange: b2,
-        onPositionChange: _,
-        playing: y2,
-        position: g2,
-        reducedMotion: r
       })
     ]
   });
 }
-function Xe(e3) {
-  let t2 = /* @__PURE__ */ new Map();
-  for (let n2 of e3.nodes) {
-    let e4 = t2.get(n2.depth) ?? [];
-    e4.push(n2), t2.set(n2.depth, e4);
+function qt(e3) {
+  let t2 = new Map(e3.nodes.map((e4) => [e4.id, e4])), n2 = /* @__PURE__ */ new Map(), r = (e4, i2 = /* @__PURE__ */ new Set()) => {
+    let a2 = n2.get(e4.id);
+    if (a2 !== void 0) return a2;
+    if (e4.parentId === void 0 || i2.has(e4.id)) return 0;
+    let o2 = t2.get(e4.parentId);
+    if (o2 === void 0) return 0;
+    let s2 = new Set(i2).add(e4.id), c2 = r(o2, s2) + 1;
+    return n2.set(e4.id, c2), c2;
+  }, i = /* @__PURE__ */ new Map();
+  for (let t3 of e3.nodes) {
+    let e4 = r(t3), n3 = i.get(e4) ?? [];
+    n3.push(t3), i.set(e4, n3);
   }
-  return [...t2.entries()].flatMap(([e4, t3]) => [...t3].sort((e6, t4) => Be(e6.startTimeUnixNano, t4.startTimeUnixNano) || Be(e6.id, t4.id)).map((n2, r) => ({
-    node: n2,
+  return [...i.entries()].flatMap(([e4, t3]) => [...t3].sort((e6, t4) => bt(e6.startTimeUnixNano, t4.startTimeUnixNano) || bt(e6.id, t4.id)).map((n3, r2) => ({
+    node: n3,
+    column: e4,
     x: 60 + e4 * 330,
-    y: t3.length === 1 ? 240 : t3.length === 2 ? 110 + r * 245 : 47 + r * (368 / (t3.length - 1))
+    y: t3.length === 1 ? 240 : t3.length === 2 ? 110 + r2 * 245 : 47 + r2 * (368 / (t3.length - 1))
   })));
 }
-function Ze(e3, t2) {
-  let n2 = e3.x + 190, r = e3.y + 35, i = t2.x, a2 = t2.y + 35, o2 = (n2 + i) / 2;
-  return `M${n2} ${r} C${o2} ${r} ${o2} ${a2} ${i} ${a2}`;
+var q = 980;
+var J = 560;
+var Y2 = 190;
+var X2 = 70;
+var Jt = {
+  x: 0,
+  y: 0,
+  width: q,
+  height: J
+};
+function Yt(e3) {
+  let t2 = Math.min(q, Math.max(392, e3.width)), n2 = Math.min(J, Math.max(224, e3.height));
+  return {
+    x: Math.round(Math.max(0, Math.min(q - t2, e3.x)) * 1e3) / 1e3,
+    y: Math.round(Math.max(0, Math.min(J - n2, e3.y)) * 1e3) / 1e3,
+    width: Math.round(t2 * 1e3) / 1e3,
+    height: Math.round(n2 * 1e3) / 1e3
+  };
 }
-var Qe = (0, import_react.memo)(function({ node: r, x: i, y: a2, selected: o2, lensHit: s2, current: c2, playing: l2, summary: u2, traceDurationNano: d2, onSelect: f2 }) {
-  let p2 = () => f2(r.id);
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("g", {
-    "aria-label": `${r.label}, ${r.kind}, ${r.status}, ${G(r.durationNano)}`,
-    "aria-level": r.depth + 1,
-    className: `trace-tree-node trace-kind-${r.kind.toLowerCase()}${o2 ? " is-selected" : ""}${s2 ? " is-lens-hit" : " is-lens-muted"}${c2 && l2 ? " is-time-current" : ""}${r.status === "ERROR" ? " trace-status-error" : ""}`,
-    "data-render-detail": u2 ? "summary" : "complete",
+function Xt(e3, t2) {
+  let n2 = e3.width * t2, r = e3.height * t2;
+  return Yt({
+    x: e3.x + (e3.width - n2) / 2,
+    y: e3.y + (e3.height - r) / 2,
+    width: n2,
+    height: r
+  });
+}
+function Zt(e3) {
+  return `${e3.x} ${e3.y} ${e3.width} ${e3.height}`;
+}
+function Qt(e3, t2, n2) {
+  let r = Math.min(e3 / n2.width, t2 / n2.height);
+  return {
+    scale: r,
+    offsetX: (e3 - n2.width * r) / 2,
+    offsetY: (t2 - n2.height * r) / 2
+  };
+}
+function $t(e3, t2, n2, r) {
+  let i = e3.x + Y2, a2 = e3.y + X2 / 2, o2 = t2?.x ?? 950, s2 = t2 === void 0 ? Math.min(520, a2 + 80) : t2.y + X2 / 2;
+  return {
+    startX: i,
+    startY: a2,
+    middleX: (i + o2) / 2,
+    endX: o2,
+    endY: s2,
+    kind: n2,
+    focused: r
+  };
+}
+function en(e3, t2) {
+  let n2 = Math.abs(e3.middleX - e3.startX), r = Math.abs(e3.endY - e3.startY), i = Math.abs(e3.endX - e3.middleX), a2 = t2 * (n2 + r + i), o2 = (e4, t3, n3) => e4 + (t3 - e4) * n3;
+  return a2 <= n2 ? {
+    x: o2(e3.startX, e3.middleX, n2 === 0 ? 1 : a2 / n2),
+    y: e3.startY
+  } : (a2 -= n2, a2 <= r ? {
+    x: e3.middleX,
+    y: o2(e3.startY, e3.endY, r === 0 ? 1 : a2 / r)
+  } : (a2 -= r, {
+    x: o2(e3.middleX, e3.endX, i === 0 ? 1 : a2 / i),
+    y: e3.endY
+  }));
+}
+function Z(e3, t2, n2) {
+  let r = getComputedStyle(e3).getPropertyValue(t2).trim();
+  return r === "" ? n2 : r;
+}
+var tn = (0, import_react.memo)(function({ node: r, trace: i, onSelect: a2, layout: o2, showLinks: s2 = true, compact: c2 = false }) {
+  let l2 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+    "aria-label": `${r.label}, ${W(r.durationNano)}`,
+    "aria-level": (o2?.column ?? r.depth) + 1,
+    "data-tree-x": o2?.x,
+    "data-tree-y": o2?.y,
+    "data-testid": "trace-tree-node",
     "data-trace-node-id": r.id,
-    onClick: p2,
-    onKeyDown: (e3) => {
-      (e3.key === "Enter" || e3.key === " ") && (e3.preventDefault(), p2());
-    },
+    onClick: () => a2(r.id),
     role: "treeitem",
-    tabIndex: 0,
-    transform: `translate(${i} ${a2})`,
-    children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
-        className: "trace-tree-card",
-        height: "70",
-        rx: "9",
-        width: "190"
-      }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
-        className: "trace-tree-kind-rail",
-        height: "70",
-        rx: "3",
-        width: "4"
-      }),
-      u2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
-        className: "trace-tree-name",
-        x: "14",
-        y: "31",
-        children: r.label
-      }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
-        className: "trace-tree-duration",
-        textAnchor: "end",
-        x: "176",
-        y: "50",
-        children: G(r.durationNano)
-      })] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
-          className: "trace-tree-kind",
-          x: "14",
-          y: "17",
-          children: r.kind
-        }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
-          className: "trace-tree-status",
-          textAnchor: "end",
-          x: "176",
-          y: "17",
-          children: r.status
-        }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
-          className: "trace-tree-name",
-          x: "14",
-          y: "37",
-          children: r.label
-        }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
-          className: "trace-tree-meta",
-          x: "14",
-          y: "53",
-          children: `+${G(r.startOffsetNano)} \xB7 ${Ue(r.id)}`
-        }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
-          className: "trace-tree-duration",
-          textAnchor: "end",
-          x: "176",
-          y: "53",
-          children: G(r.durationNano)
-        }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
-          className: "trace-tree-micro-bg",
-          height: "3",
-          rx: "2",
-          width: "160",
-          x: "14",
-          y: "61"
-        }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
-          className: "trace-tree-micro",
-          height: "3",
-          rx: "2",
-          width: Math.max(2, W(r.durationNano, d2) * 1.6),
-          x: 14 + W(r.startOffsetNano, d2) * 1.6,
-          y: "61"
-        })
-      ] })
-    ]
+    type: "button",
+    children: c2 ? r.label : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: r.label }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: W(r.durationNano) })] })
+  });
+  return c2 ? l2 : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+    style: { paddingInlineStart: `${r.depth * 1.5}rem` },
+    children: [l2, s2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Wt, {
+      node: r,
+      trace: i
+    }) : null]
   });
 });
-var $e = (0, import_react.memo)(function({ node: e3, trace: r, onSelect: i }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-    "aria-level": e3.depth + 1,
-    role: "treeitem",
-    style: { paddingInlineStart: `${e3.depth * 1.5}rem` },
-    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-      "data-trace-node-id": e3.id,
-      onClick: () => i(e3.id),
-      type: "button",
-      children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: e3.label }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: G(e3.durationNano) })]
-    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Y2, {
-      node: e3,
-      trace: r
-    })]
-  });
-});
-var et = (0, import_react.memo)(function({ trace: e3, viewNavigation: r }) {
-  let [i, a2] = (0, import_react.useState)(), [c2, u2] = (0, import_react.useState)("none"), [f2, p2] = (0, import_react.useState)(0), [m2, h2] = (0, import_react.useState)(false), g2 = (0, import_react.useCallback)((e4) => a2(e4), []), _ = Ke(), v2 = (0, import_react.useMemo)(() => e3.status === "READY" ? Xe(e3) : [], [e3]);
-  if ((0, import_react.useEffect)(() => {
-    if (!m2) return;
-    let e4 = window.setInterval(() => {
-      p2((e6) => e6 >= 100 ? (h2(false), 100) : Math.min(100, e6 + 2));
-    }, 100);
-    return () => window.clearInterval(e4);
-  }, [m2]), e3.status !== "READY") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(J, { trace: e3 });
-  let y2 = new Map(v2.map((e4) => [e4.node.id, e4])), b2 = e3.nodes.find((e4) => e4.id === i) ?? e3.nodes[0], x2 = (() => {
-    let t2 = /* @__PURE__ */ new Set([b2.id]);
-    if (c2 === "ancestors") {
-      let n2 = b2;
-      for (; n2.parentId !== void 0; ) {
-        t2.add(n2.parentId);
-        let r2 = e3.nodes.find(({ id: e4 }) => e4 === n2.parentId);
-        if (r2 === void 0) break;
-        n2 = r2;
-      }
-    }
-    if (c2 === "descendants") {
-      let n2 = [b2.id];
-      for (; n2.length > 0; ) {
-        let r2 = n2.shift();
-        for (let i2 of e3.nodes.filter(({ parentId: e4 }) => e4 === r2)) t2.add(i2.id), n2.push(i2.id);
-      }
+var nn = (0, import_react.memo)(function({ trace: e3, reducedMotion: r = false, viewNavigation: i }) {
+  let [a2, c2] = (0, import_react.useState)(), [f, p] = (0, import_react.useState)("none"), [h2, v2] = (0, import_react.useState)(Jt), y = (0, import_react.useRef)(null), b2 = (0, import_react.useRef)(null), x2 = (0, import_react.useRef)(false), S2 = (0, import_react.useCallback)((e4) => c2(e4), []), C2 = Dt(), w = (0, import_react.useMemo)(() => e3.status === "READY" ? qt(e3) : [], [e3]), T = (0, import_react.useMemo)(() => new Map(w.map((e4) => [e4.node.id, e4])), [w]), E2 = (0, import_react.useMemo)(() => new Map(e3.nodes.map((e4) => [e4.id, e4])), [e3.nodes]), D2 = (0, import_react.useMemo)(() => {
+    let t2 = /* @__PURE__ */ new Map();
+    for (let n2 of e3.nodes) {
+      if (n2.parentId === void 0) continue;
+      let e4 = t2.get(n2.parentId);
+      e4 === void 0 ? t2.set(n2.parentId, [n2]) : e4.push(n2);
     }
     return t2;
-  })(), S = c2 === "none" ? "Focus receipt \xB7 exact PARENT_EDGE identity; choose a lens to inspect." : `${c2 === "ancestors" ? "Ancestors" : "Descendants"} receipt \xB7 ${x2.size} exact Span ${x2.size === 1 ? "identity" : "identities"} \xB7 recorded PARENT_EDGE only.`, C = e3.durationNano ?? "0", w2 = v2.flatMap((e4) => {
+  }, [e3.nodes]), O2 = E2.get(a2 ?? "") ?? e3.nodes[0], k2 = (0, import_react.useRef)(O2?.id);
+  (0, import_react.useEffect)(() => {
+    k2.current = O2?.id;
+  }, [O2?.id]);
+  let ee2 = r ? O2?.id : void 0, A2 = (0, import_react.useMemo)(() => {
+    if (O2 === void 0) return /* @__PURE__ */ new Set();
+    if (f === "none") return St;
+    let e4 = /* @__PURE__ */ new Set([O2.id]);
+    if (f === "ancestors") {
+      let t2 = O2;
+      for (; t2.parentId !== void 0; ) {
+        e4.add(t2.parentId);
+        let n2 = E2.get(t2.parentId);
+        if (n2 === void 0) break;
+        t2 = n2;
+      }
+    }
+    if (f === "descendants") {
+      let t2 = [O2.id];
+      for (; t2.length > 0; ) {
+        let n2 = t2.shift();
+        for (let r2 of D2.get(n2) ?? []) e4.add(r2.id), t2.push(r2.id);
+      }
+    }
+    return e4;
+  }, [
+    D2,
+    f,
+    E2,
+    O2
+  ]), j2 = (0, import_react.useMemo)(() => w.flatMap((e4) => {
     if (e4.node.parentId === void 0) return [];
-    let t2 = y2.get(e4.node.parentId);
-    return t2 === void 0 ? [] : [{
-      child: e4,
-      parent: t2,
-      path: Ze(t2, e4)
-    }];
-  }), T2 = w2.length > 128;
+    let t2 = T.get(e4.node.parentId);
+    return t2 === void 0 ? [] : [$t(t2, e4, "parent", f === "none" || A2.has(t2.node.id) && A2.has(e4.node.id))];
+  }), [
+    T,
+    w,
+    f,
+    A2
+  ]), te2 = (0, import_react.useMemo)(() => e3.links.flatMap((e4) => {
+    let t2 = T.get(e4.from.span_id);
+    return t2 === void 0 ? [] : [$t(t2, T.get(e4.to.span_id), "link", f === "none")];
+  }), [
+    T,
+    f,
+    e3.links
+  ]), M2 = (0, import_react.useMemo)(() => [...j2, ...te2], [te2, j2]), N2 = j2.length > 128, P2 = (0, import_react.useMemo)(() => {
+    let e4 = M2.filter((e6) => e6.focused);
+    return N2 ? e4.slice(0, 8) : e4;
+  }, [N2, M2]);
+  if ((0, import_react.useEffect)(() => {
+    let t2 = y.current;
+    if (t2 === null || window.CanvasRenderingContext2D === void 0) return;
+    let n2 = t2.getContext("2d");
+    if (n2 === null) return;
+    let i2 = "", a3 = "", o2 = "", s2 = "", c3 = "", l2 = "", u2 = "", d2 = "", p2 = "", m2 = "", g2 = () => {
+      i2 = Z(t2, "--surface-raised", "#17212d"), a3 = Z(t2, "--border-strong", "#607084"), o2 = Z(t2, "--content-primary", "#f1f5f9"), s2 = Z(t2, "--content-secondary", "#a9b4c2"), c3 = Z(t2, "--data-series-1", "#38bdf8"), l2 = Z(t2, "--data-series-2", "#2dd4bf"), u2 = Z(t2, "--status-error", "#fb7185"), d2 = Z(t2, "--interaction-accent", "#38bdf8"), p2 = Z(t2, "--border-strong", "#607084"), m2 = Z(t2, "--status-warning", "#fbbf24");
+    };
+    g2();
+    let _2 = e3.durationNano ?? "0", v3 = 0, b3, x3, S3 = (e4) => {
+      n2.save(), n2.globalAlpha = e4.focused ? 1 : 0.2, n2.strokeStyle = e4.kind === "link" ? m2 : p2, n2.lineWidth = 2, n2.setLineDash(e4.kind === "link" ? [7, 6] : []), n2.beginPath(), n2.moveTo(e4.startX, e4.startY), n2.lineTo(e4.middleX, e4.startY), n2.lineTo(e4.middleX, e4.endY), n2.lineTo(e4.endX, e4.endY), n2.stroke(), n2.setLineDash([]), n2.fillStyle = e4.kind === "link" ? m2 : p2;
+      let t3 = e4.endX >= e4.startX ? 1 : -1;
+      n2.beginPath(), n2.moveTo(e4.endX, e4.endY), n2.lineTo(e4.endX - t3 * 9, e4.endY - 5), n2.lineTo(e4.endX - t3 * 9, e4.endY + 5), n2.closePath(), n2.fill(), n2.restore();
+    }, C3 = (e4) => {
+      let g3 = t2.getBoundingClientRect(), y2 = g3.width || q, b4 = g3.height || J, x4 = Math.max(1, window.devicePixelRatio || 1), T2 = Math.round(y2 * x4), E3 = Math.round(b4 * x4);
+      (t2.width !== T2 || t2.height !== E3) && (t2.width = T2, t2.height = E3), t2.dataset.pixelRatio = String(x4), t2.dataset.backingSize = `${T2}x${E3}`, n2.resetTransform(), n2.clearRect(0, 0, T2, E3);
+      let D3 = Qt(y2, b4, h2);
+      if (n2.setTransform(D3.scale * x4, 0, 0, D3.scale * x4, (D3.offsetX - h2.x * D3.scale) * x4, (D3.offsetY - h2.y * D3.scale) * x4), N2) for (let e6 of ["parent", "link"]) {
+        let t3 = M2.filter((t4) => t4.kind === e6);
+        if (t3.length !== 0) {
+          n2.save(), n2.strokeStyle = e6 === "link" ? m2 : p2, n2.lineWidth = 2, n2.setLineDash(e6 === "link" ? [7, 6] : []), n2.beginPath();
+          for (let e7 of t3) n2.moveTo(e7.startX, e7.startY), n2.lineTo(e7.middleX, e7.startY), n2.lineTo(e7.middleX, e7.endY), n2.lineTo(e7.endX, e7.endY);
+          n2.stroke(), n2.restore();
+        }
+      }
+      else M2.forEach(S3);
+      r || P2.forEach((t3, r2) => {
+        let i3 = en(t3, ((e4 / 1600 + r2 * 0.17) % 1 + 1) % 1);
+        n2.save(), n2.fillStyle = t3.kind === "link" ? m2 : d2, n2.shadowBlur = N2 ? 0 : 10, n2.shadowColor = n2.fillStyle, n2.beginPath(), n2.arc(i3.x, i3.y, 4, 0, Math.PI * 2), n2.fill(), n2.restore();
+      }), w.forEach(({ node: e6, x: t3, y: r2 }) => {
+        let p3 = f === "none" || A2.has(e6.id);
+        if (n2.save(), n2.globalAlpha = p3 ? 1 : 0.28, n2.fillStyle = i2, n2.strokeStyle = e6.status === "ERROR" ? u2 : k2.current === e6.id ? d2 : a3, n2.lineWidth = k2.current === e6.id ? 2.5 : 1.2, N2) {
+          n2.fillRect(t3, r2, Y2, X2), n2.strokeRect(t3, r2, Y2, X2), n2.fillStyle = e6.kind === "CLIENT" ? l2 : c3, n2.fillRect(t3, r2, 4, X2), n2.restore();
+          return;
+        }
+        n2.beginPath(), n2.moveTo(t3, r2), n2.lineTo(t3 + Y2 - 9, r2), n2.quadraticCurveTo(t3 + Y2, r2, t3 + Y2, r2 + 9), n2.lineTo(t3 + Y2, r2 + X2 - 9), n2.quadraticCurveTo(t3 + Y2, r2 + X2, t3 + Y2 - 9, r2 + X2), n2.lineTo(t3, r2 + X2), n2.closePath(), n2.fill(), n2.stroke(), n2.save(), n2.clip(), n2.fillStyle = e6.kind === "CLIENT" ? l2 : c3, n2.fillRect(t3, r2, 4, X2), n2.restore(), n2.fillStyle = s2, n2.font = "10px ui-monospace, monospace", n2.fillText(e6.kind, t3 + 14, r2 + 17), n2.textAlign = "right", n2.fillText(e6.status, t3 + 176, r2 + 17), n2.textAlign = "left", n2.fillStyle = o2, n2.font = "650 12px system-ui", n2.fillText(e6.label, t3 + 14, r2 + 37, 160), N2 ? (n2.fillStyle = s2, n2.font = "10px ui-monospace, monospace", n2.textAlign = "right", n2.fillText(W(e6.durationNano), t3 + 176, r2 + 54), n2.textAlign = "left") : (n2.fillStyle = s2, n2.font = "10px ui-monospace, monospace", n2.fillText(`+${W(e6.startOffsetNano)} \xB7 ${Tt(e6.id)}`, t3 + 14, r2 + 53, 120), n2.textAlign = "right", n2.fillText(W(e6.durationNano), t3 + 176, r2 + 53), n2.textAlign = "left", n2.fillStyle = a3, n2.fillRect(t3 + 14, r2 + 61, 160, 3), n2.fillStyle = e6.kind === "CLIENT" ? l2 : c3, n2.fillRect(t3 + 14 + U(e6.startOffsetNano, _2) * 1.6, r2 + 61, Math.max(2, U(e6.durationNano, _2) * 1.6), 3)), n2.restore();
+      }), n2.resetTransform(), r || (v3 = window.requestAnimationFrame(C3));
+    };
+    return C3(performance.now()), r && typeof ResizeObserver < "u" && (b3 = new ResizeObserver(() => C3(performance.now())), b3.observe(t2)), typeof MutationObserver < "u" && (x3 = new MutationObserver(() => {
+      g2(), r && C3(performance.now());
+    }), x3.observe(t2.closest(".wsr-bi") ?? t2, {
+      attributeFilter: [
+        "class",
+        "data-theme",
+        "style"
+      ],
+      attributes: true,
+      subtree: true
+    })), () => {
+      window.cancelAnimationFrame(v3), b3?.disconnect(), x3?.disconnect();
+    };
+  }, [
+    h2,
+    N2,
+    M2,
+    P2,
+    w,
+    f,
+    A2,
+    r,
+    ee2,
+    e3.durationNano
+  ]), (0, import_react.useEffect)(() => {
+    let e4 = b2.current;
+    if (e4 === null || window.CanvasRenderingContext2D === void 0) return;
+    let t2 = e4.getContext("2d");
+    if (t2 === null) return;
+    let n2 = "", r2 = "", i2 = "", a3 = "", o2 = "", s2 = () => {
+      n2 = Z(e4, "--data-series-1", "#38bdf8"), r2 = Z(e4, "--data-series-2", "#2dd4bf"), i2 = Z(e4, "--status-error", "#fb7185"), a3 = Z(e4, "--border-strong", "#607084"), o2 = Z(e4, "--status-warning", "#fbbf24");
+    };
+    s2();
+    let c3 = () => {
+      let s3 = e4.getBoundingClientRect(), c4 = s3.width || 140, l3 = s3.height || 80, u3 = Math.max(1, window.devicePixelRatio || 1), d2 = Math.round(c4 * u3), f2 = Math.round(l3 * u3);
+      (e4.width !== d2 || e4.height !== f2) && (e4.width = d2, e4.height = f2), t2.resetTransform(), t2.clearRect(0, 0, d2, f2), t2.setTransform(d2 / q, 0, 0, f2 / J, 0, 0), t2.lineWidth = 5, M2.forEach((e6) => {
+        t2.strokeStyle = e6.kind === "link" ? o2 : a3, t2.setLineDash(e6.kind === "link" ? [14, 12] : []), t2.beginPath(), t2.moveTo(e6.startX, e6.startY), t2.lineTo(e6.middleX, e6.startY), t2.lineTo(e6.middleX, e6.endY), t2.lineTo(e6.endX, e6.endY), t2.stroke();
+      }), t2.setLineDash([]), w.forEach(({ node: e6, x: a4, y: o3 }) => {
+        t2.fillStyle = e6.status === "ERROR" ? i2 : e6.kind === "CLIENT" ? r2 : n2, t2.fillRect(a4, o3, Y2, X2);
+      }), t2.resetTransform();
+    };
+    c3();
+    let l2 = typeof ResizeObserver > "u" ? void 0 : new ResizeObserver(c3);
+    l2?.observe(e4);
+    let u2 = typeof MutationObserver > "u" ? void 0 : new MutationObserver(() => {
+      s2(), c3();
+    });
+    return u2?.observe(e4.closest(".wsr-bi") ?? e4, {
+      attributeFilter: [
+        "class",
+        "data-theme",
+        "style"
+      ],
+      attributes: true,
+      subtree: true
+    }), () => {
+      l2?.disconnect(), u2?.disconnect();
+    };
+  }, [M2, w]), e3.status !== "READY" || O2 === void 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ut, { trace: e3 });
+  let F2 = f === "none" ? "Focus receipt \xB7 exact PARENT_EDGE identity; choose a lens to inspect." : `${f === "ancestors" ? "Ancestors" : "Descendants"} receipt \xB7 ${A2.size} exact Span ${A2.size === 1 ? "identity" : "identities"} \xB7 recorded PARENT_EDGE only.`, I2 = (e4) => {
+    let t2 = e4.currentTarget.getBoundingClientRect();
+    if (t2.width <= 0 || t2.height <= 0) return;
+    let n2 = (e4.clientX - t2.left) / t2.width * q, r2 = (e4.clientY - t2.top) / t2.height * J;
+    v2((e6) => Yt({
+      ...e6,
+      x: n2 - e6.width / 2,
+      y: r2 - e6.height / 2
+    }));
+  };
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Recorded trace tree",
     className: "trace-view trace-tree-graph",
-    "data-lens": c2,
+    "data-lens": f,
+    "data-motion": r ? "off" : "edge-flow",
+    "data-testid": "trace-tree",
     "data-trace-renderer": "tree",
     children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-        className: "trace-tree-context",
-        children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: e3.nodes[0]?.label ?? e3.traceId }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: `trace ${e3.traceId} \xB7 ${e3.nodes.length} exact Spans \xB7 ${e3.parentEdges.length} PARENT_EDGE \xB7 ${e3.links.length} LINK` })] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-          className: "trace-tree-toolbar",
-          children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-            onClick: () => u2("none"),
-            type: "button",
-            children: "Fit tree"
-          }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-            "aria-pressed": m2,
-            onClick: () => h2((e4) => !e4),
-            type: "button",
-            children: m2 ? "Motion: Live" : "Motion: Still"
-          })]
-        })]
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+        className: "trace-summary trace-summary-dense trace-tree-context trace-view-header",
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+            className: "trace-summary-identity trace-view-header-copy",
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                variant: "overline",
+                children: "Exact recorded call graph"
+              }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                as: "strong",
+                variant: "h2",
+                children: e3.nodes[0]?.label ?? e3.traceId
+              }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                variant: "caption",
+                children: e3.traceId
+              })
+            ]
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+            "aria-hidden": "true",
+            className: "trace-view-header-spacer"
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+            className: "trace-summary-metrics trace-view-header-metrics",
+            children: [
+              ["Exact spans", e3.nodes.length],
+              ["PARENT_EDGE", e3.parentEdges.length],
+              ["LINK", e3.links.length]
+            ].map(([e4, r2]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+              className: "trace-summary-stat trace-view-header-stat",
+              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                as: "small",
+                variant: "caption",
+                children: e4
+              }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                as: "strong",
+                className: "numeric-exact",
+                variant: "h2",
+                children: r2
+              })]
+            }, e4))
+          })
+        ]
       }),
-      r,
+      i,
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
         className: "trace-workbench",
         children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
           className: "trace-tree-canvas-shell",
           children: [
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
-              className: "trace-timeline-head",
-              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Span call tree" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Click a Span or exact relationship \xB7 deterministic geometry" })]
+              className: "trace-tree-canvas-head",
+              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                as: "h2",
+                variant: "subtitle1",
+                children: "Span call tree"
+              }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                as: "p",
+                variant: "caption",
+                children: "Click a Span or exact relationship \xB7 deterministic geometry"
+              })] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(_, {
+                "aria-label": "Tree camera controls",
+                className: "trace-tree-actions",
+                role: "group",
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)(g, {
+                    appearance: "ghost",
+                    "aria-label": "Fit tree",
+                    onClick: () => v2(Jt),
+                    type: "button",
+                    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+                      "aria-hidden": "true",
+                      viewBox: "0 0 16 16",
+                      children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" })
+                    })
+                  }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)(g, {
+                    appearance: "ghost",
+                    "aria-label": "Zoom out",
+                    disabled: h2.width === q,
+                    onClick: () => v2((e4) => Xt(e4, 1.25)),
+                    type: "button",
+                    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+                      "aria-hidden": "true",
+                      viewBox: "0 0 16 16",
+                      children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M3 8h10" })
+                    })
+                  }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)(g, {
+                    appearance: "ghost",
+                    "aria-label": "Zoom in",
+                    disabled: h2.width <= 392,
+                    onClick: () => v2((e4) => Xt(e4, 0.8)),
+                    type: "button",
+                    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+                      "aria-hidden": "true",
+                      viewBox: "0 0 16 16",
+                      children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M3 8h10M8 3v10" })
+                    })
+                  })
+                ]
+              })]
             }),
-            _ ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-              "aria-label": "Recorded trace call tree",
-              className: "trace-tree-outline",
-              role: "tree",
-              children: e3.nodes.map((n2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)($e, {
-                node: n2,
-                onSelect: g2,
-                trace: e3
-              }, n2.id))
-            }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-              "aria-label": "Recorded trace call tree",
-              className: "trace-tree-canvas",
-              role: "tree",
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+              "aria-label": "Trace tree legend",
+              className: "trace-tree-legend",
               children: [
-                [
-                  0,
-                  1,
-                  2
-                ].map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-                  "aria-hidden": "true",
-                  className: `trace-depth-label trace-depth-${e4}`,
-                  children: `Depth ${e4}${e4 === 0 ? " \xB7 root" : e4 === 1 ? " \xB7 calls" : " \xB7 operations"}`
-                }, e4)),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {
-                  "aria-hidden": "true",
-                  className: "trace-depth-divider trace-depth-divider-1"
-                }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {
-                  "aria-hidden": "true",
-                  className: "trace-depth-divider trace-depth-divider-2"
-                }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
+                ["internal", "INTERNAL"],
+                ["client", "CLIENT"],
+                ["error", "ERROR"],
+                ["parent", "PARENT_EDGE"],
+                ["link", "LINK"],
+                ["flow", "Request flow"]
+              ].map(([e4, r2]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {
+                "aria-hidden": "true",
+                "data-legend-kind": e4
+              }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: r2 })] }, e4))
+            }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+              className: "trace-tree-canvas",
+              "data-narrow": C2,
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("canvas", {
                   "aria-label": "Recorded span call tree graph",
-                  className: "trace-tree-svg",
+                  className: "trace-tree-canvas-surface",
+                  "data-camera-view": Zt(h2),
+                  "data-edge-flow-count": r ? 0 : P2.length,
+                  "data-edge-routing": "orthogonal",
+                  "data-geometry-detail": N2 ? "batched" : "complete",
+                  "data-link-count": te2.length,
+                  "data-layout": "call-graph",
+                  "data-node-shape": "flat-left-rounded-right",
+                  "data-parent-edge-count": j2.length,
+                  "data-resolution-mode": "device-pixel-ratio",
+                  "data-render-detail": N2 ? "summary" : "complete",
+                  "data-testid": "trace-tree-canvas",
+                  height: J,
+                  onPointerDown: (e4) => {
+                    let t2 = e4.currentTarget.getBoundingClientRect();
+                    if (t2.width <= 0 || t2.height <= 0) return;
+                    let n2 = Qt(t2.width, t2.height, h2), r2 = h2.x + (e4.clientX - t2.left - n2.offsetX) / n2.scale, i2 = h2.y + (e4.clientY - t2.top - n2.offsetY) / n2.scale, a3 = [...w].reverse().find((e6) => r2 >= e6.x && r2 <= e6.x + Y2 && i2 >= e6.y && i2 <= e6.y + X2);
+                    a3 !== void 0 && S2(a3.node.id);
+                  },
+                  onWheel: (e4) => {
+                    e4.preventDefault(), v2((t2) => Xt(t2, e4.deltaY > 0 ? 1.25 : 0.8));
+                  },
+                  ref: y,
                   role: "img",
-                  viewBox: "0 0 980 560",
-                  children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("defs", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("marker", {
-                      id: "trace-parent-arrow",
-                      markerHeight: "7",
-                      markerWidth: "7",
-                      orient: "auto",
-                      refX: "7",
-                      refY: "4",
-                      viewBox: "0 0 8 8",
-                      children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M0 0L8 4L0 8Z" })
-                    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("marker", {
-                      id: "trace-link-arrow",
-                      markerHeight: "7",
-                      markerWidth: "7",
-                      orient: "auto",
-                      refX: "7",
-                      refY: "4",
-                      viewBox: "0 0 8 8",
-                      children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M0 0L8 4L0 8Z" })
-                    })] }),
-                    T2 ? [{
-                      key: "default",
-                      items: w2.filter(({ child: e4, parent: t2 }) => c2 === "none" || x2.has(t2.node.id) && x2.has(e4.node.id)),
-                      className: c2 === "none" ? "" : " is-focused"
-                    }, {
-                      key: "muted",
-                      items: c2 === "none" ? [] : w2.filter(({ child: e4, parent: t2 }) => !(x2.has(t2.node.id) && x2.has(e4.node.id))),
-                      className: " is-muted"
-                    }].flatMap(({ key: e4, items: n2, className: r2 }) => n2.length === 0 ? [] : [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
-                      className: `trace-tree-edge${r2}`,
-                      d: n2.map(({ path: e6 }) => e6).join(" "),
-                      "data-relationship": "PARENT_EDGE",
-                      "data-relationship-count": n2.length
-                    }, `parent-coalesced-${e4}`)]) : w2.map(({ child: e4, parent: n2, path: r2 }) => {
-                      let i2 = c2 !== "none" && x2.has(n2.node.id) && x2.has(e4.node.id);
-                      return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
-                        className: `trace-tree-edge${i2 ? " is-focused" : c2 === "none" ? "" : " is-muted"}`,
-                        d: r2,
-                        "data-relationship": "PARENT_EDGE",
-                        "data-relationship-count": "1",
-                        "data-source": n2.node.id,
-                        "data-target": e4.node.id
-                      }, `parent-${e4.node.id}`);
-                    }),
-                    e3.links.map((e4) => {
-                      let n2 = y2.get(e4.from.span_id), r2 = y2.get(e4.to.span_id), i2 = n2 === void 0 ? "" : r2 === void 0 ? `M${n2.x + 95} ${n2.y + 70} C${n2.x + 150} ${n2.y + 115} 900 ${n2.y + 115} 950 ${n2.y + 80}` : Ze(n2, r2);
-                      return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
-                        className: `trace-tree-edge trace-tree-link${c2 === "none" ? "" : " is-muted"}`,
-                        d: i2,
-                        "data-relationship": "LINK",
-                        "data-source": e4.from.span_id,
-                        "data-target": e4.to.span_id
-                      }, `link-${e4.id}`);
-                    }),
-                    v2.map(({ node: e4, x: n2, y: r2 }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Qe, {
-                      current: f2 >= W(e4.startOffsetNano, C) && f2 <= W(e4.startOffsetNano, C) + W(e4.durationNano, C),
-                      lensHit: c2 === "none" || x2.has(e4.id),
-                      node: e4,
-                      onSelect: g2,
-                      playing: m2,
-                      selected: b2.id === e4.id,
-                      summary: T2,
-                      traceDurationNano: C,
-                      x: n2,
-                      y: r2
-                    }, e4.id))
-                  ]
+                  width: q
+                }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+                  "aria-label": "Recorded trace call tree",
+                  className: "trace-tree-outline",
+                  "data-detail": C2 ? "rows" : "compact",
+                  role: "tree",
+                  children: e3.nodes.map((n2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(tn, {
+                    compact: !C2,
+                    layout: T.get(n2.id),
+                    node: n2,
+                    onSelect: S2,
+                    showLinks: false,
+                    trace: e3
+                  }, n2.id))
                 }),
                 /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", {
-                  "aria-label": "Semantic camera map",
+                  "aria-label": "Tree minimap navigation",
                   className: "trace-camera-map",
+                  onPointerCancel: () => {
+                    x2.current = false;
+                  },
+                  onPointerDown: (e4) => {
+                    x2.current = true, e4.currentTarget.setPointerCapture?.(e4.pointerId), I2(e4);
+                  },
+                  onPointerMove: (e4) => {
+                    x2.current && I2(e4);
+                  },
+                  onPointerUp: (e4) => {
+                    x2.current && I2(e4), x2.current = false, e4.currentTarget.releasePointerCapture?.(e4.pointerId);
+                  },
                   role: "region",
-                  children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Semantic camera map" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: v2.map(({ node: e4 }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {}, e4.id)) })]
+                  children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                    as: "strong",
+                    variant: "caption",
+                    children: "Tree minimap"
+                  }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+                    className: "trace-camera-map-viewport",
+                    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("canvas", {
+                      "aria-hidden": "true",
+                      height: 80,
+                      ref: b2,
+                      width: 140
+                    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+                      "aria-hidden": "true",
+                      "data-camera-width": h2.width,
+                      "data-testid": "trace-tree-minimap-viewport",
+                      style: {
+                        height: `${h2.height / J * 100}%`,
+                        insetInlineStart: `${h2.x / q * 100}%`,
+                        insetBlockStart: `${h2.y / J * 100}%`,
+                        width: `${h2.width / q * 100}%`
+                      }
+                    })]
+                  })]
                 })
               ]
             }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Y2, { trace: e3 })
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Wt, { trace: e3 })
           ]
-        }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(q, {
-          node: b2,
+        }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Ht, {
+          node: O2,
           trace: e3,
           children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
             className: "trace-focus-receipt",
-            children: S
+            children: F2
           }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
             className: "trace-passport-actions",
             children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-                onClick: () => u2("ancestors"),
+                onClick: () => p("ancestors"),
                 type: "button",
                 children: "Ancestors"
               }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-                onClick: () => u2("descendants"),
+                onClick: () => p("descendants"),
                 type: "button",
                 children: "Descendants"
               }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-                onClick: () => u2("none"),
+                onClick: () => p("none"),
                 type: "button",
                 children: "Clear lens"
               })
             ]
           })]
         })]
-      }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(qe, {
-        durationNano: C,
-        onPlayingChange: h2,
-        onPositionChange: p2,
-        playing: m2,
-        position: f2,
-        reducedMotion: false
       })
     ]
   });
 });
-function tt({ trace: e3, viewNavigation: r }) {
-  if (e3.status !== "READY" || e3.durationNano === void 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(J, { trace: e3 });
+var rn = xt;
+function an({ label: e3, entries: r, total: i, totalLabel: a2 }) {
+  let o2 = r.map((e4, t2) => {
+    let n2 = i === 0n ? 0 : Number(e4.value * 10000n / i) / 100, a3 = r.slice(0, t2).reduce((e6, t3) => e6 + (i === 0n ? 0 : Number(t3.value * 10000n / i) / 100), 0);
+    return {
+      ...e4,
+      offset: a3,
+      share: n2
+    };
+  });
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+    className: "trace-statistics-donut-layout",
+    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
+      "aria-label": `${e3} donut chart`,
+      className: "trace-statistics-donut",
+      "data-chart-type": "donut",
+      role: "img",
+      viewBox: "0 0 48 48",
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+          className: "trace-statistics-donut-track",
+          cx: "24",
+          cy: "24",
+          r: "18"
+        }),
+        o2.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+          className: "trace-statistics-color trace-statistics-donut-segment",
+          cx: "24",
+          cy: "24",
+          "data-category": e4.category,
+          "data-color-index": e4.colorIndex,
+          "data-entry-label": e4.label,
+          pathLength: "100",
+          r: "18",
+          strokeDasharray: `${e4.share} ${100 - e4.share}`,
+          strokeDashoffset: -e4.offset
+        }, e4.label)),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+          x: "24",
+          y: "23",
+          children: a2 ?? i.toString()
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("text", {
+          className: "trace-statistics-donut-caption",
+          x: "24",
+          y: "29",
+          children: "total"
+        })
+      ]
+    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+      className: "trace-statistics-legend",
+      children: o2.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {
+          "aria-hidden": "true",
+          className: "trace-statistics-color",
+          "data-category": e4.category,
+          "data-color-index": e4.colorIndex
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+          variant: "body1",
+          children: e4.label
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+          as: "strong",
+          className: "trace-statistics-color trace-statistics-value",
+          "data-category": e4.category,
+          "data-color-index": e4.colorIndex,
+          variant: "body2",
+          weight: "bold",
+          children: e4.displayValue
+        })
+      ] }, e4.label))
+    })]
+  });
+}
+function on(e3, t2) {
+  let n2 = (e4) => {
+    let t3 = e4 / 100 * Math.PI * 2 - Math.PI / 2;
+    return [24 + Math.cos(t3) * 18, 24 + Math.sin(t3) * 18];
+  };
+  if (t2 - e3 >= 99.999) return "M 24 6 A 18 18 0 1 1 24 42 A 18 18 0 1 1 24 6 Z";
+  let [r, i] = n2(e3), [a2, o2] = n2(t2);
+  return `M 24 24 L ${r} ${i} A 18 18 0 ${+(t2 - e3 > 50)} 1 ${a2} ${o2} Z`;
+}
+function sn({ entries: e3, label: r, total: i }) {
+  let a2 = e3.map((t2, n2) => {
+    let r2 = i === 0n ? 0 : Number(t2.value * 10000n / i) / 100, a3 = e3.slice(0, n2).reduce((e4, t3) => e4 + (i === 0n ? 0 : Number(t3.value * 10000n / i) / 100), 0);
+    return {
+      ...t2,
+      end: i > 0n && n2 === e3.length - 1 ? 100 : a3 + r2,
+      start: a3
+    };
+  });
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+    className: "trace-statistics-donut-layout",
+    children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+      "aria-label": `${r} pie chart`,
+      className: "trace-statistics-pie",
+      "data-chart-type": "pie",
+      role: "img",
+      viewBox: "0 0 48 48",
+      children: a2.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+        className: "trace-statistics-color trace-statistics-pie-segment",
+        d: on(e4.start, e4.end),
+        "data-category": e4.category,
+        "data-color-index": e4.colorIndex,
+        "data-entry-label": e4.label,
+        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("title", { children: `${e4.label}: ${e4.displayValue}` })
+      }, e4.label))
+    }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+      className: "trace-statistics-legend",
+      children: e3.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", {
+          "aria-hidden": "true",
+          className: "trace-statistics-color",
+          "data-category": e4.category,
+          "data-color-index": e4.colorIndex
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+          variant: "body1",
+          children: e4.label
+        }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+          as: "strong",
+          className: "trace-statistics-color trace-statistics-value",
+          "data-category": e4.category,
+          "data-color-index": e4.colorIndex,
+          variant: "body2",
+          weight: "bold",
+          children: e4.displayValue
+        })
+      ] }, e4.label))
+    })]
+  });
+}
+function cn({ entries: e3, label: r }) {
+  let i = e3.reduce((e4, t2) => t2.value > e4 ? t2.value : e4, 0n);
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+    "aria-label": `${r} horizontal bar chart`,
+    className: "trace-statistics-kind-bars",
+    "data-chart-type": "horizontal-bar",
+    role: "img",
+    children: e3.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+      className: "trace-statistics-kind-bar-row",
+      children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+        variant: "body1",
+        children: e4.label
+      }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+        className: "trace-statistics-kind-bar-track",
+        children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+          className: "trace-statistics-color trace-statistics-kind-bar-fill",
+          "data-color-index": e4.colorIndex,
+          "data-entry-label": e4.label,
+          style: { width: `${U(String(e4.value), String(i))}%` },
+          title: `${e4.label}: ${e4.displayValue}`,
+          children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: e4.displayValue })
+        })
+      })]
+    }, e4.label))
+  });
+}
+function ln({ trace: e3, viewNavigation: r }) {
+  if (e3.status !== "READY" || e3.durationNano === void 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Ut, { trace: e3 });
   let i = e3.nodes.filter(({ status: e4 }) => e4 === "ERROR").length, a2 = e3.nodes.reduce((e4, t2) => BigInt(t2.durationNano) > BigInt(e4) ? t2.durationNano : e4, "0"), o2 = [
     ["Recorded spans", String(e3.nodes.length)],
     ["Recorded links", String(e3.links.length)],
     ["ERROR spans", String(i)],
-    ["Maximum recorded duration", `${a2} ns`]
-  ], s2 = Object.entries(e3.nodes.reduce((e4, t2) => (e4[t2.status] = (e4[t2.status] ?? 0) + 1, e4), {})), c2 = Object.entries(e3.nodes.reduce((e4, t2) => (e4[t2.kind] = (e4[t2.kind] ?? 0) + 1, e4), {}));
+    ["Maximum recorded duration", G(a2)]
+  ], s2 = Object.entries(e3.nodes.reduce((e4, t2) => (e4[t2.status] = (e4[t2.status] ?? 0) + 1, e4), {})), c2 = Object.entries(e3.nodes.reduce((e4, t2) => (e4[t2.kind] = (e4[t2.kind] ?? 0) + 1, e4), {})), l2 = s2.map(([e4, t2], n2) => ({
+    category: `status-${e4.toLowerCase()}`,
+    colorIndex: n2 % rn,
+    displayValue: String(t2),
+    label: e4,
+    value: BigInt(t2)
+  })), u2 = (e4, t2) => e4 === "INTERNAL" ? 0 : e4 === "CLIENT" ? 3 : t2 % rn, d2 = c2.map(([e4, t2], n2) => ({
+    colorIndex: u2(e4, n2),
+    displayValue: String(t2),
+    label: e4,
+    value: BigInt(t2)
+  })), f = Object.entries(e3.nodes.reduce((e4, t2) => (e4[t2.kind] = (e4[t2.kind] ?? 0n) + BigInt(t2.durationNano), e4), {})).map(([e4, t2], n2) => ({
+    colorIndex: u2(e4, n2),
+    displayValue: G(String(t2)),
+    label: e4,
+    value: t2
+  })), p = e3.nodes[0], h2 = e3.nodes.slice(1), g2 = h2.reduce((e4, t2) => e4 + BigInt(t2.durationNano), 0n), _2 = p !== void 0 && h2.length > 0 && BigInt(p.durationNano) === g2, v2 = new Map(e3.nodes.map((e4) => [e4.id, e4])), y = (e4) => {
+    let t2 = e4.fields.find(({ field: e6, value: t3 }) => e6 === "wsr.statistics.topic" && typeof t3 == "string" && t3.trim().length > 0)?.value;
+    if (typeof t2 == "string") return t2.trim();
+    let n2 = e4, r2 = /* @__PURE__ */ new Set();
+    for (; n2.parentId !== void 0 && n2.parentId !== p?.id && !r2.has(n2.id); ) {
+      r2.add(n2.id);
+      let e6 = v2.get(n2.parentId);
+      if (e6 === void 0) break;
+      n2 = e6;
+    }
+    return n2.label;
+  }, b2 = /* @__PURE__ */ new Map();
+  h2.forEach((e4, t2) => {
+    let n2 = y(e4), r2 = b2.get(n2);
+    r2 === void 0 ? b2.set(n2, {
+      duration: BigInt(e4.durationNano),
+      firstIndex: t2,
+      nodes: [e4],
+      topic: n2
+    }) : (r2.duration += BigInt(e4.durationNano), r2.nodes.push(e4));
+  });
+  let x2 = [...b2.values()], S2 = (x2.length <= 4 ? x2 : (() => {
+    let e4 = new Set([...x2].sort((e6, t3) => e6.duration === t3.duration ? e6.firstIndex - t3.firstIndex : e6.duration > t3.duration ? -1 : 1).slice(0, 3).map(({ topic: e6 }) => e6)), t2 = x2.filter(({ topic: t3 }) => e4.has(t3)), n2 = h2.filter((t3) => !e4.has(y(t3)));
+    return [...t2, {
+      duration: n2.reduce((e6, t3) => e6 + BigInt(t3.durationNano), 0n),
+      firstIndex: n2.length,
+      nodes: n2,
+      topic: "Other"
+    }];
+  })()).map((e4, t2) => ({
+    colorIndex: (t2 + 1) % rn,
+    durationNano: String(e4.duration),
+    entries: e4.nodes.map((e6) => ({
+      colorIndex: h2.indexOf(e6) % rn,
+      displayValue: G(e6.durationNano),
+      label: e6.label,
+      value: BigInt(e6.durationNano)
+    })),
+    id: `category-group-${t2 + 1}`,
+    label: e4.topic,
+    topic: e4.topic
+  })), C2 = [...p === void 0 ? [] : [{
+    colorIndex: 0,
+    durationNano: p.durationNano,
+    id: p.id,
+    label: p.label
+  }], ...S2.map((e4) => ({
+    colorIndex: e4.colorIndex,
+    durationNano: e4.durationNano,
+    id: e4.id,
+    label: e4.label,
+    topic: e4.topic
+  }))], w = String(C2.reduce((e4, t2) => BigInt(t2.durationNano) > e4 ? BigInt(t2.durationNano) : e4, 0n));
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
     "aria-label": "Recorded trace statistics",
     className: "trace-view trace-statistics",
+    "data-testid": "trace-statistics",
     "data-trace-renderer": "statistics",
     children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
-        className: "trace-statistics-intro",
+        className: "trace-statistics-intro trace-view-header",
         children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-            as: "span",
-            className: "trace-eyebrow",
-            variant: "eyebrow",
-            children: "Exact recorded inventory"
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+            className: "trace-statistics-heading trace-view-header-copy",
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                as: "span",
+                className: "trace-overline",
+                variant: "overline",
+                children: "Exact recorded inventory"
+              }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                as: "h2",
+                variant: "h2",
+                children: "Trace Statistics"
+              }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                as: "p",
+                variant: "caption",
+                children: "Exact inventory and recorded-time aggregates only; no inferred causality."
+              })
+            ]
           }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-            as: "h2",
-            variant: "sectionTitle",
-            children: "Trace statistics"
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+            "aria-hidden": "true",
+            className: "trace-view-header-spacer"
           }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-            as: "p",
-            variant: "caption",
-            children: "Exact inventory and recorded-time aggregates only; no inferred causality."
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dl", {
+            className: "trace-statistics-summary trace-view-header-metrics",
+            children: o2.map(([e4, r2]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+              className: "trace-view-header-stat",
+              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                as: "dt",
+                variant: "caption",
+                children: e4
+              }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                as: "dd",
+                className: "numeric-exact",
+                variant: "h2",
+                children: r2
+              })]
+            }, e4))
           })
         ]
       }),
       r,
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dl", {
-        className: "trace-statistics-summary",
-        children: o2.map(([e4, r2]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-          className: "panel-card",
-          children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-            as: "dt",
-            variant: "label",
-            children: e4
-          }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-            as: "dd",
-            className: "numeric-exact",
-            variant: "value",
-            children: r2
-          })]
-        }, e4))
-      }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
         className: "trace-statistics-grid",
         children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-            className: "panel-card",
-            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+            className: "panel-card trace-statistics-inventory",
+            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
               as: "h3",
-              variant: "sectionTitle",
+              variant: "subtitle1",
               children: "Recorded status inventory"
-            }), s2.map(([r2, i2]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-              className: "trace-stat-row",
-              children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-                  variant: "body",
-                  children: r2
-                }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-                  as: "strong",
-                  variant: "label",
-                  children: i2
-                }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", { style: { width: `${i2 / e3.nodes.length * 100}%` } })
-              ]
-            }, r2))]
+            }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(an, {
+              entries: l2,
+              label: "Recorded status inventory",
+              total: BigInt(e3.nodes.length)
+            })]
           }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-            className: "panel-card",
-            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+            className: "panel-card trace-statistics-inventory",
+            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
               as: "h3",
-              variant: "sectionTitle",
+              variant: "subtitle1",
               children: "Recorded kind inventory"
-            }), c2.map(([r2, i2]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-              className: "trace-stat-row",
-              children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-                  variant: "body",
-                  children: r2
-                }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-                  as: "strong",
-                  variant: "label",
-                  children: i2
-                }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", { style: { width: `${i2 / e3.nodes.length * 100}%` } })
-              ]
-            }, r2))]
+            }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(sn, {
+              entries: d2,
+              label: "Recorded kind inventory",
+              total: BigInt(e3.nodes.length)
+            })]
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+            className: "panel-card trace-statistics-inventory",
+            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+              as: "h3",
+              variant: "subtitle1",
+              children: "Recorded duration by kind"
+            }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(cn, {
+              entries: f,
+              label: "Recorded duration by kind"
+            })]
           }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
             className: "panel-card trace-duration-distribution",
-            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
+            children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
               as: "h3",
-              variant: "sectionTitle",
+              variant: "subtitle1",
               children: "Recorded duration distribution"
-            }), e3.nodes.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-              className: "trace-duration-row",
-              children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-                  variant: "body",
-                  children: e4.label
-                }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("i", { style: { width: `${W(e4.durationNano, a2)}%` } }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(f, {
-                  as: "code",
-                  variant: "code",
-                  children: G(e4.durationNano)
-                })
-              ]
-            }, e4.id))]
+            }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+              className: "trace-duration-distribution-body",
+              children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+                "aria-label": "Recorded duration distribution vertical bar chart",
+                className: "trace-duration-chart",
+                "data-chart-type": "vertical-bar",
+                "data-exact-category-total": _2,
+                role: "img",
+                children: C2.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+                  className: "trace-duration-column trace-statistics-color",
+                  "data-color-index": e4.colorIndex,
+                  "data-topic": e4.topic,
+                  children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+                    className: "trace-duration-column-plot",
+                    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+                      className: "trace-duration-column-fill",
+                      style: { height: `${U(e4.durationNano, w)}%` },
+                      title: `${e4.label}: ${G(e4.durationNano)}`,
+                      children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: G(e4.durationNano) })
+                    })
+                  }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                    as: "span",
+                    className: "trace-duration-column-label",
+                    title: e4.label,
+                    variant: "caption",
+                    weight: "medium",
+                    children: e4.label
+                  })]
+                }, e4.id))
+              }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+                className: "trace-duration-breakdowns",
+                children: S2.map((e4) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+                  className: "trace-duration-breakdown",
+                  "data-topic": e4.topic,
+                  children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(m, {
+                    as: "h4",
+                    className: "trace-duration-breakdown-title trace-statistics-color",
+                    "data-color-index": e4.colorIndex,
+                    variant: "caption",
+                    weight: "bold",
+                    children: e4.label
+                  }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(an, {
+                    entries: e4.entries,
+                    label: `Recorded duration ${e4.topic}`,
+                    total: BigInt(e4.durationNano),
+                    totalLabel: G(e4.durationNano)
+                  })]
+                }, e4.id))
+              })]
+            })]
           })
         ]
       })
     ]
   });
 }
-var nt = [
-  "role-template-rework-rate@2.0.0",
-  "role-template-trajectory-partial-cost@2.0.0",
-  "role-model-task-outcome-rate@2.0.0",
-  "operational-latency-ms@2.0.0",
-  "trajectory-partial-cost@2.0.0",
-  "task-cohort-comparison-eligibility@2.0.0",
-  "delivery-stage-reach@2.0.0",
-  "delivery-terminal-outcome-rate@2.0.0",
-  "delivery-cycle-time-ms@2.0.0",
-  "operational-token-usage@2.0.0",
-  "operational-attributable-cost@2.0.0",
-  "operational-usage-availability@2.0.0"
-];
-new TextEncoder();
-var Q = ({ trace_id: e3, span_id: t2 }) => `${e3}:${t2}`;
+var mn = ({ trace_id: e3, span_id: t2 }) => `${e3}:${t2}`;
 var $ = (e3, t2) => e3 < t2 ? -1 : +(e3 > t2);
-function ot(e3) {
+function hn(e3) {
   return {
     schemaVersion: "wsr.trace-view@1",
     status: "INVALID",
@@ -5871,11 +6691,11 @@ function ot(e3) {
     errors: [...new Set(e3)].sort($)
   };
 }
-function st(e3) {
+function gn(e3) {
   let t2 = [], n2 = /* @__PURE__ */ new Map(), r = /* @__PURE__ */ new Map(), i = [], a2 = [], o2 = /* @__PURE__ */ new Set();
   for (let s3 of e3) {
     if (s3.kind === "NODE") {
-      let e4 = Q({
+      let e4 = mn({
         trace_id: s3.trace_id,
         span_id: s3.node.span_id
       });
@@ -5888,7 +6708,7 @@ function st(e3) {
       continue;
     }
     if (s3.kind === "PARENT_EDGE") {
-      let e4 = Q(s3.edge.from), n3 = Q(s3.edge.to), a3 = r.get(e4);
+      let e4 = mn(s3.edge.from), n3 = mn(s3.edge.to), a3 = r.get(e4);
       a3 !== void 0 && a3 !== n3 ? t2.push(`multiple recorded parents for ${e4}`) : r.set(e4, n3), i.push({
         id: s3.id,
         from: { ...s3.edge.from },
@@ -5929,25 +6749,25 @@ function st(e3) {
     if (c2.delete(e4), o3 !== void 0) return s2.set(e4, o3 + 1), o3 + 1;
   };
   for (let e4 of [...n2.keys()].sort($)) l2(e4);
-  if (t2.length > 0) return ot(t2);
+  if (t2.length > 0) return hn(t2);
   let u2 = [...n2.values()].sort((e4, t3) => {
     let n3 = BigInt(e4.node.start_time_unix_nano) - BigInt(t3.node.start_time_unix_nano);
     return n3 === 0n ? $(e4.recorded_at, t3.recorded_at) || $(e4.id, t3.id) : n3 < 0n ? -1 : 1;
   });
-  if (u2.length === 0) return ot(["recorded trace has no NODE"]);
-  let d2 = u2.reduce((e4, t3) => BigInt(t3.node.start_time_unix_nano) < e4 ? BigInt(t3.node.start_time_unix_nano) : e4, BigInt(u2[0].node.start_time_unix_nano)), f2 = u2.reduce((e4, t3) => BigInt(t3.node.end_time_unix_nano) > e4 ? BigInt(t3.node.end_time_unix_nano) : e4, BigInt(u2[0].node.end_time_unix_nano));
+  if (u2.length === 0) return hn(["recorded trace has no NODE"]);
+  let d2 = u2.reduce((e4, t3) => BigInt(t3.node.start_time_unix_nano) < e4 ? BigInt(t3.node.start_time_unix_nano) : e4, BigInt(u2[0].node.start_time_unix_nano)), f = u2.reduce((e4, t3) => BigInt(t3.node.end_time_unix_nano) > e4 ? BigInt(t3.node.end_time_unix_nano) : e4, BigInt(u2[0].node.end_time_unix_nano));
   return {
     schemaVersion: "wsr.trace-view@1",
     status: "READY",
     traceId: [...o2][0],
     startTimeUnixNano: d2.toString(),
-    endTimeUnixNano: f2.toString(),
-    durationNano: (f2 - d2).toString(),
+    endTimeUnixNano: f.toString(),
+    durationNano: (f - d2).toString(),
     nodes: u2.map((e4) => {
       let t3 = {
         trace_id: e4.trace_id,
         span_id: e4.node.span_id
-      }, i2 = r.get(Q(t3));
+      }, i2 = r.get(mn(t3));
       return {
         id: e4.node.span_id,
         endpoint: t3,
@@ -5962,7 +6782,7 @@ function st(e3) {
         traceState: e4.node.trace_state,
         fields: e4.node.fields.map((e6) => ({ ...e6 })),
         truth: { ...e4.truth },
-        depth: s2.get(Q(t3)),
+        depth: s2.get(mn(t3)),
         ...i2 === void 0 ? {} : { parentId: n2.get(i2).node.span_id },
         evidenceId: e4.id,
         recordedAt: e4.recorded_at,
@@ -5976,7 +6796,9 @@ function st(e3) {
 }
 
 // node_modules/wsr-ui-core/dist/styles.css
-var styles_default = '.wsr-bi{--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light;--wsr-surface-panel:oklch(100% 0 0);--wsr-surface-section:var(--wsr-surface-panel);--wsr-surface-raised:oklch(99% .004 250);--wsr-surface-inset:oklch(94.5% .01 250);--wsr-shape-panel:.625rem;--wsr-shape-control:.4375rem;--wsr-type-section-title:.8125rem;--wsr-type-body:.6875rem;--wsr-type-caption:.5625rem;--wsr-type-label:.625rem;--wsr-type-code:.5625rem;--wsr-trace-indent-0:var(--content-muted);--wsr-trace-indent-1:var(--status-available);--wsr-trace-indent-2:var(--status-warning);--wsr-trace-indent-3:var(--status-error);--trace-indent-column:0;--trace-indent-columns:1;--surface-canvas:oklch(97.5% .006 250);--surface-base:var(--surface-canvas);--surface-section:var(--wsr-surface-section,var(--wsr-surface-panel));--surface-panel:var(--wsr-surface-panel,oklch(100% 0 0));--surface-raised:var(--wsr-surface-raised,oklch(99% .004 250));--surface-inset:var(--wsr-surface-inset,oklch(94.5% .01 250));--content-primary:oklch(23% .025 255);--content-secondary:oklch(42% .025 255);--content-muted:oklch(54% .02 255);--border-default:oklch(86% .015 250);--border-strong:oklch(67% .025 250);--interaction-accent:oklch(49% .18 244);--interaction-selection:oklch(90% .05 244);--interaction-disabled:oklch(70% .01 250);--focus-ring:oklch(57% .17 244);--status-available:oklch(42% .12 155);--status-available-surface:oklch(94% .05 155);--status-attention:oklch(50% .13 75);--status-warning:var(--status-attention);--status-attention-surface:oklch(95% .055 85);--status-unavailable:oklch(45% .025 255);--status-unavailable-surface:oklch(94% .012 250);--status-expired:oklch(48% .1 305);--status-expired-surface:oklch(95% .035 305);--status-incompatible:oklch(48% .13 28);--status-incompatible-surface:oklch(95% .045 28);--status-error:oklch(47% .17 25);--status-error-surface:oklch(95% .05 25);--data-series-1:oklch(50% .17 244);--data-series-2:oklch(58% .15 185);--space-page:1.5rem;--space-grid:1rem;--space-cluster:.75rem;--space-control:.625rem;--space-tight:.375rem;--density-row:2.75rem;--density-control:2.5rem;--shape-panel:var(--wsr-shape-panel,.625rem);--shape-control:var(--wsr-shape-control,.4375rem);--shape-pill:999px;--type-heading-size:var(--wsr-type-section-title,.8125rem);--type-body-size:var(--wsr-type-body,.6875rem);--type-caption-size:var(--wsr-type-caption,.5625rem);--type-label-size:var(--wsr-type-label,.625rem);--type-code-size:var(--wsr-type-code,.5625rem);--type-code-family:ui-monospace, SFMono-Regular, Consolas, monospace;--type-value-size:1.5rem;--type-numeric-size:1.5rem;--layout-table-max-height:32rem;--layout-visual-preview-height:6rem;--motion-finite-duration:.32s;--wsr-container-border-style:solid;box-sizing:border-box;min-width:0;color:var(--content-primary);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}.wsr-bi[data-theme=dark]{--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;--wsr-surface-panel:oklch(22.5% .025 255);--wsr-surface-section:var(--wsr-surface-panel);--wsr-surface-raised:oklch(25.5% .025 255);--wsr-surface-inset:oklch(16% .02 255);--surface-canvas:oklch(18% .02 255);--surface-section:var(--wsr-surface-section,var(--wsr-surface-panel));--surface-panel:var(--wsr-surface-panel,oklch(22.5% .025 255));--surface-raised:var(--wsr-surface-raised,oklch(25.5% .025 255));--surface-inset:var(--wsr-surface-inset,oklch(16% .02 255));--content-primary:oklch(94% .01 250);--content-secondary:oklch(76% .018 250);--content-muted:oklch(64% .02 250);--border-default:oklch(34% .025 250);--border-strong:oklch(49% .03 250);--interaction-accent:oklch(76% .13 235);--interaction-selection:oklch(32% .07 244);--interaction-disabled:oklch(48% .018 250);--focus-ring:oklch(73% .14 235);--status-available:oklch(79% .12 153);--status-available-surface:oklch(31% .07 155);--status-attention:oklch(84% .12 82);--status-attention-surface:oklch(32% .06 76);--status-unavailable:oklch(72% .025 250);--status-unavailable-surface:oklch(28% .02 250);--status-expired:oklch(79% .1 305);--status-expired-surface:oklch(31% .06 305);--status-incompatible:oklch(82% .13 35);--status-incompatible-surface:oklch(31% .07 28);--status-error:oklch(80% .14 25);--status-error-surface:oklch(31% .08 25);--data-series-1:oklch(75% .14 235);--data-series-2:oklch(77% .12 185)}.wsr-bi[data-density=compact]{--space-page:1rem;--space-grid:.75rem;--space-cluster:.5rem;--space-control:.375rem;--space-tight:.25rem;--density-control:2.75rem}.wsr-bi *,.wsr-bi :before,.wsr-bi :after{box-sizing:inherit}.wsr-bi :focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}.wsr-bi .panel-card,.wsr-bi .metric-frame,.wsr-bi .dashboard-metric-panel,.wsr-bi .bi-card{gap:var(--space-grid);min-width:0;padding:var(--space-page);border:1px var(--wsr-container-border-style) var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);flex-direction:column;display:flex}.wsr-bi .dashboard-metric-panel{gap:var(--space-cluster);padding:var(--space-cluster)}.wsr-bi .dashboard-panel-head{justify-content:space-between;align-items:flex-start;gap:var(--space-control);display:flex}.wsr-bi .dashboard-panel-head h3,.wsr-bi .dashboard-panel-meta{margin:0}.wsr-bi .dashboard-panel-actions{justify-content:flex-end;margin-top:auto;display:flex}.wsr-bi .dashboard-panel-head h3{font-size:var(--type-label-size);line-height:1.35}.wsr-bi .dashboard-panel-meta{color:var(--content-secondary);font-size:var(--type-caption-size)}.wsr-bi .dashboard-ratio{border-radius:var(--shape-pill);background:var(--surface-inset);height:.5rem;overflow:hidden}.wsr-bi .dashboard-ratio i{background:var(--interaction-accent);height:100%;display:block}.wsr-bi .bi-section{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .metric-frame-header,.wsr-bi .metric-actions{justify-content:space-between;align-items:center;gap:var(--space-cluster);flex-wrap:wrap;display:flex}.wsr-bi .metric-value,.wsr-bi .status-stack{gap:var(--space-tight);display:grid}.wsr-bi .metric-number{font-size:var(--type-numeric-size);font-variant-numeric:tabular-nums;font-weight:650}.wsr-bi .numeric-exact,.wsr-bi .text-code{overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--type-code-size);font-variant-numeric:tabular-nums}.wsr-bi .text-heading{font-size:var(--type-heading-size);margin:0;font-weight:650}.wsr-bi .text-label{font-size:var(--type-label-size);letter-spacing:.08em;text-transform:uppercase;font-weight:700}.wsr-bi .status-label{align-items:center;gap:var(--space-tight);width:fit-content;padding:var(--space-tight) var(--space-cluster);border-radius:var(--shape-pill);font-size:var(--type-label-size);border:1px solid;font-weight:700;display:inline-flex}.wsr-bi .status-available{background:var(--status-available-surface);color:var(--status-available)}.wsr-bi .status-attention{background:var(--status-attention-surface);color:var(--status-attention)}.wsr-bi .status-unavailable{background:var(--status-unavailable-surface);color:var(--status-unavailable)}.wsr-bi .status-expired{background:var(--status-expired-surface);color:var(--status-expired)}.wsr-bi .status-incompatible{background:var(--status-incompatible-surface);color:var(--status-incompatible)}.wsr-bi .status-error{background:var(--status-error-surface);color:var(--status-error)}.wsr-bi .action-control,.wsr-bi .recorded-node,.wsr-bi .recorded-relation{min-height:var(--density-control);padding:var(--space-control);border:1px solid var(--border-strong);border-radius:var(--shape-control);background:var(--surface-raised);color:var(--content-primary);font:inherit;cursor:pointer}.wsr-bi .visual-with-fallback,.wsr-bi .compare-result,.wsr-bi .recorded-structure{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .compare-result{grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr))}.wsr-bi .visual-preview{width:100%;height:var(--layout-visual-preview-height)}.wsr-bi .fill-current{fill:currentColor}.wsr-bi .text-data-series-1{color:var(--data-series-1)}.wsr-bi .stroke-border-default{stroke:var(--border-default)}.wsr-bi .visual-data-table{table-layout:fixed;border-collapse:collapse;width:100%;max-width:100%;font-size:var(--type-label-size)}.wsr-bi .visual-data-table th,.wsr-bi .visual-data-table td{padding:var(--space-tight);border-block-end:1px solid var(--border-default);overflow-wrap:anywhere;text-align:start}.wsr-bi .bounded-table,.wsr-bi .recorded-graph-frame{max-width:100%;overflow:auto}.wsr-bi .recorded-graph{width:100%;min-width:40rem}.wsr-bi .recorded-graph-parent{stroke:var(--border-strong)}.wsr-bi .recorded-graph-link{stroke:var(--interaction-accent);stroke-dasharray:5 4}.wsr-bi .recorded-graph-node{fill:var(--surface-panel);stroke:var(--interaction-accent)}.wsr-bi .recorded-graph-label{fill:var(--content-primary);font-size:var(--type-label-size)}.wsr-bi .trace-view,.wsr-bi .trace-tree,.wsr-bi .trace-tree-row{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .trace-summary,.wsr-bi .trace-waterfall-row,.wsr-bi .trace-node-label,.wsr-bi .trace-tree-row>.recorded-node{justify-content:space-between;align-items:center;gap:var(--space-cluster);min-width:0;display:flex}.wsr-bi .trace-waterfall-row{grid-template-columns:minmax(10rem,.35fr) minmax(16rem,1fr);display:grid}.wsr-bi .trace-timeline-track{min-height:var(--density-row);border:1px solid var(--border-default);border-radius:var(--shape-control);background:var(--surface-inset);position:relative;overflow:hidden}.wsr-bi .trace-timeline-bar{inset-block:var(--space-tight);border-radius:var(--shape-control);background:var(--data-series-1);transform-origin:0;min-width:2px;animation:trace-recorded-reveal var(--motion-finite-duration) ease-out both;position:absolute}.wsr-bi [data-motion=off] .trace-timeline-bar{animation:none}.wsr-bi .trace-passport-grid{gap:var(--space-tight) var(--space-grid);grid-template-columns:minmax(9rem,auto) minmax(0,1fr);margin:0;display:grid}.wsr-bi .trace-passport-grid dt{color:var(--content-secondary);font-weight:650}.wsr-bi .trace-passport-grid dd{overflow-wrap:anywhere;min-width:0;margin:0}.wsr-bi .trace-link-list{color:var(--content-secondary);margin:0}@keyframes trace-recorded-reveal{0%{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}@media (width<=40rem){.wsr-bi .trace-waterfall-row{grid-template-columns:1fr}}@media (prefers-reduced-motion:reduce){.wsr-bi{--motion-finite-duration:0s}}.wsr-bi .trace-view{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .trace-summary-dense{align-items:center;gap:var(--space-grid);padding:var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);grid-template-columns:minmax(12rem,1fr) repeat(4,auto);display:grid}.wsr-bi .trace-summary-dense>span{color:var(--content-secondary);font:var(--type-code-size) var(--type-code-family)}.wsr-bi .trace-eyebrow{color:var(--content-secondary);font-size:var(--type-caption-size);letter-spacing:.08em;text-transform:uppercase;font-weight:700;display:block}.wsr-bi .trace-view-tools,.wsr-bi .trace-motion-actions,.wsr-bi .trace-passport-head{justify-content:space-between;align-items:center;gap:var(--space-cluster);flex-wrap:wrap;display:flex}.wsr-bi .trace-view-tools input{min-width:min(100%,18rem);margin-inline-start:auto}.wsr-bi .trace-minimap{gap:var(--space-tight);min-height:3.75rem;padding:var(--space-tight) var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-inset);display:grid;overflow:hidden}.wsr-bi .trace-minimap-track{border:1px solid var(--interaction-accent);border-radius:var(--shape-control);min-height:1.75rem;position:relative}.wsr-bi .trace-minimap-track i{background:var(--data-series-1);border-radius:99px;height:.22rem;position:absolute}.wsr-bi .trace-minimap-track i:nth-child(3n+1){inset-block-start:.35rem}.wsr-bi .trace-minimap-track i:nth-child(3n+2){background:var(--data-series-2);inset-block-start:.8rem}.wsr-bi .trace-minimap-track i:nth-child(3n){background:var(--status-warning);inset-block-start:1.25rem}.wsr-bi .trace-workbench{gap:var(--space-grid);grid-template-columns:minmax(0,1fr) minmax(16rem,19rem);min-width:0;display:grid}.wsr-bi .trace-waterfall-canvas,.wsr-bi .trace-tree-canvas-shell,.wsr-bi .span-passport{border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);min-width:0;overflow:hidden}.wsr-bi .trace-timeline-head{justify-content:space-between;align-items:center;gap:var(--space-grid);min-height:2.75rem;padding:0 var(--space-grid);border-block-end:1px solid var(--border-default);color:var(--content-secondary);font-size:var(--type-caption-size);text-transform:uppercase;font-weight:700;display:flex}.wsr-bi .trace-waterfall-row{border-block-end:1px solid var(--border-default);grid-template-columns:minmax(16rem,19rem) minmax(25rem,1fr);gap:0;min-height:3rem;display:grid}.wsr-bi .trace-waterfall-row.is-current{filter:brightness(1.18)}.wsr-bi .trace-node-label{gap:var(--space-tight);text-align:start;background:0 0;border:0;border-radius:0;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;display:grid}.wsr-bi .trace-node-copy{min-width:0}.wsr-bi .trace-node-copy strong,.wsr-bi .trace-node-copy small{text-overflow:ellipsis;white-space:nowrap;display:block;overflow:hidden}.wsr-bi .trace-node-copy small{color:var(--content-secondary);font:var(--type-caption-size) var(--type-code-family)}.wsr-bi .trace-glyph{border-radius:var(--shape-control);width:1.4rem;height:1.4rem;color:var(--data-series-1);border:1px solid;place-items:center;display:grid}.wsr-bi .trace-kind-client{color:var(--data-series-2)}.wsr-bi .trace-error{color:var(--status-error)}.wsr-bi .trace-timeline-track{border:0;border-inline-start:1px solid var(--border-default);background-color:var(--surface-inset);background-image:linear-gradient(90deg, transparent 24.8%, var(--border-default) 25%, transparent 25.2%, transparent 49.8%, var(--border-default) 50%, transparent 50.2%, transparent 74.8%, var(--border-default) 75%, transparent 75.2%);border-radius:0;min-height:3rem;position:relative;overflow:hidden}.wsr-bi .trace-timeline-bar{min-width:2px;padding-inline:var(--space-tight);border:1px solid var(--data-series-1);border-radius:var(--shape-control);background:color-mix(in srgb, var(--data-series-1) 45%, var(--surface-panel));color:var(--content-primary);font-size:var(--type-caption-size);text-overflow:ellipsis;white-space:nowrap;transform-origin:0;animation:trace-recorded-reveal var(--motion-finite-duration) ease-out both;display:block;position:absolute;inset-block:.85rem;overflow:hidden}.wsr-bi .trace-timeline-bar.trace-kind-client{border-color:var(--data-series-2);background:color-mix(in srgb, var(--data-series-2) 40%, var(--surface-panel))}.wsr-bi .trace-timeline-bar.trace-status-error{border-color:var(--status-error);background:color-mix(in srgb, var(--status-error) 35%, var(--surface-panel))}.wsr-bi .trace-passport-head{justify-content:space-between;align-items:center;gap:var(--space-cluster);border-block-end:1px solid var(--border-default);min-height:2.75rem;padding:0 .75rem;display:flex}.wsr-bi .trace-passport-head strong{font-size:.625rem}.wsr-bi .trace-passport-head span{color:var(--content-muted);letter-spacing:.08em;text-transform:uppercase;font-size:.5rem}.wsr-bi .trace-passport-body{padding:.8125rem}.wsr-bi .trace-passport-title{align-items:center;gap:.5625rem;margin-block-end:.875rem;display:flex}.wsr-bi .trace-passport-title>div{min-width:0}.wsr-bi .trace-passport-name{font-size:var(--type-body-size);display:block}.wsr-bi .trace-passport-title small{color:var(--content-muted);margin-block-start:.1875rem;font-size:.5rem;display:block}.wsr-bi .trace-passport-sigil{border:1px solid var(--data-series-1);background:color-mix(in srgb, var(--data-series-1) 16%, var(--surface-panel));width:1.8125rem;height:1.8125rem;color:var(--data-series-1);border-radius:.4375rem;flex:none;place-items:center;font-size:.5rem;font-weight:800;display:grid}.wsr-bi .trace-passport-sigil.trace-kind-client{border-color:var(--data-series-2);background:color-mix(in srgb, var(--data-series-2) 16%, var(--surface-panel));color:var(--data-series-2)}.wsr-bi .trace-passport-grid{grid-template-columns:1fr;gap:.6875rem;display:grid}.wsr-bi .trace-passport-grid dt{color:var(--content-muted);letter-spacing:.1em;text-transform:uppercase;margin:0;font-size:.5rem}.wsr-bi .trace-passport-grid dd{font-size:var(--type-caption-size);margin-block-start:.1875rem;line-height:1.45}.wsr-bi .trace-passport-grid .text-code,.wsr-bi .trace-passport-grid .numeric-exact{font-size:.5rem}.wsr-bi .trace-link-receipt{padding:var(--space-tight);border-inline-start:3px solid var(--status-warning);border-radius:var(--shape-control);background:color-mix(in srgb, var(--status-warning) 16%, var(--surface-panel));color:var(--content-secondary)}.wsr-bi .trace-motion{gap:var(--space-grid);padding:var(--space-tight) var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);grid-template-columns:auto minmax(0,1fr) auto;align-items:center;display:grid}.wsr-bi .trace-motion-copy{gap:var(--space-tight);display:grid}.wsr-bi .trace-motion-copy input{width:100%}.wsr-bi .trace-motion-copy span{color:var(--content-secondary);font-size:var(--type-caption-size)}.wsr-bi .trace-tree-canvas{background-color:var(--surface-inset);background-image:radial-gradient(var(--border-default) 1px, transparent 1px);background-size:1.25rem 1.25rem;min-height:36rem;position:relative;overflow:hidden}.wsr-bi .trace-tree-svg{width:100%;height:100%;position:absolute;inset:0}.wsr-bi .trace-tree-edge{fill:none;stroke:var(--border-strong);stroke-width:2px;marker-end:url(#trace-parent-arrow)}.wsr-bi .trace-tree-link{stroke:var(--status-warning);stroke-dasharray:7 6;marker-end:url(#trace-link-arrow)}.wsr-bi #trace-parent-arrow path{fill:var(--border-strong)}.wsr-bi #trace-link-arrow path{fill:var(--status-warning)}.wsr-bi .trace-tree-node{cursor:pointer;outline:none}.wsr-bi .trace-tree-card{fill:var(--surface-raised);stroke:var(--border-strong);stroke-width:1.2px}.wsr-bi .trace-tree-node.is-selected .trace-tree-card{stroke:var(--data-series-1);stroke-width:2px;filter:drop-shadow(0 0 5px color-mix(in srgb, var(--data-series-1) 45%, transparent))}.wsr-bi .trace-tree-node.trace-status-error .trace-tree-card{stroke:var(--status-error)}.wsr-bi .trace-tree-kind-rail,.wsr-bi .trace-tree-micro{fill:var(--data-series-1)}.wsr-bi .trace-tree-node.trace-kind-client .trace-tree-kind-rail,.wsr-bi .trace-tree-node.trace-kind-client .trace-tree-micro{fill:var(--data-series-2)}.wsr-bi .trace-tree-kind,.wsr-bi .trace-tree-meta,.wsr-bi .trace-tree-status,.wsr-bi .trace-tree-duration{fill:var(--content-secondary);font:var(--type-caption-size) var(--type-code-family)}.wsr-bi .trace-tree-name{fill:var(--content-primary);font-size:var(--type-label-size);font-weight:650}.wsr-bi .trace-tree-micro-bg{fill:var(--border-default)}.wsr-bi .trace-camera-map{width:8.5rem;min-height:5.25rem;padding:var(--space-tight);border:1px solid var(--border-strong);border-radius:var(--shape-control);background:color-mix(in srgb, var(--surface-base) 90%, transparent);position:absolute;inset-block-end:var(--space-grid);inset-inline-end:var(--space-grid)}.wsr-bi .trace-camera-map>strong{color:var(--content-secondary);font-size:var(--type-caption-size);text-transform:uppercase}.wsr-bi .trace-camera-map>div{gap:var(--space-tight);flex-wrap:wrap;margin-block-start:var(--space-tight);display:flex}.wsr-bi .trace-camera-map i{background:var(--data-series-2);border-radius:2px;width:.85rem;height:.45rem}.wsr-bi .trace-tree-outline{clip-path:inset(50%);white-space:nowrap;width:1px;height:1px;position:absolute;overflow:hidden}.wsr-bi .trace-tree-outline>div>button{justify-content:space-between;width:100%;display:flex}.wsr-bi .trace-statistics dl{gap:var(--space-grid);grid-template-columns:repeat(4,minmax(0,1fr));margin:0;display:grid}.wsr-bi .trace-statistics dl>div{min-width:0}.wsr-bi .trace-statistics dt{color:var(--content-secondary)}.wsr-bi .trace-statistics dd{margin:var(--space-grid) 0 0;font-size:var(--type-value-size)}@media (width<=64rem){.wsr-bi .trace-workbench{grid-template-columns:1fr}.wsr-bi .span-passport{display:none}.wsr-bi .trace-summary-dense{grid-template-columns:minmax(12rem,1fr) repeat(2,auto)}.wsr-bi .trace-summary-dense>span:nth-last-child(-n+2){display:none}}@media (width<=40rem){.wsr-bi .trace-summary-dense,.wsr-bi .trace-motion,.wsr-bi .trace-statistics dl{grid-template-columns:1fr}.wsr-bi .trace-minimap,.wsr-bi .trace-waterfall-canvas,.wsr-bi .trace-tree-canvas{display:none}.wsr-bi .trace-tree-outline{clip-path:none;white-space:normal;width:auto;height:auto;position:static;overflow:visible}.wsr-bi .trace-tree-outline>div{min-width:0;min-height:var(--density-row);border-block-end:1px solid var(--border-default)}.wsr-bi .trace-tree-graph,.wsr-bi .trace-tree-canvas-shell,.wsr-bi .trace-tree-outline,.wsr-bi .trace-tree-outline>div>button,.wsr-bi .trace-tree-outline>div>button>span{min-width:0;max-width:100%}.wsr-bi .trace-tree-outline>div>button>span{overflow-wrap:anywhere}.wsr-bi .trace-view-tools input{order:2;width:100%;margin:0}}.wsr-bi .trace-view{gap:.75rem}.wsr-bi .trace-view button,.wsr-bi .trace-view input[type=search]{border:1px solid var(--border-strong);border-radius:var(--shape-control);background:var(--surface-raised);min-height:2rem;color:var(--content-primary);font:inherit;font-size:var(--type-label-size);padding:0 .7rem}.wsr-bi .trace-view button{cursor:pointer}.wsr-bi .trace-view button[aria-pressed=true]{border-color:var(--interaction-accent);background:var(--interaction-selection)}.wsr-bi .trace-summary-dense{padding:.75rem .9rem}.wsr-bi .trace-summary-dense>div>strong{font-size:var(--type-heading-size);margin-block-start:.2rem;display:block}.wsr-bi .trace-node-label{padding-block:.35rem}.wsr-bi .trace-workbench{grid-template-columns:minmax(0,1fr) minmax(17rem,18.75rem);gap:.75rem}.wsr-bi .trace-timeline-head{grid-template-columns:minmax(16rem,19rem) minmax(25rem,1fr);display:grid}.wsr-bi .trace-timeline-head>:last-child{text-align:end;padding-inline-start:var(--space-grid)}.wsr-bi .trace-focus-receipt{margin-block:var(--space-grid);border-inline-start:3px solid var(--data-series-2);border-radius:var(--shape-control);background:color-mix(in srgb, var(--data-series-2) 14%, var(--surface-panel));color:var(--content-secondary);font-size:var(--type-caption-size);padding:.65rem}.wsr-bi .trace-passport-actions,.wsr-bi .trace-tree-toolbar{gap:var(--space-tight);flex-wrap:wrap;display:flex}.wsr-bi .trace-waterfall-mobile{border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);overflow:hidden}.wsr-bi .trace-waterfall-mobile>header{border-block-end:1px solid var(--border-default);font-size:var(--type-label-size);text-transform:uppercase;padding:.65rem .75rem;font-weight:700}.wsr-bi .trace-waterfall-mobile [role=treeitem]{border-block-end:1px solid var(--border-default);min-width:0}.wsr-bi .trace-waterfall-mobile [role=treeitem]>button{text-align:start;background:0 0;border:0;border-radius:0;grid-template-columns:minmax(0,1fr) auto;width:100%;min-height:3rem;display:grid}.wsr-bi .trace-tree-context{gap:var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);grid-template-columns:minmax(0,1fr) auto;align-items:center;padding:.7rem .85rem;display:grid}.wsr-bi .trace-tree-context strong,.wsr-bi .trace-tree-context code{display:block}.wsr-bi .trace-tree-context strong{font-size:var(--type-heading-size)}.wsr-bi .trace-tree-context code{color:var(--content-secondary);font:var(--type-caption-size) var(--type-code-family);text-overflow:ellipsis;white-space:nowrap;margin-block-start:.3rem;overflow:hidden}.wsr-bi .trace-depth-label{z-index:1;color:var(--content-muted);letter-spacing:.08em;text-transform:uppercase;font-size:.65rem;font-weight:700;position:absolute;inset-block-start:.8rem}.wsr-bi .trace-depth-0{inset-inline-start:5%}.wsr-bi .trace-depth-1{inset-inline-start:37%}.wsr-bi .trace-depth-2{inset-inline-start:70%}.wsr-bi .trace-depth-divider{z-index:0;border-inline-start:1px dashed var(--border-default);position:absolute;inset-block:2.1rem 1.25rem}.wsr-bi .trace-depth-divider-1{inset-inline-start:32%}.wsr-bi .trace-depth-divider-2{inset-inline-start:65%}.wsr-bi .trace-tree-edge.is-muted,.wsr-bi .trace-tree-node.is-lens-muted{opacity:.16}.wsr-bi .trace-tree-edge.is-focused{stroke:var(--data-series-2);filter:drop-shadow(0 0 4px color-mix(in srgb, var(--data-series-2) 50%, transparent))}.wsr-bi .trace-tree-node.is-time-current .trace-tree-card{filter:brightness(1.3) drop-shadow(0 0 5px color-mix(in srgb, var(--data-series-1) 45%, transparent))}.wsr-bi .trace-statistics-intro{border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);padding:.8rem .9rem}.wsr-bi .trace-statistics-intro h2,.wsr-bi .trace-statistics-intro p,.wsr-bi .trace-statistics-grid h3{margin:0}.wsr-bi .trace-statistics-intro h2{font-size:var(--type-heading-size);margin-block-start:.2rem}.wsr-bi .trace-statistics-intro p{color:var(--content-secondary);font-size:var(--type-caption-size);margin-block-start:.3rem}.wsr-bi .trace-statistics-grid{gap:var(--space-grid);grid-template-columns:repeat(2,minmax(0,1fr));display:grid}.wsr-bi .trace-duration-distribution{grid-column:1/-1}.wsr-bi .trace-stat-row,.wsr-bi .trace-duration-row{gap:var(--space-tight);grid-template-columns:minmax(0,1fr) auto;align-items:center;display:grid}.wsr-bi .trace-stat-row i,.wsr-bi .trace-duration-row i{background:var(--data-series-1);border-radius:99px;grid-column:1/-1;height:.35rem;display:block}.wsr-bi .trace-duration-row{grid-template-columns:minmax(9rem,.35fr) minmax(8rem,1fr) auto}.wsr-bi .trace-duration-row i{grid-column:auto}@media (width<=64rem){.wsr-bi .trace-workbench{grid-template-columns:1fr}}@media (width<=40rem){.wsr-bi,.wsr-bi .trace-view,.wsr-bi .trace-view>*{inline-size:100%;min-inline-size:0;max-inline-size:100%}.wsr-bi .trace-view,.wsr-bi .trace-motion-copy{overflow:hidden}.wsr-bi .trace-motion-copy span{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.wsr-bi .trace-tree-context{grid-template-columns:1fr}.wsr-bi .trace-timeline-head{min-height:auto;padding:.65rem .75rem;display:flex}.wsr-bi .trace-timeline-head>:last-child{display:none}.wsr-bi .trace-tree-outline>div>button{gap:var(--space-tight);background:0 0;border:0;border-radius:0;grid-template-columns:minmax(0,1fr) auto;min-height:3rem;display:grid}.wsr-bi .trace-statistics-grid{grid-template-columns:1fr}.wsr-bi .trace-duration-distribution{grid-column:auto}.wsr-bi .trace-duration-row{grid-template-columns:minmax(0,1fr) auto}.wsr-bi .trace-duration-row i{grid-column:1/-1}}.wsr-bi .trace-summary-dense{grid-template-columns:minmax(16rem,1fr) auto;padding:.75rem .9rem}.wsr-bi .trace-summary-identity{gap:.18rem;min-width:0;display:grid}.wsr-bi .trace-summary-identity>strong{font-size:var(--type-heading-size)}.wsr-bi .trace-summary-identity>code{color:var(--content-muted);font:var(--type-caption-size) var(--type-code-family);text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.wsr-bi .trace-summary-metrics{justify-content:flex-end;align-items:center;gap:clamp(1rem,2.4vw,2.25rem);display:flex}.wsr-bi .trace-summary-stat{gap:.2rem;min-width:4rem;display:grid}.wsr-bi .trace-summary-stat small{color:var(--content-muted);font-size:var(--type-caption-size)}.wsr-bi .trace-summary-stat strong{color:var(--content-primary);font:650 var(--type-heading-size) var(--type-code-family)}.wsr-bi .trace-summary-stat>.wsr-typography{font-size:var(--type-heading-size)}.wsr-bi .trace-summary-stat[data-tone=error] strong{color:var(--status-error)}.wsr-bi .trace-summary-stat[data-tone=success] strong{color:var(--status-available)}.wsr-bi .trace-minimap{grid-template-columns:minmax(16rem,19rem) minmax(25rem,1fr);align-items:stretch;gap:0;min-height:3.25rem;padding:0}.wsr-bi .trace-minimap-copy{align-content:center;gap:.15rem;padding-inline:.85rem;display:grid}.wsr-bi .trace-minimap-copy>strong{font-size:var(--type-label-size)}.wsr-bi .trace-minimap-copy>small{color:var(--content-muted);font-size:var(--type-caption-size)}.wsr-bi .trace-minimap-track{background:var(--surface-inset);cursor:crosshair;touch-action:none;border:0;border-radius:0;min-height:3.25rem;overflow:hidden}.wsr-bi .trace-minimap-track .trace-minimap-span{z-index:1;height:.22rem}.wsr-bi .trace-minimap-window{z-index:2;border-block:1px solid color-mix(in srgb, var(--interaction-accent) 65%, transparent);background:color-mix(in srgb, var(--interaction-accent) 8%, transparent);pointer-events:none;min-width:2px;position:absolute;inset-block:.25rem}.wsr-bi .trace-minimap-window:before,.wsr-bi .trace-minimap-window:after{background:var(--interaction-accent);content:"";border-radius:99px;width:2px;position:absolute;inset-block:28%}.wsr-bi .trace-minimap-window:before{inset-inline-start:2px}.wsr-bi .trace-minimap-window:after{inset-inline-end:2px}.wsr-bi .trace-minimap-window[data-full=true]{background:0 0;border:0}.wsr-bi .trace-minimap-window[data-full=true]:before,.wsr-bi .trace-minimap-window[data-full=true]:after{display:none}.wsr-bi .trace-waterfall-toolbar{align-items:center;gap:var(--space-grid);border-block-end:1px solid var(--border-default);grid-template-columns:minmax(7rem,1fr) minmax(15rem,21rem) minmax(7rem,1fr);min-height:3rem;padding:.45rem .75rem;display:grid}.wsr-bi .trace-waterfall-heading,.wsr-bi .trace-waterfall-actions{align-items:center;gap:var(--space-tight);display:flex}.wsr-bi .trace-waterfall-actions{justify-self:end}.wsr-bi .trace-waterfall-heading>strong{font-size:var(--type-label-size);margin-inline-end:.4rem}.wsr-bi .trace-waterfall-actions button{min-height:1.65rem}.wsr-bi .trace-waterfall-toolbar input{width:100%;min-height:2rem}.wsr-bi .trace-timeline-head{min-height:2.2rem;padding:0}.wsr-bi .trace-timeline-head>:first-child{padding-inline:.85rem}.wsr-bi .trace-timeline-head>.trace-ruler{height:100%;padding:0;position:relative}.wsr-bi .trace-ruler>i{color:var(--content-muted);font:normal var(--type-caption-size) var(--type-code-family);text-transform:none;white-space:nowrap;position:absolute;inset-block-start:50%;transform:translate(-50%,-50%)}.wsr-bi .trace-ruler>i:first-child{transform:translateY(-50%)}.wsr-bi .trace-ruler>i:last-child{transform:translate(-100%,-50%)}.wsr-bi .trace-node-label{grid-template-columns:auto 1.25rem minmax(0,1fr) auto;align-items:stretch;gap:.3rem;min-width:0;padding:0 .65rem 0 0;display:grid}.wsr-bi .trace-indent-spacer{width:calc(var(--trace-indent-columns) * (.65rem + 1px));align-self:stretch}.wsr-bi .trace-indent-segment{z-index:3;width:.65rem;border-inline-start:2px solid var(--wsr-trace-indent-0,var(--content-muted));background:color-mix(in srgb, var(--wsr-trace-indent-0,var(--content-muted)) 12%, transparent);pointer-events:none;grid-column:1;place-self:stretch start;margin-inline-start:calc(var(--trace-indent-column) * (.65rem + 1px))}.wsr-bi .trace-indent-segment[data-guide-depth="1"]{border-color:var(--wsr-trace-indent-1,var(--status-available));background:color-mix(in srgb, var(--wsr-trace-indent-1,var(--status-available)) 12%, transparent)}.wsr-bi .trace-indent-segment[data-guide-depth="2"]{border-color:var(--wsr-trace-indent-2,var(--status-warning));background:color-mix(in srgb, var(--wsr-trace-indent-2,var(--status-warning)) 12%, transparent)}.wsr-bi .trace-indent-segment[data-guide-depth="3"]{border-color:var(--wsr-trace-indent-3,var(--status-error));background:color-mix(in srgb, var(--wsr-trace-indent-3,var(--status-error)) 12%, transparent)}.wsr-bi .trace-collapse-control,.wsr-bi .trace-collapse-placeholder{align-self:center;width:1.25rem;height:1.25rem}.wsr-bi .trace-view .trace-collapse-control{min-height:0;color:var(--content-secondary);background:0 0;border:0;place-items:center;padding:0;font-size:1rem;display:grid}.wsr-bi .trace-view .trace-node-main{text-align:start;background:0 0;border:0;border-radius:0;align-content:center;gap:.15rem;min-width:0;min-height:0;padding:0;display:grid}.wsr-bi .trace-node-title-line{align-items:center;gap:.4rem;min-width:0;display:flex}.wsr-bi .trace-node-title-line>strong{font-size:var(--type-label-size);text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.wsr-bi .trace-node-main>small{color:var(--content-muted);font:var(--type-caption-size) var(--type-code-family);text-overflow:ellipsis;white-space:nowrap;padding-inline-start:0;overflow:hidden}.wsr-bi .trace-waterfall-row{border-block-end:0}.wsr-bi .trace-waterfall-row:nth-child(2n){background:color-mix(in srgb, var(--surface-raised) 42%, var(--surface-panel))}.wsr-bi .trace-waterfall-row.is-selected{background:var(--interaction-selection)}.wsr-bi .trace-waterfall-row .trace-timeline-track{background-color:#0000;background-image:none;border:0;border-radius:0}.wsr-bi .trace-timeline{grid-auto-rows:minmax(3rem,auto);gap:0;display:grid;position:relative}.wsr-bi .trace-timeline-grid{z-index:1;border-inline-start:1px solid var(--border-strong);border-inline-end:1px solid var(--border-strong);background-image:linear-gradient(90deg, var(--border-strong) 0 1px, transparent 1px);opacity:.72;pointer-events:none;background-repeat:repeat-x;background-size:25% 100%;position:absolute;inset-block:0;inset-inline:19rem 0}.wsr-bi .trace-timeline-bar{z-index:2}.wsr-bi .trace-node-label>.numeric-exact,.wsr-bi .trace-node-label>.trace-error{font-size:var(--type-caption-size);align-self:center}@media (width<=64rem){.wsr-bi .trace-summary-dense{grid-template-columns:1fr}.wsr-bi .trace-summary-metrics{justify-content:flex-start}}@media (width<=40rem){.wsr-bi .trace-summary-metrics{grid-template-columns:repeat(2,minmax(0,1fr));display:grid}.wsr-bi .trace-minimap{display:none}.wsr-bi .trace-waterfall-toolbar{grid-template-columns:1fr}.wsr-bi .trace-waterfall-actions{justify-self:start}}@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-leading:initial;--tw-font-weight:initial;--tw-tracking:initial;--tw-border-style:solid}}}.wsr-bi .wsr-typography{color:var(--content-primary);margin:0}.wsr-bi .wsr-typography[data-variant=pageTitle]{font-size:var(--wsr-type-page-title,1.125rem);--tw-leading:var(--leading-tight,1.25);line-height:var(--leading-tight,1.25);--tw-font-weight:var(--font-weight-semibold,600);font-weight:var(--font-weight-semibold,600)}.wsr-bi .wsr-typography[data-variant=sectionTitle]{font-size:var(--type-heading-size);--tw-leading:var(--leading-snug,1.375);line-height:var(--leading-snug,1.375);--tw-font-weight:var(--font-weight-semibold,600);font-weight:var(--font-weight-semibold,600)}.wsr-bi .wsr-typography[data-variant=body]{font-size:var(--type-body-size);--tw-leading:var(--leading-relaxed,1.625);line-height:var(--leading-relaxed,1.625)}.wsr-bi .wsr-typography[data-variant=label]{font-size:var(--type-label-size);--tw-leading:var(--leading-snug,1.375);line-height:var(--leading-snug,1.375);--tw-font-weight:var(--font-weight-bold,700);font-weight:var(--font-weight-bold,700)}.wsr-bi .wsr-typography[data-variant=caption]{font-size:var(--type-caption-size);color:var(--content-secondary)}.wsr-bi .wsr-typography[data-variant=eyebrow]{font-size:var(--wsr-type-micro,.5rem);--tw-font-weight:var(--font-weight-bold,700);font-weight:var(--font-weight-bold,700);--tw-tracking:var(--tracking-widest,.1em);letter-spacing:var(--tracking-widest,.1em);color:var(--content-secondary);text-transform:uppercase}.wsr-bi .wsr-typography[data-variant=code]{font-family:var(--font-mono,ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);font-size:var(--type-code-size);color:var(--content-secondary)}.wsr-bi .wsr-typography[data-variant=value]{font-family:var(--font-mono,ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);font-size:var(--type-value-size);--tw-leading:var(--leading-tight,1.25);line-height:var(--leading-tight,1.25);--tw-font-weight:var(--font-weight-semibold,600);font-weight:var(--font-weight-semibold,600);color:var(--content-primary)}.wsr-bi .wsr-button{min-height:calc(var(--spacing,.25rem) * 8);justify-content:center;align-items:center;gap:calc(var(--spacing,.25rem) * 1.5);border-radius:var(--shape-control);border-style:var(--tw-border-style);padding-inline:calc(var(--spacing,.25rem) * 2.5);padding-block:calc(var(--spacing,.25rem) * 1.5);font-size:var(--type-label-size);color:var(--content-primary);border-width:1px;display:inline-flex}.wsr-bi .wsr-button[data-appearance=outline]{border-color:var(--border-strong);background-color:var(--surface-raised)}.wsr-bi .wsr-button[data-appearance=ghost]{color:var(--content-secondary);background-color:#0000;border-color:#0000}.wsr-bi .wsr-button[data-appearance=solid][data-tone=primary]{border-color:var(--interaction-accent);background-color:var(--interaction-selection)}.wsr-bi .wsr-button[data-appearance=solid][data-tone=danger]{border-color:var(--status-error);background-color:var(--status-error-surface);color:var(--status-error)}.wsr-bi .wsr-button[data-appearance=segment]{min-height:calc(var(--spacing,.25rem) * 7);background-color:#0000;border-color:#0000}.wsr-bi .wsr-button[data-appearance=segment][aria-pressed=true]{border-color:var(--interaction-accent);background-color:var(--interaction-selection)}.wsr-bi .wsr-button:disabled{cursor:not-allowed;opacity:.5}.wsr-bi .wsr-button[data-icon-button=true]{min-height:calc(var(--spacing,.25rem) * 7);width:calc(var(--spacing,.25rem) * 7);min-width:calc(var(--spacing,.25rem) * 7);padding:0}.wsr-bi .wsr-button[data-icon-button=true] svg{height:calc(var(--spacing,.25rem) * 3.5);width:calc(var(--spacing,.25rem) * 3.5);fill:none;stroke:currentColor;stroke-width:1.35px;stroke-linecap:round;stroke-linejoin:round}.wsr-bi .wsr-button-group{align-items:center;gap:calc(var(--spacing,.25rem) * 1.5);flex-wrap:wrap;display:flex}.wsr-bi .wsr-button-group[data-segmented]{gap:var(--spacing,.25rem);border-radius:var(--shape-control);border-style:var(--tw-border-style);border-width:1px;border-color:var(--border-default);background-color:var(--surface-inset);padding:calc(var(--spacing,.25rem) * .5)}.wsr-bi .wsr-surface{border-radius:var(--shape-panel);border-style:var(--tw-border-style);border-width:1px;border-color:var(--border-default);background-color:var(--surface-section);min-width:0}.wsr-bi .wsr-surface[data-level=panel]{background-color:var(--surface-panel)}.wsr-bi .wsr-surface[data-level=inset]{border-radius:var(--shape-control);background-color:var(--surface-inset)}.wsr-bi .wsr-surface[data-level=raised]{background-color:var(--surface-raised)}.wsr-bi .wsr-surface[data-border=dashed]{--tw-border-style:dashed;border-style:dashed}.wsr-bi .wsr-surface[data-border=none]{border-style:var(--tw-border-style);border-width:0}.wsr-bi .wsr-divider{border-style:var(--tw-border-style);background-color:var(--border-default);border-width:0;width:100%;height:1px;margin:0}.wsr-bi .wsr-input{min-height:calc(var(--spacing,.25rem) * 8);border-radius:var(--shape-control);border-style:var(--tw-border-style);border-width:1px;border-color:var(--border-strong);background-color:var(--surface-inset);min-width:0;padding-inline:calc(var(--spacing,.25rem) * 2.5);font-size:var(--type-label-size);color:var(--content-primary);--tw-outline-style:none;outline-style:none}.wsr-bi .wsr-input:focus{border-color:var(--interaction-accent)}.wsr-bi .wsr-status-badge{padding-inline:calc(var(--spacing,.25rem) * 2);padding-block:calc(var(--spacing,.25rem) * .5);font-size:var(--wsr-type-micro,.5rem);--tw-font-weight:var(--font-weight-bold,700);font-weight:var(--font-weight-bold,700);text-transform:uppercase;border-radius:2147483647px;align-items:center;display:inline-flex}.wsr-bi .wsr-status-badge[data-status=available],.wsr-bi .wsr-status-badge[data-status=selected]{background-color:var(--interaction-selection);color:var(--interaction-accent)}.wsr-bi .wsr-status-badge[data-status=partial]{background-color:var(--status-attention-surface);color:var(--status-attention)}.wsr-bi .wsr-status-badge[data-status=unavailable]{background-color:var(--surface-raised);color:var(--content-secondary)}.wsr-bi .wsr-status-badge[data-status=error]{background-color:var(--status-error-surface);color:var(--status-error)}@property --tw-leading{syntax:"*";inherits:false}@property --tw-font-weight{syntax:"*";inherits:false}@property --tw-tracking{syntax:"*";inherits:false}@property --tw-border-style{syntax:"*";inherits:false;initial-value:solid}\n/*$vite$:1*/';
+var styles_default = `/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+.wsr-bi{--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light;--wsr-surface-panel:oklch(100% 0 0);--wsr-surface-section:var(--wsr-surface-panel);--wsr-surface-raised:oklch(99% .004 250);--wsr-surface-inset:oklch(94.5% .01 250);--wsr-shape-panel:.625rem;--wsr-shape-control:.4375rem;--wsr-type-h1:2.25rem;--wsr-type-h2:1.25rem;--wsr-type-subtitle1:1.125rem;--wsr-type-body1:1rem;--wsr-type-body2:.875rem;--wsr-type-caption:.75rem;--wsr-type-overline:.5625rem;--trace-indent-column:0;--trace-indent-columns:1;--surface-canvas:oklch(97.5% .006 250);--surface-base:var(--surface-canvas);--surface-section:var(--wsr-surface-section,var(--wsr-surface-panel));--surface-panel:var(--wsr-surface-panel,oklch(100% 0 0));--surface-raised:var(--wsr-surface-raised,oklch(99% .004 250));--surface-inset:var(--wsr-surface-inset,oklch(94.5% .01 250));--content-primary:oklch(23% .025 255);--content-secondary:oklch(42% .025 255);--content-muted:oklch(54% .02 255);--content-inverse:oklch(99% 0 0);--border-default:oklch(86% .015 250);--border-strong:oklch(67% .025 250);--interaction-accent:oklch(49% .18 244);--interaction-selection:oklch(90% .05 244);--interaction-disabled:oklch(70% .01 250);--focus-ring:oklch(57% .17 244);--status-available:oklch(42% .12 155);--status-available-surface:oklch(94% .05 155);--status-attention:oklch(50% .13 75);--status-warning:var(--status-attention);--status-attention-surface:oklch(95% .055 85);--status-unavailable:oklch(45% .025 255);--status-unavailable-surface:oklch(94% .012 250);--status-expired:oklch(48% .1 305);--status-expired-surface:oklch(95% .035 305);--status-incompatible:oklch(48% .13 28);--status-incompatible-surface:oklch(95% .045 28);--status-error:oklch(47% .17 25);--status-error-surface:oklch(95% .05 25);--data-series-1:oklch(50% .17 244);--data-series-2:oklch(58% .15 185);--data-series-3:oklch(62% .16 300);--data-series-4:oklch(65% .16 75);--data-series-5:oklch(55% .16 25);--data-series-6:oklch(52% .1 215);--space-page:1.5rem;--space-grid:1rem;--space-cluster:.75rem;--space-control:.625rem;--space-tight:.375rem;--density-row:2.75rem;--density-control:2.5rem;--shape-panel:var(--wsr-shape-panel,.625rem);--shape-control:var(--wsr-shape-control,.4375rem);--shape-pill:999px;--type-h1-size:var(--wsr-type-h1,2.25rem);--type-heading-size:var(--wsr-type-h2,1.25rem);--type-subtitle-size:var(--wsr-type-subtitle1,1.125rem);--type-body-size:var(--wsr-type-body1,1rem);--type-body-small-size:var(--wsr-type-body2,.875rem);--type-caption-size:var(--wsr-type-caption,.75rem);--type-overline-size:var(--wsr-type-overline,.5625rem);--type-label-size:var(--wsr-type-body2,.875rem);--type-code-size:var(--wsr-type-caption,.75rem);--type-code-family:var(--wsr-code-font-family,ui-monospace, SFMono-Regular, Consolas, monospace);--type-value-size:1.5rem;--type-numeric-size:1.5rem;--layout-table-max-height:32rem;--layout-visual-preview-height:6rem;--dashboard-grid-column-width:10rem;--dashboard-grid-gap:0px;--dashboard-grid-inline-padding:0px;--motion-finite-duration:.32s;--wsr-container-border-style:solid;box-sizing:border-box;min-width:0;color:var(--content-primary);font-family:var(--wsr-font-family,Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif)}.wsr-bi[data-theme=dark]{--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;--wsr-surface-panel:oklch(22.5% .025 255);--wsr-surface-section:var(--wsr-surface-panel);--wsr-surface-raised:oklch(25.5% .025 255);--wsr-surface-inset:oklch(16% .02 255);--surface-canvas:oklch(18% .02 255);--surface-section:var(--wsr-surface-section,var(--wsr-surface-panel));--surface-panel:var(--wsr-surface-panel,oklch(22.5% .025 255));--surface-raised:var(--wsr-surface-raised,oklch(25.5% .025 255));--surface-inset:var(--wsr-surface-inset,oklch(16% .02 255));--content-primary:oklch(94% .01 250);--content-secondary:oklch(76% .018 250);--content-muted:oklch(64% .02 250);--content-inverse:oklch(18% .02 255);--border-default:oklch(34% .025 250);--border-strong:oklch(49% .03 250);--interaction-accent:oklch(76% .13 235);--interaction-selection:oklch(32% .07 244);--interaction-disabled:oklch(48% .018 250);--focus-ring:oklch(73% .14 235);--status-available:oklch(79% .12 153);--status-available-surface:oklch(31% .07 155);--status-attention:oklch(84% .12 82);--status-attention-surface:oklch(32% .06 76);--status-unavailable:oklch(72% .025 250);--status-unavailable-surface:oklch(28% .02 250);--status-expired:oklch(79% .1 305);--status-expired-surface:oklch(31% .06 305);--status-incompatible:oklch(82% .13 35);--status-incompatible-surface:oklch(31% .07 28);--status-error:oklch(80% .14 25);--status-error-surface:oklch(31% .08 25);--data-series-1:oklch(75% .14 235);--data-series-2:oklch(77% .12 185);--data-series-3:oklch(78% .13 300);--data-series-4:oklch(82% .13 80);--data-series-5:oklch(77% .13 28);--data-series-6:oklch(74% .1 210)}.wsr-bi[data-density=compact]{--space-page:1rem;--space-grid:.75rem;--space-cluster:.5rem;--space-control:.375rem;--space-tight:.25rem;--density-control:2.75rem}.wsr-bi *,.wsr-bi :before,.wsr-bi :after{box-sizing:inherit}.wsr-bi :focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}.wsr-bi .dashboard-grid-shell{min-width:0;overflow:auto hidden}.wsr-bi .dashboard-grid-shell[data-editing=true]{border-radius:var(--shape-panel);background-color:var(--surface-inset);background-image:linear-gradient(to right, var(--border-default) 1px, transparent 1px), linear-gradient(to bottom, var(--border-default) 1px, transparent 1px);background-position:var(--dashboard-grid-inline-padding) 0;background-size:calc(var(--dashboard-grid-column-width) + var(--dashboard-grid-gap)) 176px}.wsr-bi .dashboard-grid{transition:height var(--motion-finite-duration) ease;position:relative}.wsr-bi .dashboard-grid>.react-grid-item{min-width:0;transition:transform .18s,width .18s,height .18s}.wsr-bi .dashboard-grid>.react-grid-item>.dashboard-metric-panel{height:100%;overflow:auto}.wsr-bi .dashboard-grid-shell[data-editing=true] .dashboard-grid>.react-grid-item:not(.react-grid-placeholder){cursor:grab;outline:1px dashed var(--interaction-accent);outline-offset:2px}.wsr-bi .dashboard-grid>.react-grid-item.react-draggable-dragging{z-index:3;cursor:grabbing;transition:none}.wsr-bi .dashboard-grid>.react-grid-placeholder{z-index:2;border-radius:var(--shape-panel);background:var(--interaction-selection);outline:2px solid var(--interaction-accent);opacity:.72}.wsr-bi .dashboard-grid .react-resizable-handle{cursor:se-resize;width:1.25rem;height:1.25rem;position:absolute;bottom:.25rem;right:.25rem}.wsr-bi .dashboard-grid-shell[data-editing=false] .react-resizable-handle{display:none}.wsr-bi .dashboard-grid .react-resizable-handle:after{border-right:2px solid var(--interaction-accent);border-bottom:2px solid var(--interaction-accent);content:"";width:.5rem;height:.5rem;position:absolute;bottom:.1875rem;right:.1875rem}.wsr-bi .dashboard-import-input{clip-path:inset(50%);white-space:nowrap;width:1px;height:1px;position:absolute;overflow:hidden}.wsr-bi .dashboard-actions{justify-content:end}.wsr-bi .dashboard-actions .wsr-button[data-appearance=ghost],.wsr-bi .dashboard-widget-delete.wsr-button{border:0}.wsr-bi .dashboard-action-error{max-width:16rem;color:var(--status-error);font-size:var(--type-caption-size)}.wsr-bi .dashboard-widget-delete{z-index:4;background:var(--surface-raised);border:0;position:absolute;inset-block-start:var(--space-tight);inset-inline-end:var(--space-tight)}@supports (color:color-mix(in lab, red, red)){.wsr-bi .dashboard-widget-delete{background:color-mix(in oklch, var(--surface-raised) 88%, transparent)}}.wsr-bi .dashboard-widget-delete{color:var(--content-secondary)}.wsr-bi .dashboard-widget-delete.wsr-button:is(:hover,:focus-visible){background:var(--status-error-surface);color:var(--status-error);border:0}.wsr-bi .dashboard-remove-icon{width:1em;height:1em;-webkit-mask-image:var(--svg);-webkit-mask-image:var(--svg);-webkit-mask-image:var(--svg);-webkit-mask-image:var(--svg);mask-image:var(--svg);--svg:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M18 6L6 18M6 6l12 12'/%3E%3C/svg%3E");background-color:currentColor;width:1rem;height:1rem;display:inline-block;-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}.wsr-bi .dashboard-confirm-icon{width:1em;height:1em;-webkit-mask-image:var(--svg);-webkit-mask-image:var(--svg);-webkit-mask-image:var(--svg);-webkit-mask-image:var(--svg);mask-image:var(--svg);--svg:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m5 12l5 5L20 7'/%3E%3C/svg%3E");background-color:currentColor;width:1rem;height:1rem;display:inline-block;-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}.wsr-bi .panel-card,.wsr-bi .metric-frame,.wsr-bi .dashboard-metric-panel,.wsr-bi .bi-card{gap:var(--space-grid);min-width:0;padding:var(--space-page);border:1px var(--wsr-container-border-style) var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);flex-direction:column;display:flex}.wsr-bi .dashboard-metric-panel{gap:var(--space-cluster);padding:var(--space-cluster);container:dashboard-panel/inline-size}.wsr-bi .dashboard-grid>.react-grid-item>.dashboard-metric-panel[data-visualizer=numeric-card\\@1]{overflow:hidden}.wsr-bi .dashboard-panel-head{justify-content:space-between;align-items:flex-start;gap:var(--space-control);display:flex}.wsr-bi .dashboard-panel-head h3,.wsr-bi .dashboard-panel-meta{margin:0}.wsr-bi .dashboard-panel-actions{justify-content:flex-end;margin-top:auto;display:flex}.wsr-bi .dashboard-panel-head h3{font-size:var(--type-label-size);line-height:1.35}.wsr-bi .dashboard-metric-panel[data-visualizer=numeric-card\\@1] .dashboard-panel-title{font-size:var(--type-caption-size)}.wsr-bi .dashboard-evidence-icon{width:1em;height:1em;-webkit-mask-image:var(--svg);-webkit-mask-image:var(--svg);-webkit-mask-image:var(--svg);-webkit-mask-image:var(--svg);mask-image:var(--svg);--svg:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cg fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='2'%3E%3Cpath d='M14 3v4a1 1 0 0 0 1 1h4'/%3E%3Cpath d='M12 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v4.5'/%3E%3Cpath d='M14 17.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0m4.5 2L21 22'/%3E%3C/g%3E%3C/svg%3E");background-color:currentColor;width:1rem;height:1rem;display:inline-block;-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}.wsr-bi .dashboard-panel-meta{color:var(--content-secondary);font-size:var(--type-caption-size)}.wsr-bi .dashboard-ratio{border-radius:var(--shape-pill);background:var(--surface-inset);height:.5rem;overflow:hidden}.wsr-bi .dashboard-ratio i{background:var(--interaction-accent);height:100%;display:block}.wsr-bi .bi-section{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .metric-frame-header,.wsr-bi .metric-actions{justify-content:space-between;align-items:center;gap:var(--space-cluster);flex-wrap:wrap;display:flex}.wsr-bi .metric-value,.wsr-bi .status-stack{gap:var(--space-tight);display:grid}.wsr-bi .metric-number{font-size:var(--type-numeric-size);font-variant-numeric:tabular-nums;font-weight:650}.wsr-bi .numeric-exact,.wsr-bi .text-code{overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--type-code-size);font-variant-numeric:tabular-nums}.wsr-bi .text-heading{font-size:var(--type-heading-size);margin:0;font-weight:650}.wsr-bi .text-label{font-size:var(--type-label-size);letter-spacing:.08em;text-transform:uppercase;font-weight:700}.wsr-bi .status-label{align-items:center;gap:var(--space-tight);width:fit-content;padding:var(--space-tight) var(--space-cluster);border-radius:var(--shape-pill);font-size:var(--type-label-size);border:1px solid;font-weight:700;display:inline-flex}.wsr-bi .status-available{background:var(--status-available-surface);color:var(--status-available)}@container dashboard-panel (width<=12rem){.dashboard-panel-head .status-available{border-radius:50%;justify-content:center;width:1.5rem;height:1.5rem;padding:0}.dashboard-panel-head .status-available .status-label-text{display:none}}.wsr-bi .status-attention{background:var(--status-attention-surface);color:var(--status-attention)}.wsr-bi .status-unavailable{background:var(--status-unavailable-surface);color:var(--status-unavailable)}.wsr-bi .status-expired{background:var(--status-expired-surface);color:var(--status-expired)}.wsr-bi .status-incompatible{background:var(--status-incompatible-surface);color:var(--status-incompatible)}.wsr-bi .status-error{background:var(--status-error-surface);color:var(--status-error)}.wsr-bi .action-control,.wsr-bi .recorded-node,.wsr-bi .recorded-relation{min-height:var(--density-control);padding:var(--space-control);border:1px solid var(--border-strong);border-radius:var(--shape-control);background:var(--surface-raised);color:var(--content-primary);font:inherit;cursor:pointer}.wsr-bi .visual-with-fallback,.wsr-bi .compare-result,.wsr-bi .recorded-structure{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .compare-result{grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr))}.wsr-bi .visual-preview{width:100%;height:var(--layout-visual-preview-height)}.wsr-bi .fill-current{fill:currentColor}.wsr-bi .text-data-series-1{color:var(--data-series-1)}.wsr-bi .stroke-border-default{stroke:var(--border-default)}.wsr-bi .visual-data-table{table-layout:fixed;border-collapse:collapse;width:100%;max-width:100%;font-size:var(--type-label-size)}.wsr-bi .visual-data-table th,.wsr-bi .visual-data-table td{padding:var(--space-tight);border-block-end:1px solid var(--border-default);overflow-wrap:anywhere;text-align:start}.wsr-bi .bounded-table,.wsr-bi .recorded-graph-frame{max-width:100%;overflow:auto}.wsr-bi .recorded-graph{width:100%;min-width:40rem}.wsr-bi .recorded-graph-parent{stroke:var(--border-strong)}.wsr-bi .recorded-graph-link{stroke:var(--interaction-accent);stroke-dasharray:5 4}.wsr-bi .recorded-graph-node{fill:var(--surface-panel);stroke:var(--interaction-accent)}.wsr-bi .recorded-graph-label{fill:var(--content-primary);font-size:var(--type-label-size)}.wsr-bi .trace-view,.wsr-bi .trace-tree,.wsr-bi .trace-tree-row{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .trace-summary,.wsr-bi .trace-waterfall-row,.wsr-bi .trace-node-label,.wsr-bi .trace-tree-row>.recorded-node{justify-content:space-between;align-items:center;gap:var(--space-cluster);min-width:0;display:flex}.wsr-bi .trace-waterfall-row{grid-template-columns:minmax(10rem,.35fr) minmax(16rem,1fr);display:grid}.wsr-bi .trace-timeline-track{min-height:var(--density-row);border:1px solid var(--border-default);border-radius:var(--shape-control);background:var(--surface-inset);position:relative;overflow:hidden}.wsr-bi .trace-timeline-bar{inset-block:var(--space-tight);border-radius:var(--shape-control);background:var(--data-series-1);transform-origin:0;min-width:2px;animation:trace-recorded-reveal var(--motion-finite-duration) ease-out both;position:absolute}.wsr-bi [data-motion=off] .trace-timeline-bar{animation:none}.wsr-bi .trace-passport-grid{gap:var(--space-tight) var(--space-grid);grid-template-columns:minmax(9rem,auto) minmax(0,1fr);margin:0;display:grid}.wsr-bi .trace-passport-grid dt{color:var(--content-secondary);font-weight:650}.wsr-bi .trace-passport-grid dd{overflow-wrap:anywhere;min-width:0;margin:0}.wsr-bi .trace-link-list{color:var(--content-secondary);margin:0}.wsr-bi .trace-sr-only{clip:rect(0 0 0 0);white-space:nowrap;border:0;width:1px;height:1px;margin:-1px;padding:0;position:absolute;overflow:hidden}@keyframes trace-recorded-reveal{0%{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}@media (width<=40rem){.wsr-bi .trace-waterfall-row{grid-template-columns:1fr}}@media (prefers-reduced-motion:reduce){.wsr-bi{--motion-finite-duration:0s}}.wsr-bi .trace-view{gap:var(--space-grid);min-width:0;display:grid}.wsr-bi .trace-summary-dense{align-items:center;gap:var(--space-grid);padding:var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);grid-template-columns:minmax(12rem,1fr) repeat(4,auto);display:grid}.wsr-bi .trace-summary-dense>span{color:var(--content-secondary);font:var(--type-code-size) var(--type-code-family)}.wsr-bi .trace-overline{color:var(--content-secondary);font-size:var(--type-overline-size);letter-spacing:.08em;text-transform:uppercase;font-weight:700;display:block}.wsr-bi .trace-view-tools,.wsr-bi .trace-passport-head{justify-content:space-between;align-items:center;gap:var(--space-cluster);flex-wrap:wrap;display:flex}.wsr-bi .trace-view-tools input{min-width:min(100%,18rem);margin-inline-start:auto}.wsr-bi .trace-minimap{gap:var(--space-tight);min-height:3.75rem;padding:var(--space-tight) var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-inset);display:grid;overflow:hidden}.wsr-bi .trace-minimap-track{border:1px solid var(--interaction-accent);border-radius:var(--shape-control);min-height:1.75rem;position:relative}.wsr-bi .trace-workbench{gap:var(--space-grid);grid-template-columns:minmax(0,1fr) minmax(16rem,19rem);min-width:0;display:grid}.wsr-bi .trace-waterfall-canvas,.wsr-bi .trace-tree-canvas-shell,.wsr-bi .span-passport{border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);min-width:0;overflow:hidden}.wsr-bi .trace-waterfall-row{border-block-end:1px solid var(--border-default);min-height:3rem;display:flex}.wsr-bi .trace-node-label{gap:var(--space-tight);text-align:start;background:0 0;border:0;border-radius:0;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;display:grid}.wsr-bi .trace-node-copy{min-width:0}.wsr-bi .trace-node-copy strong,.wsr-bi .trace-node-copy small{text-overflow:ellipsis;white-space:nowrap;display:block;overflow:hidden}.wsr-bi .trace-node-copy small{color:var(--content-secondary);font:var(--type-caption-size) var(--type-code-family)}.wsr-bi .trace-glyph{border-radius:var(--shape-control);width:1.4rem;height:1.4rem;color:var(--data-series-1);border:1px solid;place-items:center;display:grid}.wsr-bi .trace-kind-client{color:var(--data-series-2)}.wsr-bi .trace-error{color:var(--status-error)}.wsr-bi .trace-timeline-track{border:0;border-inline-start:1px solid var(--border-default);background-color:var(--surface-inset);background-image:linear-gradient(90deg, transparent 24.8%, var(--border-default) 25%, transparent 25.2%, transparent 49.8%, var(--border-default) 50%, transparent 50.2%, transparent 74.8%, var(--border-default) 75%, transparent 75.2%);border-radius:0;min-height:3rem;position:relative;overflow:hidden}.wsr-bi .trace-timeline-bar{min-width:2px;padding-inline:var(--space-tight);border:1px solid var(--data-series-1);border-radius:var(--shape-control);background:var(--data-series-1);display:block;position:absolute;inset-block:.85rem;overflow:hidden}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-timeline-bar{background:color-mix(in srgb, var(--data-series-1) 45%, var(--surface-panel))}}.wsr-bi .trace-timeline-bar{color:var(--content-primary);font-size:var(--type-caption-size);text-overflow:ellipsis;white-space:nowrap;transform-origin:0;animation:trace-recorded-reveal var(--motion-finite-duration) ease-out both}.wsr-bi .trace-timeline-bar.trace-kind-client{border-color:var(--data-series-2);background:var(--data-series-2)}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-timeline-bar.trace-kind-client{background:color-mix(in srgb, var(--data-series-2) 40%, var(--surface-panel))}}.wsr-bi .trace-timeline-bar.trace-status-error{border-color:var(--status-error);background:var(--status-error)}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-timeline-bar.trace-status-error{background:color-mix(in srgb, var(--status-error) 35%, var(--surface-panel))}}.wsr-bi .trace-passport-head{justify-content:space-between;align-items:center;gap:var(--space-cluster);border-block-end:1px solid var(--border-default);min-height:2.75rem;padding:0 .75rem;display:flex}.wsr-bi .trace-passport-head strong{font-size:.625rem}.wsr-bi .trace-passport-head span{color:var(--content-muted);letter-spacing:.08em;text-transform:uppercase;font-size:.5rem}.wsr-bi .trace-passport-body{padding:.8125rem}.wsr-bi .trace-passport-title{align-items:center;gap:.5625rem;margin-block-end:.875rem;display:flex}.wsr-bi .trace-passport-title>div{min-width:0}.wsr-bi .trace-passport-name{font-size:var(--type-body-size);display:block}.wsr-bi .trace-passport-title small{color:var(--content-muted);margin-block-start:.1875rem;font-size:.5rem;display:block}.wsr-bi .trace-passport-sigil{border:1px solid var(--data-series-1);background:var(--data-series-1);border-radius:.4375rem;flex:none;place-items:center;width:1.8125rem;height:1.8125rem;display:grid}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-passport-sigil{background:color-mix(in srgb, var(--data-series-1) 16%, var(--surface-panel))}}.wsr-bi .trace-passport-sigil{color:var(--data-series-1);font-size:.5rem;font-weight:800}.wsr-bi .trace-passport-sigil.trace-kind-client{border-color:var(--data-series-2);background:var(--data-series-2)}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-passport-sigil.trace-kind-client{background:color-mix(in srgb, var(--data-series-2) 16%, var(--surface-panel))}}.wsr-bi .trace-passport-sigil.trace-kind-client{color:var(--data-series-2)}.wsr-bi .trace-passport-sigil.trace-status-error{border-color:var(--status-error);background:var(--status-error)}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-passport-sigil.trace-status-error{background:color-mix(in srgb, var(--status-error) 16%, var(--surface-panel))}}.wsr-bi .trace-passport-sigil.trace-status-error{color:var(--status-error)}.wsr-bi .trace-passport-grid{grid-template-columns:1fr;gap:.6875rem;display:grid}.wsr-bi .trace-passport-grid dt{color:var(--content-muted);letter-spacing:.1em;text-transform:uppercase;margin:0;font-size:.5rem}.wsr-bi .trace-passport-grid dd{font-size:var(--type-caption-size);margin-block-start:.1875rem;line-height:1.45}.wsr-bi .trace-passport-grid .text-code,.wsr-bi .trace-passport-grid .numeric-exact{font-size:.5rem}.wsr-bi .trace-link-receipt,.wsr-bi .trace-focus-receipt{margin-block:var(--space-grid);border-radius:var(--shape-control);color:var(--content-secondary);font-family:var(--type-code-family);font-size:var(--type-caption-size);text-align:start;padding:.65rem;line-height:1.5}.wsr-bi .trace-link-receipt{border-inline-start:3px solid var(--status-warning);background:var(--status-warning)}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-link-receipt{background:color-mix(in srgb, var(--status-warning) 16%, var(--surface-panel))}}.wsr-bi .trace-tree-canvas{background-color:var(--surface-inset);background-image:radial-gradient(var(--border-default) 1px, transparent 1px);background-size:1.25rem 1.25rem;min-height:36rem;position:relative;overflow:hidden}.wsr-bi .trace-tree-canvas-surface{cursor:pointer;touch-action:none;width:100%;height:100%;display:block;position:absolute;inset:0}.wsr-bi .trace-camera-map{z-index:2;width:9.5rem;padding:var(--space-tight);border:1px solid var(--border-strong);border-radius:var(--shape-control);background:var(--surface-base);position:absolute;inset-block-end:var(--space-grid);inset-inline-start:var(--space-grid)}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-camera-map{background:color-mix(in srgb, var(--surface-base) 90%, transparent)}}.wsr-bi .trace-camera-map{cursor:crosshair;touch-action:none;-webkit-user-select:none;user-select:none}.wsr-bi .trace-camera-map>strong{color:var(--content-secondary);text-transform:uppercase}.wsr-bi .trace-camera-map-viewport{border-radius:calc(var(--shape-control) / 2);background:var(--surface-inset);height:5rem;margin-block-start:var(--space-tight);position:relative;overflow:hidden}.wsr-bi .trace-camera-map-viewport canvas{width:100%;height:100%;display:block}.wsr-bi .trace-camera-map-viewport>span{border:1px solid var(--interaction-accent);background:var(--interaction-accent);position:absolute}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-camera-map-viewport>span{background:color-mix(in srgb, var(--interaction-accent) 15%, transparent)}}.wsr-bi .trace-camera-map-viewport>span{pointer-events:none}.wsr-bi .trace-tree-outline{clip-path:inset(50%);white-space:nowrap;width:1px;height:1px;position:absolute;overflow:hidden}.wsr-bi .trace-tree-outline>div>button{justify-content:space-between;width:100%;display:flex}.wsr-bi .trace-statistics-summary{gap:var(--space-grid);grid-template-columns:repeat(4,minmax(0,1fr));margin:0;display:grid}.wsr-bi .trace-statistics-summary>div{min-width:0}.wsr-bi .trace-statistics-summary dt{color:var(--content-secondary)}.wsr-bi .trace-statistics-summary dd{margin:var(--space-grid) 0 0;font-size:var(--type-value-size)}@media (width<=64rem){.wsr-bi .trace-workbench{grid-template-columns:1fr}.wsr-bi .span-passport{display:none}.wsr-bi .trace-summary-dense{grid-template-columns:minmax(12rem,1fr) repeat(2,auto)}.wsr-bi .trace-summary-dense>span:nth-last-child(-n+2){display:none}}@media (width<=40rem){.wsr-bi .trace-summary-dense,.wsr-bi .trace-statistics-summary{grid-template-columns:1fr}.wsr-bi .trace-minimap,.wsr-bi .trace-waterfall-canvas,.wsr-bi .trace-tree-canvas-surface,.wsr-bi .trace-camera-map{display:none}.wsr-bi .trace-tree-canvas{min-height:auto}.wsr-bi .trace-tree-outline{clip-path:none;white-space:normal;width:auto;height:auto;position:static;overflow:visible}.wsr-bi .trace-tree-outline>div{min-width:0;min-height:var(--density-row);border-block-end:1px solid var(--border-default)}.wsr-bi .trace-tree-graph,.wsr-bi .trace-tree-canvas-shell,.wsr-bi .trace-tree-outline,.wsr-bi .trace-tree-outline>div>button,.wsr-bi .trace-tree-outline>div>button>span{min-width:0;max-width:100%}.wsr-bi .trace-tree-outline>div>button>span{overflow-wrap:anywhere}.wsr-bi .trace-view-tools input{order:2;width:100%;margin:0}}.wsr-bi .trace-view{gap:.75rem}.wsr-bi .trace-view button,.wsr-bi .trace-view input[type=search]{border:1px solid var(--border-strong);border-radius:var(--shape-control);background:var(--surface-raised);min-height:2rem;color:var(--content-primary);font:inherit;font-size:var(--type-label-size);padding:0 .7rem}.wsr-bi .trace-view button{cursor:pointer}.wsr-bi .trace-view button[aria-pressed=true]{border-color:var(--interaction-accent);background:var(--interaction-selection)}.wsr-bi .trace-summary-dense{padding:.75rem .9rem}.wsr-bi .trace-summary-dense>div>strong{font-size:var(--type-heading-size);margin-block-start:.2rem;display:block}.wsr-bi .trace-node-label{padding-block:.35rem}.wsr-bi .trace-workbench{grid-template-columns:minmax(0,1fr) minmax(17rem,18.75rem);gap:.75rem}.wsr-bi .trace-tree-canvas-head{align-items:center;gap:var(--space-grid);border-block-end:1px solid var(--border-default);grid-template-columns:minmax(0,1fr) auto;min-height:3rem;padding:.45rem .75rem;display:grid}.wsr-bi .trace-tree-canvas-head>div:first-child{gap:.15rem;min-width:0;display:grid}.wsr-bi .trace-tree-canvas-head h2,.wsr-bi .trace-tree-canvas-head p{margin:0}.wsr-bi .trace-tree-canvas-head h2{font-size:var(--type-label-size)}.wsr-bi .trace-tree-canvas-head p{color:var(--content-muted);text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.wsr-bi .trace-tree-canvas-head [role=group]{gap:var(--space-tight);display:flex}.wsr-bi .trace-tree-canvas-head button{min-height:1.65rem}.wsr-bi .trace-tree-actions{justify-self:end}.wsr-bi .trace-tree-actions .wsr-button[data-icon-button=true]:is(:hover,:focus-visible){border-color:var(--interaction-accent);background:var(--interaction-selection);color:var(--interaction-accent)}.wsr-bi .trace-tree-legend{border-block-end:1px solid var(--border-default);background:var(--surface-panel);min-height:2rem;color:var(--content-secondary);font-size:var(--type-caption-size);flex-wrap:wrap;align-items:center;gap:.4rem 1rem;margin:0;padding:.35rem .75rem;list-style:none;display:flex}.wsr-bi .trace-tree-legend li{white-space:nowrap;align-items:center;gap:.35rem;display:inline-flex}.wsr-bi .trace-tree-legend i{background:var(--data-series-1);border-radius:0 .25rem .25rem 0;flex:none;block-size:.45rem;inline-size:1rem;display:inline-block;position:relative}.wsr-bi .trace-tree-legend i[data-legend-kind=client]{background:var(--data-series-2)}.wsr-bi .trace-tree-legend i[data-legend-kind=error]{background:var(--status-error)}.wsr-bi .trace-tree-legend i[data-legend-kind=parent],.wsr-bi .trace-tree-legend i[data-legend-kind=link]{border-block-start:1px solid var(--content-secondary);background:0 0;border-radius:0;block-size:0}.wsr-bi .trace-tree-legend i[data-legend-kind=link]{border-block-start-style:dashed;border-block-start-color:var(--status-warning)}.wsr-bi .trace-tree-legend i[data-legend-kind=parent]:after,.wsr-bi .trace-tree-legend i[data-legend-kind=link]:after{content:"";border-block-start:1px solid;border-inline-end:1px solid;block-size:.3rem;inline-size:.3rem;position:absolute;inset-block-start:-.2rem;inset-inline-end:-.05rem;transform:rotate(45deg)}.wsr-bi .trace-tree-legend i[data-legend-kind=flow]{background:var(--interaction-accent);block-size:.4rem;inline-size:.4rem;box-shadow:0 0 .35rem var(--interaction-accent);border-radius:50%}.wsr-bi .trace-focus-receipt{border-inline-start:3px solid var(--interaction-accent);background:var(--interaction-accent)}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-focus-receipt{background:color-mix(in srgb, var(--interaction-accent) 14%, var(--surface-panel))}}.wsr-bi .trace-passport-actions{gap:var(--space-tight);flex-wrap:wrap;display:flex}.wsr-bi .trace-waterfall-mobile{border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);overflow:hidden}.wsr-bi .trace-waterfall-mobile>header{border-block-end:1px solid var(--border-default);font-size:var(--type-label-size);text-transform:uppercase;padding:.65rem .75rem;font-weight:700}.wsr-bi .trace-waterfall-mobile [role=treeitem]{border-block-end:1px solid var(--border-default);min-width:0}.wsr-bi .trace-waterfall-mobile [role=treeitem]>button{text-align:start;background:0 0;border:0;border-radius:0;grid-template-columns:minmax(0,1fr) auto;width:100%;min-height:3rem;display:grid}.wsr-bi .trace-statistics-intro{border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);grid-template-columns:minmax(15rem,1fr) auto;align-items:center;gap:clamp(1rem,2.5vw,2.5rem);padding:.8rem .9rem;display:grid}.wsr-bi .trace-statistics-heading{gap:.2rem;min-width:0;display:grid}.wsr-bi .trace-statistics-intro h2,.wsr-bi .trace-statistics-intro p,.wsr-bi .trace-statistics-grid h3{margin:0}.wsr-bi .trace-statistics-intro h2{font-size:var(--type-heading-size)}.wsr-bi .trace-statistics-intro p{color:var(--content-secondary);font-size:var(--type-caption-size)}.wsr-bi .trace-statistics-intro .trace-statistics-summary{grid-template-columns:repeat(4,minmax(4.5rem,auto));align-items:center;gap:clamp(.8rem,1.8vw,1.75rem)}.wsr-bi .trace-statistics-summary>div{gap:.2rem;display:grid}.wsr-bi .trace-statistics-summary dt{font-size:var(--type-caption-size);white-space:nowrap}.wsr-bi .trace-statistics-summary dd{color:var(--content-primary);font-size:var(--type-heading-size);white-space:nowrap;margin:0;font-weight:650}.wsr-bi .trace-statistics-grid{gap:var(--space-grid);grid-template-columns:repeat(3,minmax(0,1fr));display:grid}.wsr-bi .trace-duration-distribution{grid-column:1/-1}.wsr-bi .trace-statistics-donut-layout{align-items:center;gap:var(--space-grid);grid-template-columns:minmax(7rem,.4fr) minmax(8rem,1fr);display:grid}.wsr-bi .trace-statistics-donut,.wsr-bi .trace-statistics-pie{width:min(100%,8rem);margin-inline:auto;display:block;overflow:visible}.wsr-bi .trace-statistics-pie-segment{fill:var(--trace-statistics-color);stroke:var(--surface-panel);stroke-width:.5px}.wsr-bi .trace-statistics-donut circle{fill:none;stroke-width:6px}.wsr-bi .trace-statistics-donut-track{stroke:var(--surface-inset)}.wsr-bi .trace-statistics-donut-segment{stroke:var(--trace-statistics-color);transform-origin:50%;transform:rotate(-90deg)}.wsr-bi .trace-statistics-donut text{fill:var(--content-primary);font:650 .42rem var(--type-code-family);text-anchor:middle}.wsr-bi .trace-statistics-donut .trace-statistics-donut-caption{fill:var(--content-muted);text-transform:uppercase;font-size:.22rem;font-weight:500}.wsr-bi .trace-statistics-legend{gap:.55rem;margin:0;padding:0;list-style:none;display:grid}.wsr-bi .trace-statistics-legend li{grid-template-columns:.55rem minmax(0,1fr) auto;align-items:center;gap:.45rem;display:grid}.wsr-bi .trace-statistics-legend li>i{background:var(--trace-statistics-color);border-radius:50%;width:.55rem;height:.55rem}.wsr-bi .wsr-typography.trace-statistics-value.trace-statistics-color{color:var(--trace-statistics-color)}.wsr-bi .trace-statistics-color,.wsr-bi .trace-statistics-color[data-color-index="0"]{--trace-statistics-color:var(--data-series-1)}.wsr-bi .trace-statistics-color[data-color-index="1"]{--trace-statistics-color:var(--data-series-2)}.wsr-bi .trace-statistics-color[data-color-index="2"]{--trace-statistics-color:var(--data-series-3)}.wsr-bi .trace-statistics-color[data-color-index="3"]{--trace-statistics-color:var(--data-series-4)}.wsr-bi .trace-statistics-color[data-color-index="4"]{--trace-statistics-color:var(--data-series-5)}.wsr-bi .trace-statistics-color[data-color-index="5"]{--trace-statistics-color:var(--data-series-6)}.wsr-bi .trace-statistics-color[data-category=status-ok]{--trace-statistics-color:var(--status-available)}.wsr-bi .trace-statistics-color[data-category=status-error]{--trace-statistics-color:var(--status-error)}.wsr-bi .trace-statistics-color[data-category=status-unset]{--trace-statistics-color:var(--status-unavailable)}.wsr-bi .trace-statistics-kind-bars{align-content:center;align-items:center;gap:var(--space-cluster);flex:1;grid-template-columns:minmax(4.5rem,auto) minmax(0,1fr);min-width:0;display:grid}.wsr-bi .trace-statistics-kind-bar-row{display:contents}.wsr-bi .trace-statistics-kind-bar-track{border-radius:var(--shape-control);background:var(--surface-inset);height:2rem;overflow:hidden}.wsr-bi .trace-statistics-kind-bar-fill{min-width:2rem;height:100%;padding-inline:var(--space-tight);border-radius:var(--shape-control);background:var(--trace-statistics-color);color:var(--content-inverse);justify-content:flex-end;align-items:center;display:flex;overflow:hidden}.wsr-bi .trace-statistics-kind-bar-fill>span{font:650 var(--type-caption-size) var(--type-code-family);text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.wsr-bi .trace-duration-distribution-body{align-items:start;gap:var(--space-grid);grid-template-columns:minmax(0,1.2fr) minmax(15rem,.8fr);display:grid}.wsr-bi .trace-duration-breakdowns{gap:var(--space-grid);border-inline-start:1px solid var(--border-default);grid-template-columns:repeat(2,minmax(0,1fr));padding-inline-start:var(--space-grid);display:grid}.wsr-bi .trace-duration-breakdown{gap:var(--space-tight);min-width:0;display:grid}.wsr-bi .trace-duration-breakdown-title{color:var(--trace-statistics-color);margin:0}.wsr-bi .trace-duration-breakdown .trace-statistics-donut-layout{gap:var(--space-tight);grid-template-columns:4.75rem minmax(0,1fr)}.wsr-bi .trace-duration-breakdown .trace-statistics-donut{width:4.75rem}.wsr-bi .trace-duration-breakdown .trace-statistics-legend{gap:var(--space-tight)}.wsr-bi .trace-duration-breakdown .trace-statistics-legend li{gap:var(--space-tight);grid-template-columns:.45rem minmax(0,1fr) auto}.wsr-bi .trace-duration-breakdown .trace-statistics-legend li>i{width:.45rem;height:.45rem}.wsr-bi .trace-duration-breakdown .trace-statistics-legend .wsr-typography{font-size:var(--type-caption-size)}.wsr-bi .trace-duration-chart{align-items:end;gap:var(--space-cluster);grid-template-columns:repeat(auto-fit,minmax(5rem,1fr));min-width:0;padding-block-start:.35rem;display:grid}.wsr-bi .trace-duration-column{gap:var(--space-tight);text-align:center;grid-template-rows:11rem minmax(2.5rem,auto);min-width:0;display:grid}.wsr-bi .trace-duration-column-plot{border-block-end:1px solid var(--border-default);justify-content:center;align-items:flex-end;min-width:0;height:11rem;display:flex}.wsr-bi .trace-duration-column-fill{width:min(100%,4.5rem);min-height:1.75rem;padding:var(--space-tight) .2rem;border-radius:var(--shape-control) var(--shape-control) 0 0;background:var(--trace-statistics-color);color:var(--content-inverse);justify-content:center;align-items:flex-start;display:flex;overflow:hidden}.wsr-bi .trace-duration-column-fill>span{font:650 var(--type-caption-size) var(--type-code-family);text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.wsr-bi .trace-duration-column-label{min-width:0;color:var(--content-secondary);text-overflow:ellipsis;overflow:hidden}@media (width<=64rem){.wsr-bi .trace-workbench{grid-template-columns:1fr}.wsr-bi .trace-statistics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wsr-bi .trace-duration-distribution-body{grid-template-columns:1fr}.wsr-bi .trace-duration-breakdowns{border-block-start:1px solid var(--border-default);border-inline-start:0;padding-block-start:var(--space-grid);padding-inline-start:0}}@media (width<=40rem){.wsr-bi,.wsr-bi .trace-view,.wsr-bi .trace-view>*{inline-size:100%;min-inline-size:0;max-inline-size:100%}.wsr-bi .trace-view{overflow:hidden}.wsr-bi .trace-tree-context,.wsr-bi .trace-tree-canvas-head{grid-template-columns:1fr}.wsr-bi .trace-tree-canvas-head p{display:none}.wsr-bi .trace-tree-outline>div>button{gap:var(--space-tight);background:0 0;border:0;border-radius:0;grid-template-columns:minmax(0,1fr) auto;min-height:3rem;display:grid}.wsr-bi .trace-statistics-grid,.wsr-bi .trace-statistics-intro{grid-template-columns:1fr}.wsr-bi .trace-statistics-intro .trace-statistics-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.wsr-bi .trace-duration-distribution{grid-column:auto}.wsr-bi .trace-statistics-donut-layout{grid-template-columns:minmax(6rem,.35fr) minmax(8rem,1fr)}.wsr-bi .trace-duration-breakdowns{grid-template-columns:1fr}}.wsr-bi .trace-summary-dense{grid-template-columns:minmax(16rem,1fr) auto;padding:.75rem .9rem}.wsr-bi .trace-summary-identity{gap:.18rem;min-width:0;display:grid}.wsr-bi .trace-summary-identity>strong{font-size:var(--type-heading-size)}.wsr-bi .trace-summary-identity>code{color:var(--content-muted);font:var(--type-caption-size) var(--type-code-family);text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.wsr-bi .trace-summary-metrics{justify-content:flex-end;align-items:center;gap:clamp(1rem,2.4vw,2.25rem);display:flex}.wsr-bi .trace-summary-stat{gap:.2rem;min-width:4rem;display:grid}.wsr-bi .trace-summary-stat small{color:var(--content-muted);font-size:var(--type-caption-size)}.wsr-bi .trace-summary-stat strong{color:var(--content-primary);font:650 var(--type-heading-size) var(--type-code-family)}.wsr-bi .trace-summary-stat>.wsr-typography{font-size:var(--type-heading-size)}.wsr-bi .trace-summary-stat[data-tone=error] strong{color:var(--status-error)}.wsr-bi .trace-summary-stat[data-tone=success] strong{color:var(--status-available)}.wsr-bi .trace-view-header{align-items:center;gap:var(--space-grid);border:1px solid var(--border-default);border-radius:var(--shape-panel);background:var(--surface-panel);flex-direction:row;min-width:0;padding:.75rem .9rem;display:flex}.wsr-bi .trace-view-header-copy{flex-direction:column;flex:0 auto;gap:.2rem;min-width:14rem;display:flex}.wsr-bi .trace-view-header-spacer{min-width:var(--space-grid);flex:auto}.wsr-bi .trace-view-header-metrics{flex-direction:row;flex:none;align-items:center;gap:clamp(1rem,2.4vw,2.25rem);min-width:0;margin:0;display:flex}.wsr-bi .trace-view-header-stat{flex-direction:column;gap:.2rem;min-width:4rem;display:flex}.wsr-bi .trace-view-header-copy>.wsr-typography[data-variant=overline]{color:var(--content-secondary);font-size:var(--type-overline-size);font-weight:700}.wsr-bi .trace-view-header-copy>.wsr-typography[data-variant=caption]{color:var(--content-muted);font-size:var(--type-caption-size);text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.wsr-bi .trace-view-header-stat>.wsr-typography[data-variant=caption]{color:var(--content-muted);font-size:var(--type-caption-size);white-space:nowrap}.wsr-bi .trace-view-header-stat>.wsr-typography[data-variant=h2]{color:var(--content-primary);font-size:var(--type-heading-size);white-space:nowrap;margin:0;font-weight:650}.wsr-bi .trace-minimap{grid-template-columns:minmax(8rem,10rem) minmax(25rem,1fr);align-items:stretch;gap:0;min-height:3.25rem;padding:0}.wsr-bi .trace-minimap-copy{border-inline-end:1px solid var(--border-default);background:var(--surface-panel);align-content:center;gap:.15rem;padding-inline:.85rem;display:grid}.wsr-bi .trace-minimap-copy>strong{font-size:var(--type-label-size)}.wsr-bi .trace-minimap-copy>small{color:var(--content-muted);font-size:var(--type-caption-size)}.wsr-bi .trace-minimap-track{background:var(--surface-inset);cursor:crosshair;touch-action:none;border:0;border-radius:0;min-height:3.25rem;overflow:hidden}.wsr-bi .trace-minimap-overview{z-index:1;pointer-events:none;width:100%;height:calc(100% - 1.25rem);position:absolute;inset:.25rem 0 1rem;overflow:hidden}.wsr-bi .trace-minimap-overview .trace-minimap-span{--trace-waterfall-color:var(--data-series-1);stroke:var(--trace-waterfall-color)}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-minimap-overview .trace-minimap-span{stroke:color-mix(in srgb, var(--trace-waterfall-color) 45%, var(--surface-panel))}}.wsr-bi .trace-minimap-overview .trace-minimap-span{stroke-linecap:round;vector-effect:non-scaling-stroke}.wsr-bi .trace-minimap-overview .trace-minimap-span[data-color-index="1"]{--trace-waterfall-color:var(--data-series-2)}.wsr-bi .trace-minimap-overview .trace-minimap-span[data-color-index="2"]{--trace-waterfall-color:var(--data-series-3)}.wsr-bi .trace-minimap-overview .trace-minimap-span[data-color-index="3"]{--trace-waterfall-color:var(--data-series-4)}.wsr-bi .trace-minimap-overview .trace-minimap-span[data-color-index="4"]{--trace-waterfall-color:var(--data-series-5)}.wsr-bi .trace-minimap-overview .trace-minimap-span[data-color-index="5"]{--trace-waterfall-color:var(--data-series-6)}.wsr-bi .trace-minimap-overview .trace-minimap-span.trace-status-error{stroke:var(--status-error)}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-minimap-overview .trace-minimap-span.trace-status-error{stroke:color-mix(in srgb, var(--status-error) 35%, var(--surface-panel))}}.wsr-bi .trace-minimap-ruler{z-index:3;pointer-events:none;position:absolute;inset:0}.wsr-bi .trace-minimap-ruler>span{background:var(--surface-inset);padding-inline:.15rem;position:absolute;inset-block-end:.18rem}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-minimap-ruler>span{background:color-mix(in srgb, var(--surface-inset) 86%, transparent)}}.wsr-bi .trace-minimap-ruler>span{color:var(--content-muted);font:normal var(--type-caption-size) var(--type-code-family);white-space:nowrap;line-height:1.2;transform:translate(-50%)}.wsr-bi .trace-minimap-ruler>span:before{border-inline-start:1px solid var(--border-strong);content:"";height:.24rem;position:absolute;inset-block-end:calc(100% + .08rem);inset-inline-start:50%}.wsr-bi .trace-minimap-ruler>span:first-child{transform:none}.wsr-bi .trace-minimap-ruler>span:first-child:before{inset-inline-start:0}.wsr-bi .trace-minimap-ruler>span:last-child{transform:translate(-100%)}.wsr-bi .trace-minimap-ruler>span:last-child:before{inset-inline-start:100%}.wsr-bi .trace-minimap-window{z-index:2;border-block:1px solid var(--status-warning);min-width:2px;position:absolute;inset-block:.25rem}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-minimap-window{border-block:1px solid color-mix(in srgb, var(--status-warning) 82%, transparent)}}.wsr-bi .trace-minimap-window{background:var(--status-warning)}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-minimap-window{background:color-mix(in srgb, var(--status-warning) 14%, transparent)}}.wsr-bi .trace-minimap-window{box-shadow:inset 0 0 0 1px var(--status-warning)}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-minimap-window{box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--status-warning) 28%, transparent)}}.wsr-bi .trace-minimap-window{cursor:grab}.wsr-bi .trace-minimap-resize-handle{z-index:1;cursor:ew-resize;pointer-events:auto;width:.75rem;position:absolute;inset-block:0}.wsr-bi .trace-minimap-resize-handle:before{background:var(--status-warning);content:"";border-radius:99px;width:2px;position:absolute;inset-block:28%;inset-inline-start:calc(50% - 1px)}.wsr-bi .trace-minimap-resize-handle[data-edge=left]{inset-inline-start:-.375rem}.wsr-bi .trace-minimap-resize-handle[data-edge=right]{inset-inline-end:-.375rem}.wsr-bi .trace-minimap-window[data-full=true]{pointer-events:none;background:0 0;border:0}.wsr-bi .trace-waterfall-toolbar{align-items:center;gap:var(--space-grid);border-block-end:1px solid var(--border-default);grid-template-columns:minmax(7rem,1fr) minmax(15rem,21rem) minmax(7rem,1fr);min-height:3rem;padding:.45rem .75rem;display:grid}.wsr-bi .trace-waterfall-heading,.wsr-bi .trace-waterfall-actions{align-items:center;gap:var(--space-tight);display:flex}.wsr-bi .trace-waterfall-actions{justify-self:end}.wsr-bi .trace-waterfall-heading>strong{font-size:var(--type-label-size);margin-inline-end:.4rem}.wsr-bi .trace-waterfall-actions button{min-height:1.65rem}.wsr-bi .trace-waterfall-actions .wsr-button[data-icon-button=true]:is(:hover,:focus-visible){border-color:var(--interaction-accent);background:var(--interaction-selection);color:var(--interaction-accent)}.wsr-bi .trace-waterfall-toolbar input{width:100%;min-height:2rem}.wsr-bi .trace-waterfall-table{grid-template-columns:minmax(16rem,19rem) minmax(0,1fr);align-items:start;min-width:0;display:grid}.wsr-bi .trace-waterfall-label-pane{border-inline-end:1px solid var(--border-strong);min-width:0}.wsr-bi .trace-waterfall-column-head{border-block-end:1px solid var(--border-default);height:2rem;color:var(--content-secondary);font-size:var(--type-caption-size);text-transform:uppercase;align-items:center;padding-inline:.85rem;font-weight:700;display:flex}.wsr-bi .trace-waterfall-label-rows{flex-direction:column;min-width:0;display:flex;position:absolute;inset-block-start:0;inset-inline:0}.wsr-bi .trace-waterfall-scroll-viewport{overscroll-behavior:contain;scrollbar-gutter:stable;overflow:hidden auto}.wsr-bi .trace-waterfall-scroll-space{min-width:0;position:relative}.wsr-bi .trace-waterfall-row{cursor:pointer;align-items:stretch;height:3rem;min-height:3rem;display:flex}.wsr-bi .trace-node-label{align-items:stretch;gap:.3rem;width:100%;min-width:0;padding:0 .65rem 0 0;display:flex}.wsr-bi .trace-indent-items{flex:none;align-self:stretch;display:flex}.wsr-bi .trace-indent-item{--trace-indent-color:var(--data-series-1);background:var(--trace-indent-color);width:.65rem;display:block}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-indent-item{background:color-mix(in srgb, var(--trace-indent-color) 24%, transparent)}}.wsr-bi .trace-indent-item[data-guide-depth="1"]{--trace-indent-color:var(--data-series-2)}.wsr-bi .trace-indent-item[data-guide-depth="2"]{--trace-indent-color:var(--data-series-3)}.wsr-bi .trace-indent-item[data-guide-depth="3"]{--trace-indent-color:var(--data-series-4)}.wsr-bi .trace-indent-item[data-guide-depth="4"]{--trace-indent-color:var(--data-series-5)}.wsr-bi .trace-indent-item[data-guide-depth="5"]{--trace-indent-color:var(--data-series-6)}.wsr-bi .trace-collapse-control,.wsr-bi .trace-collapse-placeholder{align-self:center;width:1.25rem;height:1.25rem}.wsr-bi .trace-view .trace-collapse-control{min-height:0;color:var(--content-secondary);background:0 0;border:0;place-items:center;padding:0;font-size:1rem;display:grid}.wsr-bi .trace-view .trace-node-main{text-align:start;background:0 0;border:0;border-radius:0;flex:auto;align-content:center;gap:.15rem;min-width:0;min-height:0;padding:0;display:grid}.wsr-bi .trace-node-title-line{align-items:center;gap:.4rem;min-width:0;display:flex}.wsr-bi .trace-node-title-line>strong{font-size:var(--type-label-size);text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.wsr-bi .trace-node-main>small{color:var(--content-muted);font:var(--type-caption-size) var(--type-code-family);text-overflow:ellipsis;white-space:nowrap;padding-inline-start:0;overflow:hidden}.wsr-bi .trace-waterfall-row{border-block-end:0}.wsr-bi .trace-waterfall-row:nth-child(2n){background:var(--surface-raised)}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-waterfall-row:nth-child(2n){background:color-mix(in srgb, var(--surface-raised) 42%, var(--surface-panel))}}.wsr-bi .trace-waterfall-row.is-selected{background:var(--interaction-selection)}.wsr-bi .trace-waterfall-chart{background:var(--surface-inset);min-width:0;display:block;overflow:hidden}.wsr-bi .trace-waterfall-axis-line,.wsr-bi .trace-waterfall-gridline{stroke:var(--border-strong);stroke-width:1px;vector-effect:non-scaling-stroke}.wsr-bi .trace-waterfall-gridline{opacity:.64}.wsr-bi .trace-waterfall-axis-tick{pointer-events:none}.wsr-bi .trace-waterfall-axis-tick text{fill:var(--content-muted);font:normal var(--type-caption-size) var(--type-code-family)}.wsr-bi .trace-waterfall-lane{cursor:pointer;outline:none}.wsr-bi .trace-waterfall-lane-hit-target{fill:#0000}.wsr-bi .trace-waterfall-lane[data-selected=true] .trace-waterfall-lane-hit-target{fill:var(--interaction-selection)}.wsr-bi .trace-waterfall-lane:focus-visible .trace-waterfall-lane-hit-target{stroke:var(--focus-ring);stroke-width:2px;vector-effect:non-scaling-stroke}.wsr-bi .trace-waterfall-chart .trace-timeline-bar{--trace-waterfall-color:var(--data-series-1);fill:var(--trace-waterfall-color)}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-waterfall-chart .trace-timeline-bar{fill:color-mix(in srgb, var(--trace-waterfall-color) 45%, var(--surface-panel))}}.wsr-bi .trace-waterfall-chart .trace-timeline-bar{stroke:var(--trace-waterfall-color);stroke-width:1px;vector-effect:non-scaling-stroke}.wsr-bi .trace-waterfall-chart .trace-timeline-bar[data-color-index="1"]{--trace-waterfall-color:var(--data-series-2)}.wsr-bi .trace-waterfall-chart .trace-timeline-bar[data-color-index="2"]{--trace-waterfall-color:var(--data-series-3)}.wsr-bi .trace-waterfall-chart .trace-timeline-bar[data-color-index="3"]{--trace-waterfall-color:var(--data-series-4)}.wsr-bi .trace-waterfall-chart .trace-timeline-bar[data-color-index="4"]{--trace-waterfall-color:var(--data-series-5)}.wsr-bi .trace-waterfall-chart .trace-timeline-bar[data-color-index="5"]{--trace-waterfall-color:var(--data-series-6)}.wsr-bi .trace-waterfall-chart .trace-timeline-bar.trace-status-error{fill:var(--status-error)}@supports (color:color-mix(in lab, red, red)){.wsr-bi .trace-waterfall-chart .trace-timeline-bar.trace-status-error{fill:color-mix(in srgb, var(--status-error) 35%, var(--surface-panel))}}.wsr-bi .trace-waterfall-chart .trace-timeline-bar.trace-status-error{stroke:var(--status-error)}.wsr-bi .trace-waterfall-lane[data-selected=true] .trace-timeline-bar{stroke-width:2px}.wsr-bi .trace-waterfall-chart .trace-timeline-label{fill:var(--content-primary);font-size:var(--type-label-size);pointer-events:none;font-weight:650}.wsr-bi :is(.trace-waterfall-timeline,.trace-timeline-label)[data-motion-phase]{transform-box:fill-box;transform-origin:50%;animation-duration:.28s;animation-timing-function:cubic-bezier(.22,1,.36,1);animation-fill-mode:both}.wsr-bi :is(.trace-waterfall-timeline,.trace-timeline-label)[data-motion-phase=enter][data-motion-direction=right]{animation-name:trace-timeline-enter-right}.wsr-bi :is(.trace-waterfall-timeline,.trace-timeline-label)[data-motion-phase=enter][data-motion-direction=left]{animation-name:trace-timeline-enter-left}.wsr-bi :is(.trace-waterfall-timeline,.trace-timeline-label)[data-motion-phase=exit][data-motion-direction=right]{animation-name:trace-timeline-exit-right}.wsr-bi :is(.trace-waterfall-timeline,.trace-timeline-label)[data-motion-phase=exit][data-motion-direction=left]{animation-name:trace-timeline-exit-left}.wsr-bi[data-motion=off] :is(.trace-waterfall-timeline,.trace-timeline-label){animation:none}@keyframes trace-timeline-enter-right{0%{opacity:0;transform:translate(-1.5rem)}to{opacity:1;transform:translate(0)}}@keyframes trace-timeline-enter-left{0%{opacity:0;transform:translate(1.5rem)}to{opacity:1;transform:translate(0)}}@keyframes trace-timeline-exit-right{0%{opacity:1;transform:translate(0)}to{opacity:0;transform:translate(1.5rem)}}@keyframes trace-timeline-exit-left{0%{opacity:1;transform:translate(0)}to{opacity:0;transform:translate(-1.5rem)}}.wsr-bi .trace-node-label>.numeric-exact,.wsr-bi .trace-node-label>.trace-error{font-size:var(--type-caption-size);align-self:center}@media (width<=64rem){.wsr-bi .trace-summary-dense{grid-template-columns:1fr}.wsr-bi .trace-summary-metrics{justify-content:flex-start}}@media (width<=40rem){.wsr-bi .trace-summary-metrics{grid-template-columns:repeat(2,minmax(0,1fr));display:grid}.wsr-bi .trace-minimap{display:none}.wsr-bi .trace-waterfall-toolbar{grid-template-columns:1fr}.wsr-bi .trace-waterfall-actions{justify-self:start}}@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-leading:initial;--tw-font-weight:initial;--tw-tracking:initial;--tw-border-style:solid}}}.wsr-bi .wsr-typography{color:var(--content-primary);margin:0}.wsr-bi .wsr-typography[data-variant=h1]{font-size:var(--type-h1-size);--tw-leading:var(--leading-tight,1.25);line-height:var(--leading-tight,1.25);--tw-font-weight:var(--font-weight-semibold,600);font-weight:var(--font-weight-semibold,600)}.wsr-bi .wsr-typography[data-variant=h2]{font-size:var(--type-heading-size);--tw-leading:var(--leading-snug,1.375);line-height:var(--leading-snug,1.375);--tw-font-weight:var(--font-weight-semibold,600);font-weight:var(--font-weight-semibold,600)}.wsr-bi .wsr-typography[data-variant=subtitle1]{font-size:var(--type-subtitle-size);--tw-leading:var(--leading-snug,1.375);line-height:var(--leading-snug,1.375);--tw-font-weight:var(--font-weight-semibold,600);font-weight:var(--font-weight-semibold,600)}.wsr-bi .wsr-typography[data-variant=body1]{font-size:var(--type-body-size);--tw-leading:var(--leading-relaxed,1.625);line-height:var(--leading-relaxed,1.625)}.wsr-bi .wsr-typography[data-variant=body2]{font-size:var(--type-body-small-size);--tw-leading:var(--leading-relaxed,1.625);line-height:var(--leading-relaxed,1.625)}.wsr-bi .wsr-typography[data-variant=caption]{font-size:var(--type-caption-size);color:var(--content-secondary)}.wsr-bi .wsr-typography[data-variant=overline]{font-size:var(--type-overline-size);--tw-font-weight:var(--font-weight-bold,700);font-weight:var(--font-weight-bold,700);--tw-tracking:var(--tracking-widest,.1em);letter-spacing:var(--tracking-widest,.1em);color:var(--content-secondary);text-transform:uppercase}.wsr-bi .wsr-typography[data-family=mono]{font-family:var(--type-code-family)}.wsr-bi .wsr-typography[data-weight=regular]{--tw-font-weight:var(--font-weight-normal,400);font-weight:var(--font-weight-normal,400)}.wsr-bi .wsr-typography[data-weight=medium]{--tw-font-weight:var(--font-weight-medium,500);font-weight:var(--font-weight-medium,500)}.wsr-bi .wsr-typography[data-weight=semibold]{--tw-font-weight:var(--font-weight-semibold,600);font-weight:var(--font-weight-semibold,600)}.wsr-bi .wsr-typography[data-weight=bold]{--tw-font-weight:var(--font-weight-bold,700);font-weight:var(--font-weight-bold,700)}.wsr-bi .wsr-typography[data-tone=primary]{color:var(--content-primary)}.wsr-bi .wsr-typography[data-tone=secondary]{color:var(--content-secondary)}.wsr-bi .wsr-typography[data-tone=muted]{color:var(--content-muted)}.wsr-bi .wsr-typography[data-tone=inverse]{color:var(--content-inverse)}.wsr-bi .wsr-typography[data-tone=error]{color:var(--status-error)}.wsr-bi .wsr-typography[data-tone=warning]{color:var(--status-attention)}.wsr-bi .wsr-typography[data-tone=success]{color:var(--status-available)}.wsr-bi .wsr-typography[data-italic]{font-style:italic}.wsr-bi .wsr-typography[data-underline]{text-decoration-line:underline}.wsr-bi .wsr-typography[data-truncate]{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}.wsr-bi .wsr-button{min-height:calc(var(--spacing,.25rem) * 8);justify-content:center;align-items:center;gap:calc(var(--spacing,.25rem) * 1.5);border-radius:var(--shape-control);border-style:var(--tw-border-style);padding-inline:calc(var(--spacing,.25rem) * 2.5);padding-block:calc(var(--spacing,.25rem) * 1.5);font-size:var(--type-label-size);color:var(--content-primary);border-width:1px;display:inline-flex}.wsr-bi .wsr-button[data-appearance=outline]{border-color:var(--border-strong);background-color:var(--surface-raised)}.wsr-bi .wsr-button[data-appearance=ghost]{color:var(--content-secondary);background-color:#0000;border-color:#0000}.wsr-bi .wsr-button[data-appearance=solid][data-tone=primary]{border-color:var(--interaction-accent);background-color:var(--interaction-selection)}.wsr-bi .wsr-button[data-appearance=solid][data-tone=danger]{border-color:var(--status-error);background-color:var(--status-error-surface);color:var(--status-error)}.wsr-bi .wsr-button[data-appearance=segment]{min-height:calc(var(--spacing,.25rem) * 7);background-color:#0000;border-color:#0000}.wsr-bi .wsr-button[data-appearance=segment][aria-pressed=true]{border-color:var(--interaction-accent);background-color:var(--interaction-selection)}.wsr-bi .wsr-button:disabled{cursor:not-allowed;opacity:.5}.wsr-bi .wsr-button[data-icon-button=true]{min-height:calc(var(--spacing,.25rem) * 7);width:calc(var(--spacing,.25rem) * 7);min-width:calc(var(--spacing,.25rem) * 7);padding:0}.wsr-bi .wsr-button[data-icon-button=true] svg{height:calc(var(--spacing,.25rem) * 3.5);width:calc(var(--spacing,.25rem) * 3.5);fill:none;stroke:currentColor;stroke-width:1.35px;stroke-linecap:round;stroke-linejoin:round}.wsr-bi .wsr-button-group{align-items:center;gap:calc(var(--spacing,.25rem) * 1.5);flex-wrap:wrap;display:flex}.wsr-bi .wsr-button-group[data-segmented]{gap:var(--spacing,.25rem);border-radius:var(--shape-control);border-style:var(--tw-border-style);border-width:1px;border-color:var(--border-default);background-color:var(--surface-inset);padding:calc(var(--spacing,.25rem) * .5)}.wsr-bi .wsr-surface{border-radius:var(--shape-panel);border-style:var(--tw-border-style);border-width:1px;border-color:var(--border-default);background-color:var(--surface-section);min-width:0}.wsr-bi .wsr-surface[data-level=panel]{background-color:var(--surface-panel)}.wsr-bi .wsr-surface[data-level=inset]{border-radius:var(--shape-control);background-color:var(--surface-inset)}.wsr-bi .wsr-surface[data-level=raised]{background-color:var(--surface-raised)}.wsr-bi .wsr-surface[data-border=dashed]{--tw-border-style:dashed;border-style:dashed}.wsr-bi .wsr-surface[data-border=none]{border-style:var(--tw-border-style);border-width:0}.wsr-bi .wsr-divider{border-style:var(--tw-border-style);background-color:var(--border-default);border-width:0;width:100%;height:1px;margin:0}.wsr-bi .wsr-input{min-height:calc(var(--spacing,.25rem) * 8);border-radius:var(--shape-control);border-style:var(--tw-border-style);border-width:1px;border-color:var(--border-strong);background-color:var(--surface-inset);min-width:0;padding-inline:calc(var(--spacing,.25rem) * 2.5);font-size:var(--type-label-size);color:var(--content-primary);--tw-outline-style:none;outline-style:none}.wsr-bi .wsr-input:focus{border-color:var(--interaction-accent)}.wsr-bi .wsr-status-badge{padding-inline:calc(var(--spacing,.25rem) * 2);padding-block:calc(var(--spacing,.25rem) * .5);font-size:var(--type-overline-size);--tw-font-weight:var(--font-weight-bold,700);font-weight:var(--font-weight-bold,700);text-transform:uppercase;border-radius:2147483647px;align-items:center;display:inline-flex}.wsr-bi .wsr-status-badge[data-status=available],.wsr-bi .wsr-status-badge[data-status=selected]{background-color:var(--interaction-selection);color:var(--interaction-accent)}.wsr-bi .wsr-status-badge[data-status=partial]{background-color:var(--status-attention-surface);color:var(--status-attention)}.wsr-bi .wsr-status-badge[data-status=unavailable]{background-color:var(--surface-raised);color:var(--content-secondary)}.wsr-bi .wsr-status-badge[data-status=error]{background-color:var(--status-error-surface);color:var(--status-error)}@property --tw-leading{syntax:"*";inherits:false}@property --tw-font-weight{syntax:"*";inherits:false}@property --tw-tracking{syntax:"*";inherits:false}@property --tw-border-style{syntax:"*";inherits:false;initial-value:solid}
+/*$vite$:1*/`;
 
 // packages/studio/src/client/evaluate-model.js
 var STORAGE_KEY = "wsr.studio.location@1";
@@ -7091,26 +7913,26 @@ function createStudioClientPlugin({ React: React2, Primitives: Primitives2 = {},
 
 // packages/studio/src/client/browser-entry.js
 var Bi = Object.freeze({
-  BiSurface: x,
-  Button: p,
-  ButtonGroup: h,
-  CATALOG_COORDINATES: nt,
-  CompareResultFrame: xe,
-  DashboardMetricPanel: _e,
-  EvidenceConsoleFoundation: Me,
-  MetricPanel: ve,
-  ReceiptView: De,
-  ScopedError: V,
-  StatusBadge: y,
-  Surface: g,
-  TextInput: v,
-  TraceStatistics: tt,
-  TraceTree: et,
-  TraceWaterfall: Ye,
-  Typography: f,
-  compileTraceView: st,
-  createBiTheme: w,
-  selectDefaultVisualizer: L
+  BiSurface: C,
+  Button: h,
+  ButtonGroup: _,
+  CATALOG_COORDINATES: ot,
+  CompareResultFrame: Te,
+  DashboardMetricPanel: xe,
+  EvidenceConsoleFoundation: Ie,
+  MetricPanel: Se,
+  ReceiptView: je,
+  ScopedError: B,
+  StatusBadge: x,
+  Surface: v,
+  TextInput: b,
+  TraceStatistics: ln,
+  TraceTree: nn,
+  TraceWaterfall: Kt,
+  Typography: m,
+  compileTraceView: gn,
+  createBiTheme: D,
+  selectDefaultVisualizer: ae
 });
 var plugin = createStudioClientPlugin({ React: import_react2.default, Primitives, Bi, sharedStyles: styles_default });
 var name = plugin.name;

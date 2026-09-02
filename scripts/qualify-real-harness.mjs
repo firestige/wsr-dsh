@@ -853,12 +853,16 @@ try {
     }));
     const summaryLabels = [...view?.querySelectorAll('.trace-summary-stat small') ?? []].map((node) => node.textContent.trim());
     const summaryTones = Object.fromEntries([...view?.querySelectorAll('.trace-summary-stat') ?? []].map((node) => [node.querySelector('small')?.textContent.trim(), node.dataset.tone]));
-    const rulerTicks = [...view?.querySelectorAll('.trace-ruler i') ?? []].map((node) => node.textContent.trim());
+    const rulerTicks = [...view?.querySelectorAll('.trace-minimap-ruler span') ?? []].map((node) => node.textContent.trim());
     const minimapSlider = view?.querySelector('[role="slider"][aria-label="Trace minimap zoom window"]');
+    const minimapOverview = view?.querySelector('[data-testid="trace-waterfall-minimap-overview"]');
+    const minimapWindow = view?.querySelector('[data-testid="trace-waterfall-data-zoom-window"]');
+    const minimapStartHandle = view?.querySelector('[data-testid="trace-waterfall-data-zoom-handle-left"]');
+    const minimapEndHandle = view?.querySelector('[data-testid="trace-waterfall-data-zoom-handle-right"]');
     const rootToggle = view?.querySelector('[aria-label="Collapse Qualification evaluate descendants"]');
     const waterfallActions = view?.querySelector('.trace-waterfall-actions');
     return view && view.textContent.includes('Qualification evaluate')
-      && view.querySelector('[aria-label="Recorded trace minimap"]') && minimapSlider && view.querySelector('input[type="range"]') && view.textContent.includes('Span Passport')
+      && view.querySelector('[aria-label="Recorded trace minimap"]') && minimapSlider && minimapOverview && minimapWindow && minimapStartHandle && minimapEndHandle && view.textContent.includes('Span Passport')
       ? { schemaVersion: 'wsr.studio-render@1', motion: view.getAttribute('data-motion'), spans: view.querySelectorAll('[role="treeitem"]').length,
           minimap: true, passport: Boolean(view.querySelector('.trace-passport-head') && view.querySelector('.trace-passport-body') && view.querySelector('.trace-passport-sigil')),
           summaryLabels, summaryTones, rulerTicks, oldToolbar: Boolean(view.querySelector('.trace-view-tools')),
@@ -897,18 +901,19 @@ try {
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Tree').click(); })()`);
   const tree = await waitFor(async () => cdp.evaluate(`(() => {
     const view = document.querySelector('[data-trace-renderer="tree"]');
+    const graph = view?.querySelector('canvas[aria-label="Recorded span call tree graph"]');
     return view && view.textContent.includes('Qualification evaluate') && view.textContent.includes('Span Passport')
-      && view.querySelector('svg[aria-label="Recorded span call tree graph"]') && view.querySelector('[aria-label="Semantic camera map"]')
+      && graph && view.querySelector('[aria-label="Tree minimap navigation"]')
       ? { schemaVersion: 'wsr.trace-graph@1', spans: view.querySelectorAll('[role="treeitem"]').length,
-          parentEdges: view.querySelectorAll('[data-relationship="PARENT_EDGE"]').length,
-          links: view.querySelectorAll('[data-relationship="LINK"]').length,
-          graph: Boolean(view.querySelector('svg[aria-label="Recorded span call tree graph"]')),
+          parentEdgeCount: Number(graph.dataset.parentEdgeCount),
+          linkCount: Number(graph.dataset.linkCount),
+          graph: true,
           cameraMap: true,
           navigationNote: view.querySelector('.studio-trace-view-note')?.textContent.trim(),
           passport: Boolean(view.querySelector('.trace-passport-head') && view.querySelector('.trace-passport-body') && view.querySelector('.trace-passport-sigil')) }
       : undefined;
   })()`), "HARNESS_STUDIO_TRACE_TREE_FAILED");
-  if (tree.schemaVersion !== "wsr.trace-graph@1" || tree.spans !== 7 || tree.parentEdges !== 6 || tree.links !== 1 || !tree.graph || !tree.passport ||
+  if (tree.schemaVersion !== "wsr.trace-graph@1" || tree.spans !== 7 || tree.parentEdgeCount !== 6 || tree.linkCount !== 1 || !tree.graph || !tree.cameraMap || !tree.passport ||
       tree.navigationNote !== "Deterministic geometry · depth → recorded start/end → Span ID") throw new Error(`HARNESS_STUDIO_TRACE_TREE_DENSITY_INVALID: ${JSON.stringify(tree)}`);
   const studioTreeScreenshot = await captureScreenshot(cdp, "studio-trace-tree-dark-desktop");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Statistics').click(); })()`);
@@ -921,9 +926,9 @@ try {
           typography: [...view.querySelectorAll('[data-variant]')].map((node) => node.dataset.variant) }
       : undefined;
   })()`), "HARNESS_STUDIO_TRACE_STATISTICS_FAILED");
+  const expectedStatisticsTypography = ["overline", "h2", "subtitle1", "body1", "body2", "caption"];
   if (statistics.navigationNote !== "Exact inventory · recorded-time aggregates · no inferred causality" ||
-      !statistics.typography.includes("sectionTitle") || !statistics.typography.includes("label") ||
-      !statistics.typography.includes("body") || !statistics.typography.includes("caption") || !statistics.typography.includes("value")) {
+      expectedStatisticsTypography.some((variant) => !statistics.typography.includes(variant))) {
     throw new Error(`HARNESS_STUDIO_TRACE_STATISTICS_SEMANTICS_INVALID: ${JSON.stringify(statistics)}`);
   }
   const studioStatisticsScreenshot = await captureScreenshot(cdp, "studio-trace-statistics-dark-desktop");
