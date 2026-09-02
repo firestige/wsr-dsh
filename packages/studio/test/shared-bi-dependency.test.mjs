@@ -5,7 +5,7 @@ import test from "node:test";
 
 const root = resolve(import.meta.dirname, "../../..");
 const expectedIntegrity =
-  "sha512-jHK1jASNAw0WqNMrzgOK9KWZls/DiA7q8J2shE96/Gatb2mTw+lzG7UY+8rWuh1PWfyTFuvqnS3u/hVfyCrOBw==";
+  "sha512-d18toSc4NPrq6Hhkzx4xDFYpy57FnJ5NqM3QimxxWai8WcBFcicjnrq9DXIgbEV5xV3kX8XKjZAkTV2tRhRG7Q==";
 
 test("Studio locks the immutable shared BI registry candidate without source-path escape hatches", async () => {
   const studio = JSON.parse(
@@ -14,11 +14,11 @@ test("Studio locks the immutable shared BI registry candidate without source-pat
   const lock = JSON.parse(await readFile(resolve(root, "package-lock.json"), "utf8"));
   const installed = lock.packages["node_modules/wsr-ui-core"];
 
-  assert.equal(studio.dependencies["wsr-ui-core"], "0.1.0-rc.0");
-  assert.equal(installed.version, "0.1.0-rc.0");
+  assert.equal(studio.dependencies["wsr-ui-core"], "0.1.0-rc.1");
+  assert.equal(installed.version, "0.1.0-rc.1");
   assert.equal(
     installed.resolved,
-    "https://registry.npmjs.org/wsr-ui-core/-/wsr-ui-core-0.1.0-rc.0.tgz",
+    "https://registry.npmjs.org/wsr-ui-core/-/wsr-ui-core-0.1.0-rc.1.tgz",
   );
   assert.equal(installed.integrity, expectedIntegrity);
   assert.doesNotMatch(JSON.stringify(studio.dependencies), /file:|workspace:|wsr-ui\/packages\/bi\/src/u);

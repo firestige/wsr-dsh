@@ -7500,7 +7500,7 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
         style: viewStyle
       },
       React2.createElement("style", { "data-wsr-studio-host-styles": "wsr-dsh@1" }, hostStyles),
-      sharedStyles === void 0 ? null : React2.createElement("style", { "data-wsr-bi-styles": "wsr-ui-core@0.1.0-rc.0" }, sharedStyles),
+      sharedStyles === void 0 ? null : React2.createElement("style", { "data-wsr-bi-styles": "wsr-ui-core@0.1.0-rc.1" }, sharedStyles),
       React2.createElement(
         Surface,
         { as: "header", level: "section", "data-wsr-studio-region": "header" },

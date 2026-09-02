@@ -4,7 +4,7 @@
     {
       "name": "dsh-wsr-execution",
       "displayName": "WSR",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "summary": "Operate WSR Intake, Deliveries, Actions, and canonical results in DSH.",
       "icon": "./icon.svg",
       "license": "Apache-2.0",
@@ -13,7 +13,7 @@
     {
       "name": "dsh-wsr-studio",
       "displayName": "WSR Studio",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "summary": "Read Evidence and Evolution evaluation views through the loopback Host gateway.",
       "icon": "./icon.svg",
       "license": "Apache-2.0",
@@ -22,7 +22,7 @@
     {
       "name": "dsh-wsr",
       "displayName": "WSR suite",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "summary": "Install the qualified compatible WSR Execution and Studio pair.",
       "icon": "./icon.svg",
       "license": "Apache-2.0",

@@ -1,6 +1,6 @@
 {
   "name": "dsh-wsr-studio",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "DeepSeek Harness WSR Studio Evaluate UI with a strict loopback-only read gateway.",
   "type": "module",
   "main": "./src/index.js",
@@ -42,7 +42,7 @@
     "@deepseek-ai/dsh-client-connection": "0.1.1-rc.2",
     "@deepseek-ai/dsh-client-ui-conversation": "0.1.1-rc.2",
     "@deepseek-ai/dsh-client-ui-primitives": "0.1.1-rc.2",
-    "wsr-ui-core": "0.1.0-rc.0"
+    "wsr-ui-core": "0.1.0-rc.1"
   },
   "peerDependencies": {
     "@deepseek-ai/dsh": "0.1.1-rc.2"
