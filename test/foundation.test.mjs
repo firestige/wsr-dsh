@@ -25,11 +25,11 @@ test("the repository admits independently versioned compatible bundles", async (
     "dsh-wsr-studio",
     "dsh-wsr",
   ]);
-  assert.equal(report.version, "0.2.2");
+  assert.equal(report.version, "0.2.3");
   assert.deepEqual(report.packageVersions, {
-    "dsh-wsr-execution": "0.2.1",
-    "dsh-wsr-studio": "0.1.1",
-    "dsh-wsr": "0.2.1",
+    "dsh-wsr-execution": "0.2.2",
+    "dsh-wsr-studio": "0.1.2",
+    "dsh-wsr": "0.2.2",
   });
   assert.equal(report.dshVersion, "0.1.1-rc.2");
   assert.deepEqual(report.displayNames, {
@@ -43,8 +43,8 @@ test("the suite composes compatible Execution and Studio versions without an act
   const patch = await readFile(join(root, "packages/suite/cordis.patch.yml"), "utf8");
 
   assert.deepEqual(suite.dependencies, {
-    "dsh-wsr-execution": "^0.2.0",
-    "dsh-wsr-studio": "^0.1.1",
+    "dsh-wsr-execution": "^0.2.2",
+    "dsh-wsr-studio": "^0.1.2",
   });
   assert.equal(suite.wsr.displayName, undefined);
   assert.equal(suite.main, undefined);

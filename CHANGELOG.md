@@ -1,10 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.2.3 — 2026-09-02
 
 - Render WSR Studio as the native conversation tab immediately after Delivery without changing the SPA URL.
 - Replace the generic one-line `/wsr` result with one keyed command view that exposes friendly diagnostics and complete bounded JSON details.
 - Reject selector-only create requests with an actionable Task-prompt diagnostic before Core admission and remove duplicate immediate command rows.
+- Publish `dsh-wsr-execution@0.2.2`, `dsh-wsr-studio@0.1.2`, and `dsh-wsr@0.2.2` with Studio consuming `wsr-ui-core@0.1.0-rc.1`.
+- Add the adjustable metric dashboard and recorded Trace Waterfall, Tree, and Statistics product views.
 
 ## 0.2.2 — 2026-08-30
 

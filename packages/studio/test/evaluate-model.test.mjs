@@ -95,6 +95,24 @@ test("Task discovery appends cursor pages with deterministic de-duplication", as
   assert.equal(controller.getSnapshot().taskList.page.next_cursor, null);
 });
 
+test("clearing the current selection returns to Select without retaining an evaluation identity", () => {
+  const storage = new Map();
+  const controller = createEvaluateController({
+    gateway: { async call() { return { ok: true, value: taskPage }; } },
+    initialContext: { taskId: "task-a" },
+    storage: {
+      getItem(key) { return storage.get(key) ?? null; },
+      setItem(key, value) { storage.set(key, value); },
+    },
+  });
+
+  controller.clearSelection();
+
+  assert.equal(controller.getSnapshot().selection, undefined);
+  assert.deepEqual(controller.getSnapshot().route, { page: "select" });
+  assert.equal([...storage.values()].at(-1), "/evaluate");
+});
+
 test("session storage restores the valid evaluate location and refresh recovery retains the last result", async () => {
   const storage = new Map();
   const persisted = {
@@ -244,6 +262,18 @@ test("version-incompatible formal API envelopes degrade Studio without entering 
   await controller.loadTasks();
   assert.equal(controller.getSnapshot().taskList.phase, "error");
   assert.equal(controller.getSnapshot().taskList.error.code, "incompatible-response");
+  controller.setSelection({ mode: "single", taskIds: ["task-a"] });
+  await controller.evaluate();
+  assert.equal(controller.getSnapshot().phase, "error");
+  assert.equal(controller.getSnapshot().error.code, "incompatible-response");
+  assert.equal(controller.getSnapshot().result, undefined);
+});
+
+test("a production Catalog contract rejects a partial Metric Result set", async () => {
+  const controller = createEvaluateController({
+    catalogCoordinates: ["metric-a@2.0.0", "metric-b@2.0.0"],
+    gateway: { async call() { return { ok: true, value: singleResult() }; } },
+  });
   controller.setSelection({ mode: "single", taskIds: ["task-a"] });
   await controller.evaluate();
   assert.equal(controller.getSnapshot().phase, "error");

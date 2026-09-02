@@ -1,6 +1,8 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import * as Primitives from "@deepseek-ai/dsh-client-ui-primitives";
+import * as Bi from "wsr-ui-core";
+import "wsr-ui-core/styles.css";
 
 import { createStudioClientPlugin } from "../src/client/studio.js";
 
@@ -35,4 +37,4 @@ const ctx = {
   },
 };
 
-createStudioClientPlugin({ React, Primitives }).apply(ctx);
+createStudioClientPlugin({ React, Primitives, Bi }).apply(ctx);

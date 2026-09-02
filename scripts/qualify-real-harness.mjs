@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer as createHttpServer } from "node:http";
 import { createServer as createNetServer } from "node:net";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 
 import { packWorkspaces } from "./lib/package-artifacts.mjs";
@@ -14,6 +14,7 @@ const root = resolve(new URL("../", import.meta.url).pathname);
 const chromeBinary = process.env.WSR_CHROME_BINARY ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.2.1/wsr-execution-0.2.1.tgz";
 const terminalFixture = process.env.WSR_QUALIFY_TERMINAL === "1";
+const screenshotDirectory = process.env.WSR_QUALIFY_SCREENSHOT_DIR;
 
 function run(command, args, options = {}) {
   const answer = spawnSync(command, args, { encoding: "utf8", ...options });
@@ -111,6 +112,39 @@ async function stop(child) {
   if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
 }
 
+async function captureScreenshot(cdp, name) {
+  const screenshot = await cdp.command("Page.captureScreenshot", { format: "png", fromSurface: true });
+  const bytes = Buffer.from(screenshot.data, "base64");
+  if (screenshotDirectory !== undefined) {
+    await mkdir(screenshotDirectory, { recursive: true });
+    await writeFile(join(screenshotDirectory, `${name}.png`), bytes);
+  }
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+async function waitForStableDeliveryLayout(cdp, label) {
+  let previous;
+  let stableSamples = 0;
+  return waitFor(async () => {
+    const bounds = await cdp.evaluate(`(() => {
+      const view = document.querySelector('[data-wsr-delivery-id]');
+      const composer = document.querySelector('textarea:not(:disabled)')?.closest('form');
+      if (!view) return undefined;
+      const sample = (node) => {
+        if (!node) return null;
+        const rect = node.getBoundingClientRect();
+        return [rect.x, rect.width].map((value) => Math.round(value));
+      };
+      return { view: sample(view), composer: sample(composer) };
+    })()`);
+    if (bounds === undefined) return undefined;
+    const serialized = JSON.stringify(bounds);
+    stableSamples = serialized === previous ? stableSamples + 1 : 0;
+    previous = serialized;
+    return stableSamples >= 2 ? bounds : undefined;
+  }, label);
+}
+
 const temporary = await mkdtemp(join(tmpdir(), "wsr-dsh-real-harness-"));
 let harness;
 let chrome;
@@ -122,7 +156,9 @@ try {
   const archives = await packWorkspaces({ root, output: packages });
   const executionArchive = archives.find((path) => path.includes("dsh-wsr-execution-"));
   const studioArchive = archives.find((path) => path.includes("dsh-wsr-studio-"));
-  const suiteArchive = archives.find((path) => /dsh-wsr-0\.2\.1\.tgz$/u.test(path));
+  const suiteArchive = archives.find((path) => basename(path).startsWith("dsh-wsr-")
+    && !basename(path).startsWith("dsh-wsr-execution-")
+    && !basename(path).startsWith("dsh-wsr-studio-"));
   if (executionArchive === undefined || studioArchive === undefined || suiteArchive === undefined) throw new Error("HARNESS_ARCHIVE_MISSING");
 
   const home = join(temporary, "home");
@@ -188,21 +224,104 @@ try {
     if (request.url?.startsWith("/v1/evidence/tasks")) { json(200, {
       contract: { name: "evidence.query", revision: "1.0.0" }, observation_profile: "2.0.0",
       read_model_revision: "2.0.0", snapshot: "qualification", items: [
-        { task_id: "task-a", display_name: "Alpha Task" }, { task_id: "task-b", display_name: "Beta Task" },
+        { task_id: "task-a", display_name: "Writer quality pass" },
+        { task_id: "task-b", display_name: "Reviewer convergence" },
+        { task_id: "task-c", display_name: "Release verification" },
       ], next_cursor: null,
     }); return; }
-    if (request.url?.startsWith("/v1/evidence/facts")) { json(200, { items: [{ id: "fact-1", kind: "EVENT_CONTRIBUTION", provenance: { accepted_digest: "digest-fact-1" }, source: { trace_id: traceId, span_id: "b".repeat(16) } }] }); return; }
-    if (request.url?.startsWith("/v1/evidence/traces")) { json(200, { items: [{ id: "trace-node-1", kind: "NODE", trace_id: traceId }] }); return; }
+    if (request.url?.startsWith("/v1/evidence/facts")) { json(200, { items: [{
+      id: "fact-1", kind: "EVENT_CONTRIBUTION", recorded_at: "2026-09-01T00:00:00Z",
+      provenance: { accepted_digest: "digest-fact-1", profile_version: "1.0.0", family_schema: null, owner_key: [] },
+      compatibility: { family_schema: null, event_name: "qualification", completeness: "FINAL", dimensions: [] },
+      truth: { completeness: "FINAL", availability: "AVAILABLE", expiry: "ACTIVE", expires_at: null },
+      source: { kind: "SPAN", trace_id: traceId, span_id: "b".repeat(16) }, fields: [], relationships: [],
+    }] }); return; }
+    if (request.url?.startsWith("/v1/evidence/traces")) {
+      const truth = { completeness: "FINAL", availability: "AVAILABLE", expiry: "ACTIVE", expires_at: null };
+      const spans = [
+        ["b", "Qualification evaluate", "INTERNAL", "1000000000", "2000000000", "OK", []],
+        ["c", "role.writer", "CLIENT", "1080000000", "1620000000", "UNSET", [{ field: "agentops.role.id", value: "writer" }]],
+        ["d", "model.generate", "CLIENT", "1120000000", "1520000000", "OK", [{ field: "gen_ai.provider.name", value: "deepseek" }]],
+        ["e", "tool.workspace_write", "CLIENT", "1550000000", "1610000000", "OK", [{ field: "tool.name", value: "workspace_write" }]],
+        ["f", "role.reviewer", "CLIENT", "1650000000", "1950000000", "ERROR", [{ field: "agentops.role.id", value: "reviewer" }]],
+        ["1", "model.review", "CLIENT", "1680000000", "1890000000", "OK", [{ field: "gen_ai.provider.name", value: "deepseek" }]],
+        ["2", "finding.persist", "INTERNAL", "1900000000", "1930000000", "OK", [{ field: "finding.kind", value: "qualification" }]],
+      ].map(([identity, name, kind, start, end, status, fields], index) => {
+        const spanId = identity.repeat(16);
+        return {
+          id: `trace-node-${index + 1}`, kind: "NODE", trace_id: traceId,
+          recorded_at: `2026-09-01T00:00:0${index}Z`,
+          source: { kind: "SPAN", trace_id: traceId, span_id: spanId }, truth,
+          node: { span_id: spanId, span_name: name, span_kind: kind,
+            start_time_unix_nano: start, end_time_unix_nano: end, span_status: status,
+            span_flags: kind === "CLIENT" ? 257 : 1, trace_state: null, fields }, edge: null,
+        };
+      });
+      const parentPairs = [["c", "b"], ["f", "b"], ["d", "c"], ["e", "c"], ["1", "f"], ["2", "f"]];
+      const parents = parentPairs.map(([child, parent], index) => ({
+        id: `trace-parent-${index + 1}`, kind: "PARENT_EDGE", trace_id: traceId,
+        recorded_at: `2026-09-01T00:00:1${index}Z`,
+        source: { kind: "SPAN", trace_id: traceId, span_id: child.repeat(16) }, truth, node: null,
+        edge: { from: { trace_id: traceId, span_id: child.repeat(16) }, to: { trace_id: traceId, span_id: parent.repeat(16) } },
+      }));
+      const link = {
+        id: "trace-link-writer-reviewer", kind: "LINK", trace_id: traceId,
+        recorded_at: "2026-09-01T00:00:20Z",
+        source: { kind: "SPAN", trace_id: traceId, span_id: "c".repeat(16) }, truth, node: null,
+        edge: { from: { trace_id: traceId, span_id: "c".repeat(16) }, to: { trace_id: traceId, span_id: "f".repeat(16) }, flags: 1, trace_state: "qualification=linked" },
+      };
+      json(200, { items: [...spans, ...parents, link] }); return;
+    }
     if (request.url === "/api/evolution/v1/evaluations:compute") {
       let body = "";
       request.on("data", (chunk) => { body += chunk; });
       request.on("end", () => {
         if (body === "{}") { json(400, { error: { code: "INVALID_REQUEST", retryable: false } }); return; }
         const input = JSON.parse(body);
+        const available = (value, extra = {}) => ({
+          slice_key: {}, state: "AVAILABLE", value,
+          measures: {}, coverage: { numerator: "1", denominator: "1", raw_ratio: "1", state: "FULL", alert: null },
+          compatibility: {}, exclusions: [], missing_inputs: [], provenance_refs: ["digest-fact-1"], ...extra,
+        });
+        const metricResults = [
+          ["role-template-rework-rate", [available({ kind: "RATIO", value: "17/25", unit: "ratio" }, { numerator: "17", denominator: "25" })]],
+          ["role-template-trajectory-partial-cost", [available({ kind: "MONEY", value: "4.50", unit: "USD" })]],
+          ["role-model-task-outcome-rate", [available({ kind: "RATIO", value: "10/24", unit: "ratio" }, { numerator: "10", denominator: "24" })]],
+          ["operational-latency-ms", [available({ kind: "DURATION_MS", value: "842", unit: "ms" })]],
+          ["trajectory-partial-cost", [available({ kind: "MONEY", value: "7.25", unit: "USD" })]],
+          ["task-cohort-comparison-eligibility", [available({ kind: "BOOLEAN", value: true, unit: "boolean" })]],
+          ["delivery-stage-reach", ["accepted", "executed", "verified"].map((stage, index) => available(
+            { kind: "RATIO", value: `${3 - index}/3`, unit: "ratio" },
+            { slice_key: { stage }, numerator: String(3 - index), denominator: "3" },
+          ))],
+          ["delivery-terminal-outcome-rate", ["succeeded", "failed"].map((outcome, index) => available(
+            { kind: "RATIO", value: index === 0 ? "2/3" : "1/3", unit: "ratio" },
+            { slice_key: { outcome }, numerator: index === 0 ? "2" : "1", denominator: "3" },
+          ))],
+          ["delivery-cycle-time-ms", [available({ kind: "DURATION_MS", value: "27900", unit: "ms" })]],
+          ["operational-token-usage", [
+            available({ kind: "QUANTITY", value: "1240", unit: "tokens" }, { slice_key: { kind: "input" } }),
+            available({ kind: "QUANTITY", value: "380", unit: "tokens" }, { slice_key: { kind: "output" } }),
+          ]],
+          ["operational-attributable-cost", [available({ kind: "MONEY", value: "0.018", unit: "USD" })]],
+          ["operational-usage-availability", [{
+            slice_key: {}, state: "NOT_APPLICABLE", withholding_reason: "NO_APPLICABLE_POPULATION",
+            measures: {}, coverage: { numerator: "0", denominator: "0", raw_ratio: null, state: "NO_POPULATION", alert: null },
+            compatibility: {}, exclusions: [], missing_inputs: [], provenance_refs: ["digest-fact-1"],
+          }]],
+        ].map(([metric_id, slices]) => ({ metric_id, metric_version: "2.0.0", slices }));
         const side = (selection) => ({ tag: "SIDE_RESULT", receipt: {
-          selection, population_state: "COMPLETE", evidence_bindings: [{ route: "/v1/evidence/facts", canonical_filter: { delivery_id: "delivery-a" } }],
-          task_population: selection.task_ids.map((task_id) => ({ task_id, memberships: [{ delivery_id: "delivery-a" }] })), input_refs: [],
-        }, metric_results: [{ metric_id: "delivery-cycle-time-ms", metric_version: "2.0.0", slices: [{ slice_key: {}, state: "AVAILABLE", value: { kind: "DURATION_MS", value: "12", unit: "ms" }, provenance_refs: ["digest-fact-1"] }] }] });
+          context_version: 1, selection, as_of: "2026-09-01T00:00:00Z", resolved_at: "2026-09-01T00:00:01Z",
+          population_state: "COMPLETE", catalog: { catalog_id: "agentops.evaluation.metric-catalog", version: "2.0.0",
+            semantic_digest: "sha256:catalog", observation_profile: "1.0.0" },
+          evidence_bindings: [{ route: "/v1/evidence/facts", canonical_filter: { delivery_id: "delivery-a" },
+            contract_revision: "0.1.0", observation_profile: "1.0.0", read_model_revision: "1.0.0",
+            route_snapshot: "qualification", completion_state: "COMPLETE" }],
+          task_population: selection.task_ids.map((task_id) => ({ task_id, cohort_coordinates: {}, exclusions: [], memberships: [{
+            delivery_id: "delivery-a", manifest_digest: "sha256:manifest", accepted_digest: "sha256:accepted",
+            profile_version: "2.0.0", source_identity: "qualification", recorded_at: "2026-09-01T00:00:00Z",
+          }] })), input_refs: [{ kind: "FACT", identity: "fact-1", provenance_ref: "digest-fact-1" }], workflow_resolutions: [],
+        }, metric_results: metricResults });
         json(200, input.mode === "SINGLE" ? { api_version: 1, mode: "SINGLE", result: side(input.selection) } : {
           api_version: 1, mode: "COMPARE", status: "FULL_COMPARE", left: side(input.left), right: side(input.right), deltas: [],
         });
@@ -285,15 +404,17 @@ try {
     fixtureSessions = await Promise.all([
       callApi(origin, "session.create", { workspaceId: workspace.workspace.workspaceId, sessionId: "session-terminal-a" }),
       callApi(origin, "session.create", { workspaceId: workspace.workspace.workspaceId, sessionId: "session-terminal-b" }),
+      callApi(origin, "session.create", { workspaceId: workspace.workspace.workspaceId, sessionId: "session-terminal-c" }),
     ]);
     await Promise.all([
       callApi(origin, "session.rename", { sessionId: fixtureSessions[0].sessionId, title: "Terminal A" }),
       callApi(origin, "session.rename", { sessionId: fixtureSessions[1].sessionId, title: "Terminal B" }),
+      callApi(origin, "session.rename", { sessionId: fixtureSessions[2].sessionId, title: "Terminal C" }),
     ]);
     await stop(harness);
     harness = undefined;
     const terminalRows = [
-      { sessionKey: fixtureSessions[0].sessionId, deliveryId: "delivery-completed", correlation: "intake-completed", outcome: "SUCCEEDED", updatedAt: 180, identity: "d" },
+      { sessionKey: fixtureSessions[2].sessionId, deliveryId: "delivery-completed", correlation: "intake-completed", outcome: "SUCCEEDED", updatedAt: 180, identity: "d" },
       { sessionKey: fixtureSessions[0].sessionId, deliveryId: "delivery-failed", correlation: "intake-failed", outcome: "FAILED", updatedAt: 190, identity: "e" },
       { sessionKey: fixtureSessions[1].sessionId, deliveryId: "delivery-cancelled", correlation: "intake-cancelled", outcome: "CANCELLED", updatedAt: 200, identity: "f" },
     ];
@@ -381,6 +502,18 @@ try {
     const input = document.querySelector('textarea:not(:disabled)');
     return input && !/选择一个工作区开始|Choose a workspace to start/.test(input.placeholder) && document.body.innerText.includes('repository');
   })()`), "HARNESS_SESSION_COMPOSER_UNAVAILABLE");
+  if (terminalFixture) {
+    await waitFor(async () => cdp.evaluate(`(() => {
+      const row = document.querySelector('.wsr-delivery-row[aria-label="delivery-completed, SUCCEEDED"]');
+      if (!row) return undefined;
+      row.click();
+      return true;
+    })()`), "HARNESS_TERMINAL_BASELINE_SELECTION_FAILED");
+    await waitFor(async () => cdp.evaluate(`(() => {
+      const input = document.querySelector('textarea:not(:disabled)');
+      return document.title.includes('Terminal C') && input ? true : undefined;
+    })()`), "HARNESS_TERMINAL_BASELINE_SESSION_UNAVAILABLE");
+  }
   await cdp.evaluate(`document.querySelector('textarea:not(:disabled)').focus()`);
   await cdp.command("Input.insertText", { text: "/wsr create hello-world-workflow@0.2.0" });
   const commandDraft = await cdp.evaluate(`(() => {
@@ -396,18 +529,29 @@ try {
   await cdp.command("Input.dispatchKeyEvent", {
     type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 36,
   });
+  await waitFor(async () => cdp.evaluate(`(() => {
+    const label = [...document.querySelectorAll('*')]
+      .find((node) => node.childElementCount === 0 && node.textContent.trim() === 'Workflow presentation');
+    const trigger = label?.closest('button,[role="button"]');
+    if (!trigger || !trigger.textContent.includes('TASK_PROMPT_REQUIRED')) return undefined;
+    trigger.click();
+    return true;
+  })()`), "HARNESS_COMMAND_DISCLOSURE_UNAVAILABLE");
   const commandDiagnostic = await waitFor(async () => cdp.evaluate(`(() => {
     const presentations = [...document.querySelectorAll('[data-wsr-presentation="true"]')];
+    if (presentations.length !== 1) return undefined;
     const detail = presentations[0]?.querySelector('details');
-    if (presentations.length !== 1 || !document.body.innerText.includes('Add a Task instruction') || !detail?.textContent.includes('TASK_PROMPT_REQUIRED')) return undefined;
     const inputs = [...document.querySelectorAll('*')]
       .filter((node) => node.textContent.includes('/wsr') && node.textContent.includes('create hello-world-workflow@0.2.0'))
       .sort((left, right) => left.textContent.length - right.textContent.length);
     const ordered = inputs.length > 0
       && Boolean(inputs[0].compareDocumentPosition(presentations[0]) & Node.DOCUMENT_POSITION_FOLLOWING);
-    if (!ordered) return undefined;
-    return { presentations: presentations.length, technicalDetails: true, userBeforePresentation: true };
+    return { presentations: presentations.length, technicalDetails: detail !== null, userBeforePresentation: ordered,
+      presentationText: presentations[0].textContent, errorCode: document.body.textContent.includes('TASK_PROMPT_REQUIRED') };
   })()`), "HARNESS_COMMAND_DIAGNOSTIC_UNAVAILABLE");
+  if (!commandDiagnostic.presentationText.includes("Add a Task instruction") || !commandDiagnostic.errorCode || !commandDiagnostic.userBeforePresentation) {
+    throw new Error(`HARNESS_COMMAND_DIAGNOSTIC_INVALID: ${JSON.stringify(commandDiagnostic)}`);
+  }
 
   const shell = await waitFor(async () => cdp.evaluate(`(() => {
     const resource = document.querySelector('[data-wsr-sidebar-resources="true"]');
@@ -427,20 +571,104 @@ try {
   }
   let terminalView;
   if (terminalFixture) {
-    await cdp.evaluate(`(() => { [...document.querySelectorAll('[role="tab"]')].find((node) => node.textContent.trim() === 'Delivery').click(); })()`);
+    await cdp.command("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
+    await waitFor(async () => cdp.evaluate(`(() => {
+      const tab = [...document.querySelectorAll('[role="tab"]')].find((node) => node.textContent.trim() === 'Delivery');
+      if (!tab) return undefined;
+      tab.click();
+      return true;
+    })()`), "HARNESS_TERMINAL_DELIVERY_TAB_UNAVAILABLE");
     terminalView = await waitFor(async () => cdp.evaluate(`(() => {
-      const view = document.querySelector('[data-wsr-delivery-id]');
+      const view = document.querySelector('[data-wsr-delivery-id="delivery-completed"]');
       if (!view) return undefined;
       return { deliveryId: view.getAttribute('data-wsr-delivery-id'), text: view.textContent };
     })()`), "HARNESS_TERMINAL_SESSION_VIEW_UNAVAILABLE");
-    const expectedOutcome = terminalView.deliveryId === "delivery-cancelled" ? "CANCELLED"
-      : terminalView.deliveryId === "delivery-failed" ? "FAILED" : undefined;
-    if (expectedOutcome === undefined || !terminalView.text.includes(expectedOutcome)) {
+    const expectedOutcome = "SUCCEEDED";
+    if (terminalView.deliveryId !== "delivery-completed" || !terminalView.text.includes(expectedOutcome)) {
       throw new Error(`HARNESS_TERMINAL_SESSION_VIEW_INVALID: ${JSON.stringify(terminalView)}`);
     }
+    const firstFold = await cdp.evaluate(`(() => {
+      const view = document.querySelector('[data-wsr-delivery-id]');
+      const summary = view?.querySelector('[data-wsr-delivery-summary="true"]');
+      const disclosure = view?.querySelector('[data-disclosure-row][role="button"]');
+      if (!view || !summary || !disclosure) return null;
+      const viewportBottom = Math.min(window.innerHeight, view.closest('[role="tabpanel"]')?.getBoundingClientRect().bottom ?? window.innerHeight);
+      const items = [...summary.children].map((item) => ({
+        label: item.querySelector('dt')?.textContent.trim(),
+        top: item.getBoundingClientRect().top,
+        bottom: item.getBoundingClientRect().bottom,
+      }));
+      const required = ['Status', 'Workflow', 'Outcome', 'Elapsed'];
+      const visible = required.every((label) => items.some((item) => item.label === label && item.top >= 0 && item.bottom <= viewportBottom));
+      const style = getComputedStyle(summary);
+      return { visible, required, items, display: style.display, columns: style.gridTemplateColumns,
+        documentOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+        viewOverflow: view.scrollWidth > view.clientWidth, disclosureExpanded: disclosure.getAttribute('aria-expanded') };
+    })()`);
+    if (firstFold === null || !firstFold.visible || firstFold.display !== "grid" || firstFold.documentOverflow || firstFold.viewOverflow) {
+      throw new Error(`HARNESS_DELIVERY_FIRST_FOLD_FAILED: ${JSON.stringify(firstFold)}`);
+    }
+    await waitForStableDeliveryLayout(cdp, "HARNESS_DELIVERY_DESKTOP_LAYOUT_UNSTABLE");
+    const desktopScreenshot = await captureScreenshot(cdp, "delivery-desktop");
+    const disclosure = await cdp.evaluate(`(() => {
+      const control = document.querySelector('[data-wsr-delivery-id] [data-disclosure-row][role="button"]');
+      if (!control) return null;
+      control.focus();
+      control.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true, cancelable: true }));
+      return { focused: document.activeElement === control, expanded: control.getAttribute('aria-expanded') };
+    })()`);
+    const expanded = await waitFor(async () => cdp.evaluate(`document.querySelector('[data-wsr-delivery-id] [data-disclosure-row]')?.getAttribute('aria-expanded') === 'true'`), "HARNESS_DELIVERY_DISCLOSURE_FAILED");
+    if (disclosure === null || !disclosure.focused || !expanded) throw new Error(`HARNESS_DELIVERY_DISCLOSURE_FAILED: ${JSON.stringify(disclosure)}`);
+    await cdp.command("Browser.grantPermissions", { origin, permissions: ["clipboardReadWrite"] });
+    const copyControls = await cdp.evaluate(`(() => {
+      const buttons = [...document.querySelectorAll('[data-wsr-delivery-id] button[aria-label^="Copy "]')];
+      const labels = buttons.map((button) => button.getAttribute('aria-label'));
+      if (buttons.length === 0) return { count: 0, labels, focused: false };
+      buttons[0].focus();
+      buttons[0].click();
+      return { count: buttons.length, labels, focused: document.activeElement === buttons[0] };
+    })()`);
+    const copyFeedback = await waitFor(async () => cdp.evaluate(`(() => {
+      const text = document.querySelector('[data-wsr-delivery-id] [role="status"][aria-live="polite"]')?.textContent.trim();
+      return text && (text.endsWith('copied') || text.endsWith('copy failed')) ? text : undefined;
+    })()`), "HARNESS_DELIVERY_COPY_FAILED");
+    if (copyControls.count < 7 || new Set(copyControls.labels).size !== copyControls.count || !copyControls.focused || !copyFeedback) {
+      throw new Error(`HARNESS_DELIVERY_COPY_FAILED: ${JSON.stringify(copyControls)}`);
+    }
+    await waitForStableDeliveryLayout(cdp, "HARNESS_DELIVERY_EXPANDED_LAYOUT_UNSTABLE");
+    const expandedScreenshot = await captureScreenshot(cdp, "delivery-identities-expanded");
+    const narrowDelivery = await cdp.evaluate(`(() => {
+      const view = document.querySelector('[data-wsr-delivery-id]');
+      if (!view) return false;
+      view.style.width = '320px';
+      const summary = view.querySelector('[data-wsr-delivery-summary="true"]');
+      const identities = view.querySelector('.wsr-delivery-identities');
+      const columns = (node) => getComputedStyle(node).gridTemplateColumns.split(' ').filter(Boolean).length;
+      return {
+        pass: document.documentElement.scrollWidth <= document.documentElement.clientWidth && view.scrollWidth <= view.clientWidth
+          && view.getBoundingClientRect().width <= 320 && columns(summary) === 1 && columns(identities) === 1,
+        summaryColumns: columns(summary), identityColumns: columns(identities), width: view.getBoundingClientRect().width,
+      };
+    })()`);
+    if (!narrowDelivery?.pass) throw new Error(`HARNESS_DELIVERY_NARROW_OVERFLOW: ${JSON.stringify(narrowDelivery)}`);
+    await waitForStableDeliveryLayout(cdp, "HARNESS_DELIVERY_NARROW_LAYOUT_UNSTABLE");
+    const narrowScreenshot = await captureScreenshot(cdp, "delivery-narrow-320");
+    await cdp.evaluate(`document.querySelector('[data-wsr-delivery-id]').style.width = ''`);
+    await cdp.command("Emulation.setDeviceMetricsOverride", { width: 640, height: 400, deviceScaleFactor: 2, mobile: false });
+    const zoomDelivery = await cdp.evaluate(`(() => {
+      const view = document.querySelector('[data-wsr-delivery-id]');
+      return Boolean(view && view.scrollWidth <= view.clientWidth && view.getBoundingClientRect().right <= window.innerWidth);
+    })()`);
+    if (!zoomDelivery) throw new Error("HARNESS_DELIVERY_ZOOM_OVERFLOW");
+    await waitForStableDeliveryLayout(cdp, "HARNESS_DELIVERY_ZOOM_LAYOUT_UNSTABLE");
+    const zoomScreenshot = await captureScreenshot(cdp, "delivery-zoom-200");
+    await cdp.command("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
     await cdp.command("Page.reload", { ignoreCache: true });
     await waitFor(async () => cdp.evaluate(`document.querySelector('[data-wsr-delivery-id=${JSON.stringify(terminalView.deliveryId)}]')?.textContent.includes(${JSON.stringify(expectedOutcome)})`), "HARNESS_TERMINAL_RELOAD_FAILED", 30_000);
-    terminalView = { ...terminalView, reload: expectedOutcome };
+    terminalView = { ...terminalView, reload: expectedOutcome, qualification: {
+      firstFold, narrowDelivery, zoomDelivery, copyControls: copyControls.count, copyFeedback,
+      desktopScreenshot, expandedScreenshot, narrowScreenshot, zoomScreenshot,
+    } };
   }
   await cdp.command("Page.bringToFront");
   const before = await cdp.evaluate(`(() => {
@@ -455,6 +683,18 @@ try {
     return value !== before.expanded ? value : undefined;
   }, "HARNESS_KEYBOARD_DISCLOSURE_FAILED");
 
+  await cdp.command("Emulation.setDeviceMetricsOverride", {
+    width: 1440,
+    height: 1000,
+    deviceScaleFactor: 1,
+    mobile: false,
+  });
+  await cdp.command("Emulation.setEmulatedMedia", {
+    media: "screen",
+    features: [{ name: "prefers-color-scheme", value: "dark" }],
+  });
+  await cdp.command("Page.reload", { ignoreCache: true });
+  await waitFor(async () => cdp.evaluate(`([...document.querySelectorAll('[role="tab"]')].some((node) => node.textContent.trim() === 'WSR Studio'))`), "HARNESS_STUDIO_DARK_RELOAD_FAILED", 30_000);
   await cdp.evaluate(`(() => { [...document.querySelectorAll('[role="tab"]')].find((node) => node.textContent.trim() === 'WSR Studio').click(); })()`);
   const studio = await waitFor(async () => cdp.evaluate(`(() => {
     const view = document.querySelector('[data-wsr-studio-view="evaluate"]');
@@ -462,41 +702,286 @@ try {
     const style = getComputedStyle(view);
     return { role: view.getAttribute('role'), modal: view.getAttribute('aria-modal'), color: style.color, background: style.backgroundColor,
       landmarks: ['nav', 'main'].every((name) => view.querySelector(name)), labelled: !!view.getAttribute('aria-labelledby'),
+      regions: ['header', 'main'].every((name) => view.querySelector('[data-wsr-studio-region="' + name + '"]') && view.querySelector('[data-wsr-studio-region="footer"]') === null),
+      hostTheme: document.body.hasAttribute('data-ds-dark-theme') ? 'dark' : 'light',
       repositoryInput: view.querySelector('input[aria-label="Repository"]') !== null };
   })()`), "HARNESS_STUDIO_UNAVAILABLE");
-  if (studio.role !== "region" || studio.modal !== null || !studio.landmarks || !studio.labelled || studio.repositoryInput || studio.color === studio.background) {
+  if (studio.role !== "region" || studio.modal !== null || !studio.landmarks || !studio.regions || !studio.labelled || studio.hostTheme !== "dark" || studio.repositoryInput || studio.color === studio.background) {
     throw new Error(`HARNESS_THEME_OR_ACCESSIBILITY_FAILED: ${JSON.stringify(studio)}`);
   }
-  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Load Tasks').click(); })()`);
-  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Alpha Task')`), "HARNESS_STUDIO_TASKS_FAILED");
-  await cdp.evaluate(`(() => { const row = [...document.querySelectorAll('li')].find((node) => node.textContent.includes('Alpha Task')); const input = row?.querySelector('input[type="checkbox"]'); if (!input) throw new Error('qualification task checkbox missing'); input.click(); })()`);
-  await cdp.evaluate(`document.querySelector('input[type="radio"][value="compare"]').click()`);
-  await cdp.evaluate(`(() => { const fieldset = [...document.querySelectorAll('fieldset')].find((node) => node.querySelector('legend')?.textContent === 'After'); const label = [...fieldset.querySelectorAll('label')].find((node) => node.textContent.includes('Beta Task')); label.querySelector('input').click(); })()`);
+  await waitFor(async () => cdp.evaluate(`document.querySelector('[data-wsr-studio-page="selection"]') !== null && document.querySelector('[data-wsr-dashboard-layout]') === null`), "HARNESS_STUDIO_SELECTION_PAGE_FAILED");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Load tasks').click(); })()`);
+  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Writer quality pass')`), "HARNESS_STUDIO_TASKS_FAILED");
+  await cdp.evaluate(`(() => { const input = document.querySelector('[data-wsr-task-id="task-a"] input[type="checkbox"]'); if (!input) throw new Error('qualification task checkbox missing: task-a'); input.click(); })()`);
+  const selectContract = await cdp.evaluate(`(() => {
+    const view = document.querySelector('[data-wsr-studio-page="selection"]');
+    const studio = document.querySelector('[data-wsr-studio-view="evaluate"]');
+    const buttons = [...studio.querySelectorAll('button')];
+    const rows = [...view.querySelectorAll('[data-wsr-task-id]')];
+    const modes = buttons.filter((node) => ['Single', 'Compare'].includes(node.textContent.trim()));
+    const actions = Object.fromEntries(['Use recent selection', 'Load tasks', 'Evaluate selection', 'Filters', 'Clear'].map((label) => {
+      const button = buttons.find((node) => node.textContent.trim() === label);
+      return [label, button && { appearance: button.dataset.appearance, tone: button.dataset.tone, size: button.dataset.size }];
+    }));
+    return {
+      schemaVersion: 'wsr.studio-render@1',
+      page: view.dataset.wsrStudioPage,
+      regions: [...studio.querySelectorAll('[data-wsr-studio-region]')].map((node) => node.dataset.wsrStudioRegion),
+      actions,
+      segmented: {
+        group: view.querySelector('[data-segmented="true"]') !== null,
+        modes: modes.map((node) => ({ label: node.textContent.trim(), appearance: node.dataset.appearance, selected: node.getAttribute('aria-pressed') })),
+        radioInputs: view.querySelectorAll('input[type="radio"]').length,
+      },
+      inputKinds: [...view.querySelectorAll('[data-input-kind]')].map((node) => node.dataset.inputKind),
+      statusKinds: [...view.querySelectorAll('[data-status]')].map((node) => node.dataset.status).sort(),
+      surfaceLevels: [...view.querySelectorAll('[data-level]')].map((node) => node.dataset.level),
+      typography: [...studio.querySelectorAll('[data-variant]')].map((node) => node.dataset.variant),
+      selectionTypography: {
+        taskLabels: view.querySelectorAll('.studio-task-row [data-variant="label"]').length,
+        taskCodes: view.querySelectorAll('.studio-task-row [data-variant="code"]').length,
+        selectedHeading: [...view.querySelectorAll('[data-variant]')].find((node) => node.textContent.trim() === 'Selected')?.dataset.variant,
+        note: [...view.querySelectorAll('[data-variant]')].find((node) => node.textContent.trim().startsWith('Evaluation resolves'))?.dataset.variant,
+      },
+      rows: rows.length,
+      selected: rows.filter((row) => row.querySelector('input[type="checkbox"]')?.checked).length,
+      terminalRow: rows.at(-1)?.nextElementSibling === null,
+    };
+  })()`);
+  const expectedSelectActions = {
+    "Use recent selection": { appearance: "ghost", tone: "neutral", size: "compact" },
+    "Load tasks": { appearance: "outline", tone: "neutral", size: "compact" },
+    "Evaluate selection": { appearance: "solid", tone: "primary", size: "compact" },
+    Filters: { appearance: "outline", tone: "neutral", size: "compact" },
+    Clear: { appearance: "ghost", tone: "neutral", size: "compact" },
+  };
+  const selectActionsMatch = JSON.stringify(selectContract.actions) === JSON.stringify(expectedSelectActions);
+  const selectModesMatch = JSON.stringify(selectContract.segmented.modes) === JSON.stringify([
+    { label: "Single", appearance: "segment", selected: "true" },
+    { label: "Compare", appearance: "segment", selected: "false" },
+  ]);
+  if (selectContract.schemaVersion !== "wsr.studio-render@1" || selectContract.page !== "selection" ||
+      !selectContract.regions.includes("header") || !selectContract.regions.includes("main") || selectContract.regions.includes("footer") ||
+      !selectActionsMatch || !selectContract.segmented.group || !selectModesMatch || selectContract.segmented.radioInputs !== 0 ||
+      JSON.stringify(selectContract.inputKinds) !== JSON.stringify(["search"]) ||
+      !selectContract.statusKinds.includes("selected") || !selectContract.statusKinds.includes("available") ||
+      selectContract.surfaceLevels.filter((level) => level === "section").length < 2 ||
+      !["pageTitle", "sectionTitle", "caption", "eyebrow", "code"].every((variant) => selectContract.typography.includes(variant)) ||
+      selectContract.selectionTypography.taskLabels !== selectContract.rows || selectContract.selectionTypography.taskCodes !== selectContract.rows ||
+      selectContract.selectionTypography.selectedHeading !== "label" || selectContract.selectionTypography.note !== "caption" ||
+      selectContract.rows !== 3 || selectContract.selected !== 1 || !selectContract.terminalRow) {
+    throw new Error(`HARNESS_STUDIO_SELECTION_CONTRACT_FAILED: ${JSON.stringify(selectContract)}`);
+  }
+  const studioSelectionScreenshot = await captureScreenshot(cdp, "studio-selection-dark-desktop");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Evaluate selection').click(); })()`);
+  const dashboard = await waitFor(async () => cdp.evaluate(`(() => {
+    if (document.querySelector('[data-wsr-studio-page="dashboard"]') === null || document.querySelector('[data-wsr-selection-browser]') !== null) return undefined;
+    const layout = document.querySelector('[data-wsr-dashboard-layout="wsr-dsh.studio-layout@1"]');
+    const panels = [...(layout?.querySelectorAll('[data-wsr-dashboard-panel]') ?? [])];
+    if (!layout || panels.length === 0 || panels.some((panel) => !panel.querySelector('[data-presentation="dashboard"]'))) return undefined;
+    const buttons = [...document.querySelectorAll('[data-wsr-studio-region="header"] button')];
+    const headerSurface = document.querySelector('[data-wsr-studio-region="header"]');
+    const firstPanelSurface = panels[0]?.querySelector('[data-presentation="dashboard"]');
+    const actions = Object.fromEntries(['View receipt', 'Default overview', 'Change evaluation', 'Edit dashboard'].map((label) => {
+      const button = buttons.find((node) => node.textContent.trim() === label);
+      return [label, button && { appearance: button.dataset.appearance, tone: button.dataset.tone, size: button.dataset.size }];
+    }));
+    return { schemaVersion: 'wsr.studio-render@1', page: 'dashboard', layoutSchema: layout.dataset.wsrDashboardLayout,
+      coreTheme: layout.closest('.wsr-bi')?.getAttribute('data-theme'),
+      panels: panels.map((panel) => {
+        const content = panel.querySelector('[data-presentation="dashboard"]');
+        return { id: panel.dataset.wsrDashboardPanel, columns: panel.style.getPropertyValue('--studio-panel-desktop-columns').trim(),
+          size: content?.dataset.panelSize, visualizer: content?.dataset.visualizer };
+      }),
+      rawDetails: document.querySelectorAll('[data-wsr-studio-page="dashboard"] details').length,
+      surfaceRoles: {
+        section: headerSurface && getComputedStyle(headerSurface).backgroundColor,
+        panel: firstPanelSurface && getComputedStyle(firstPanelSurface).backgroundColor,
+      },
+      actions };
+  })()`), "HARNESS_STUDIO_DASHBOARD_LAYOUT_FAILED");
+  const expectedDashboardActions = {
+    "View receipt": { appearance: "outline", tone: "neutral", size: "compact" },
+    "Default overview": { appearance: "outline", tone: "neutral", size: "compact" },
+    "Change evaluation": { appearance: "outline", tone: "neutral", size: "compact" },
+    "Edit dashboard": { appearance: "solid", tone: "primary", size: "compact" },
+  };
+  if (dashboard.schemaVersion !== "wsr.studio-render@1" || dashboard.layoutSchema !== "wsr-dsh.studio-layout@1" ||
+      dashboard.panels.length !== 12 || dashboard.panels.some((panel) => panel.id === undefined || panel.columns === "" || panel.size === undefined || panel.visualizer === undefined) ||
+      dashboard.panels.filter((panel) => panel.size === "SMALL").length !== 7 || dashboard.panels.filter((panel) => panel.size === "MEDIUM").length !== 2 ||
+      dashboard.panels.filter((panel) => panel.size === "WIDE").length !== 3 ||
+      dashboard.panels.filter((panel) => panel.visualizer === "numeric-card@1").length !== 6 ||
+      dashboard.panels.filter((panel) => panel.visualizer === "ratio-bar@1").length !== 2 ||
+      dashboard.panels.filter((panel) => panel.visualizer === "badge@1").length !== 1 ||
+      dashboard.panels.filter((panel) => panel.visualizer === "table@1").length !== 3 || dashboard.rawDetails !== 0 || dashboard.coreTheme !== "dark" ||
+      dashboard.surfaceRoles.section === "" || dashboard.surfaceRoles.section !== dashboard.surfaceRoles.panel ||
+      JSON.stringify(dashboard.actions) !== JSON.stringify(expectedDashboardActions)) {
+    throw new Error(`HARNESS_STUDIO_DASHBOARD_LAYOUT_INVALID: ${JSON.stringify(dashboard)}`);
+  }
+  const studioDashboardScreenshot = await captureScreenshot(cdp, "studio-dashboard-dark-desktop");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Edit dashboard').click(); })()`);
+  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Save layout') && document.body.innerText.includes('Cancel editing') && document.body.innerText.includes('Reset layout')`), "HARNESS_STUDIO_DASHBOARD_EDIT_FAILED");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Resize panel').click(); })()`);
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Save layout').click(); })()`);
+  const savedDashboard = await waitFor(async () => cdp.evaluate(`(() => {
+    const panel = document.querySelector('[data-wsr-dashboard-panel]');
+    const stored = sessionStorage.getItem('wsr.studio.dashboard-layout@1');
+    return panel && stored && panel.style.getPropertyValue('--studio-panel-desktop-columns').trim() === '6'
+      ? { panelColumns: '6', persisted: JSON.parse(stored).sizes }
+      : undefined;
+  })()`), "HARNESS_STUDIO_DASHBOARD_SAVE_FAILED");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Change evaluation').click(); })()`);
+  await waitFor(async () => cdp.evaluate(`document.querySelector('[data-wsr-studio-page="selection"]') !== null && document.querySelector('[data-wsr-dashboard-layout]') === null`), "HARNESS_STUDIO_CHANGE_EVALUATION_FAILED");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Compare').click(); })()`);
+  await cdp.evaluate(`(() => { const row = document.querySelector('[data-wsr-selection-side="right"][data-wsr-task-id="task-b"]'); const input = row?.querySelector('input'); if (!input) throw new Error('qualification compare task missing'); input.click(); })()`);
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Evaluate selection').click(); })()`);
   await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('delivery-cycle-time-ms@2.0.0') && document.body.innerText.includes('left side') && document.body.innerText.includes('right side')`), "HARNESS_STUDIO_COMPARE_METRIC_FAILED");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'View receipt').click(); })()`);
-  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Evidence bindings: 1')`), "HARNESS_STUDIO_RECEIPT_FAILED");
+  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('Evaluation receipt') && document.body.innerText.includes('/v1/evidence/facts')`), "HARNESS_STUDIO_RECEIPT_FAILED");
   await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Back to Metric Results').click(); })()`);
-  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Fact drill-down').click(); })()`);
-  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('EVENT_CONTRIBUTION · fact-1')`), "HARNESS_STUDIO_FACT_FAILED");
-  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Open recorded trace').click(); })()`);
-  const trace = await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('NODE · trace-node-1')`), "HARNESS_STUDIO_TRACE_FAILED");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'View evidence').click(); })()`);
+  await waitFor(async () => cdp.evaluate(`document.body.innerText.includes('EVENT_CONTRIBUTION') && document.body.innerText.includes('fact-1')`), "HARNESS_STUDIO_FACT_FAILED");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.includes(${JSON.stringify(traceId)})).click(); })()`);
+  const waterfall = await waitFor(async () => cdp.evaluate(`(() => {
+    const view = document.querySelector('[data-trace-renderer="waterfall"]');
+    const studio = document.querySelector('[data-wsr-studio-view="evaluate"]');
+    const headerButtons = [...studio.querySelectorAll('[data-wsr-studio-region="header"] button')];
+    const actions = Object.fromEntries(['Back to Dashboard', 'Open Evidence', 'Copy trace identity'].map((label) => {
+      const button = headerButtons.find((node) => node.textContent.trim() === label);
+      return [label, button && { appearance: button.dataset.appearance, tone: button.dataset.tone, size: button.dataset.size }];
+    }));
+    const rendererViews = [...studio.querySelectorAll('[aria-label="Trace renderer views"] button')].map((node) => ({
+      label: node.textContent.trim(), appearance: node.dataset.appearance, selected: node.getAttribute('aria-pressed'),
+    }));
+    const summaryLabels = [...view?.querySelectorAll('.trace-summary-stat small') ?? []].map((node) => node.textContent.trim());
+    const summaryTones = Object.fromEntries([...view?.querySelectorAll('.trace-summary-stat') ?? []].map((node) => [node.querySelector('small')?.textContent.trim(), node.dataset.tone]));
+    const rulerTicks = [...view?.querySelectorAll('.trace-minimap-ruler span') ?? []].map((node) => node.textContent.trim());
+    const minimapSlider = view?.querySelector('[role="slider"][aria-label="Trace minimap zoom window"]');
+    const minimapOverview = view?.querySelector('[data-testid="trace-waterfall-minimap-overview"]');
+    const minimapWindow = view?.querySelector('[data-testid="trace-waterfall-data-zoom-window"]');
+    const minimapStartHandle = view?.querySelector('[data-testid="trace-waterfall-data-zoom-handle-left"]');
+    const minimapEndHandle = view?.querySelector('[data-testid="trace-waterfall-data-zoom-handle-right"]');
+    const rootToggle = view?.querySelector('[aria-label="Collapse Qualification evaluate descendants"]');
+    const waterfallActions = view?.querySelector('.trace-waterfall-actions');
+    return view && view.textContent.includes('Qualification evaluate')
+      && view.querySelector('[aria-label="Recorded trace minimap"]') && minimapSlider && minimapOverview && minimapWindow && minimapStartHandle && minimapEndHandle && view.textContent.includes('Span Passport')
+      ? { schemaVersion: 'wsr.studio-render@1', motion: view.getAttribute('data-motion'), spans: view.querySelectorAll('[role="treeitem"]').length,
+          minimap: true, passport: Boolean(view.querySelector('.trace-passport-head') && view.querySelector('.trace-passport-body') && view.querySelector('.trace-passport-sigil')),
+          summaryLabels, summaryTones, rulerTicks, oldToolbar: Boolean(view.querySelector('.trace-view-tools')),
+          controls: { expand: Boolean(view.querySelector('[aria-label="Expand all spans"]')), collapse: Boolean(view.querySelector('[aria-label="Collapse all spans"]')), search: Boolean(view.querySelector('[aria-label="Search recorded spans"]')), rootToggle: Boolean(rootToggle) },
+          iconActions: { count: waterfallActions?.querySelectorAll('[data-icon-button="true"]').length, grouped: waterfallActions?.getAttribute('role') === 'group', segmented: waterfallActions?.getAttribute('data-segmented') },
+          minimapValue: minimapSlider.getAttribute('aria-valuetext'),
+          navigationNote: view.querySelector('.studio-trace-view-note')?.textContent.trim(), actions, rendererViews }
+      : undefined;
+  })()`), "HARNESS_STUDIO_TRACE_WATERFALL_FAILED");
+  const expectedTraceActions = {
+    "Back to Dashboard": { appearance: "outline", tone: "neutral", size: "compact" },
+    "Open Evidence": { appearance: "outline", tone: "neutral", size: "compact" },
+    "Copy trace identity": { appearance: "solid", tone: "primary", size: "compact" },
+  };
+  const expectedTraceViews = [
+    { label: "Waterfall", appearance: "segment", selected: "true" },
+    { label: "Tree", appearance: "segment", selected: "false" },
+    { label: "Statistics", appearance: "segment", selected: "false" },
+  ];
+  if (waterfall.schemaVersion !== "wsr.studio-render@1" || waterfall.spans !== 7 || !waterfall.passport ||
+      JSON.stringify(waterfall.summaryLabels) !== JSON.stringify(["Duration", "Start", "Spans", "Errors"]) ||
+      waterfall.summaryTones.Errors !== "error" ||
+      waterfall.rulerTicks.some((tick) => tick.includes("%")) || waterfall.rulerTicks.length !== 5 ||
+      waterfall.oldToolbar || Object.values(waterfall.controls).some((value) => !value) ||
+      waterfall.iconActions.count !== 3 || !waterfall.iconActions.grouped || waterfall.iconActions.segmented !== null ||
+      waterfall.navigationNote !== "Exact span timing" ||
+      JSON.stringify(waterfall.actions) !== JSON.stringify(expectedTraceActions) ||
+      JSON.stringify(waterfall.rendererViews) !== JSON.stringify(expectedTraceViews)) {
+    throw new Error(`HARNESS_STUDIO_TRACE_WATERFALL_DENSITY_INVALID: ${JSON.stringify(waterfall)}`);
+  }
+  await cdp.evaluate(`document.querySelector('[aria-label="Collapse Qualification evaluate descendants"]').click()`);
+  await waitFor(async () => cdp.evaluate(`document.querySelectorAll('[data-trace-renderer="waterfall"] [role="treeitem"]').length === 1`), "HARNESS_STUDIO_TRACE_COLLAPSE_FAILED");
+  await cdp.evaluate(`document.querySelector('[aria-label="Expand all spans"]').click()`);
+  await waitFor(async () => cdp.evaluate(`document.querySelectorAll('[data-trace-renderer="waterfall"] [role="treeitem"]').length === 7`), "HARNESS_STUDIO_TRACE_EXPAND_FAILED");
+  const studioWaterfallScreenshot = await captureScreenshot(cdp, "studio-trace-waterfall-dark-desktop");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Tree').click(); })()`);
+  const tree = await waitFor(async () => cdp.evaluate(`(() => {
+    const view = document.querySelector('[data-trace-renderer="tree"]');
+    const graph = view?.querySelector('canvas[aria-label="Recorded span call tree graph"]');
+    return view && view.textContent.includes('Qualification evaluate') && view.textContent.includes('Span Passport')
+      && graph && view.querySelector('[aria-label="Tree minimap navigation"]')
+      ? { schemaVersion: 'wsr.trace-graph@1', spans: view.querySelectorAll('[role="treeitem"]').length,
+          parentEdgeCount: Number(graph.dataset.parentEdgeCount),
+          linkCount: Number(graph.dataset.linkCount),
+          graph: true,
+          cameraMap: true,
+          navigationNote: view.querySelector('.studio-trace-view-note')?.textContent.trim(),
+          passport: Boolean(view.querySelector('.trace-passport-head') && view.querySelector('.trace-passport-body') && view.querySelector('.trace-passport-sigil')) }
+      : undefined;
+  })()`), "HARNESS_STUDIO_TRACE_TREE_FAILED");
+  if (tree.schemaVersion !== "wsr.trace-graph@1" || tree.spans !== 7 || tree.parentEdgeCount !== 6 || tree.linkCount !== 1 || !tree.graph || !tree.cameraMap || !tree.passport ||
+      tree.navigationNote !== "Deterministic geometry · depth → recorded start/end → Span ID") throw new Error(`HARNESS_STUDIO_TRACE_TREE_DENSITY_INVALID: ${JSON.stringify(tree)}`);
+  const studioTreeScreenshot = await captureScreenshot(cdp, "studio-trace-tree-dark-desktop");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Statistics').click(); })()`);
+  const statistics = await waitFor(async () => cdp.evaluate(`(() => {
+    const view = document.querySelector('[data-trace-renderer="statistics"]');
+    return view && view.textContent.includes('Recorded spans') && view.textContent.includes('Recorded links')
+      && !view.textContent.toLowerCase().includes('critical path') && !view.textContent.toLowerCase().includes('service map')
+      ? { exactInventory: true, inferredAnalysis: false,
+          navigationNote: view.querySelector('.studio-trace-view-note')?.textContent.trim(),
+          typography: [...view.querySelectorAll('[data-variant]')].map((node) => node.dataset.variant) }
+      : undefined;
+  })()`), "HARNESS_STUDIO_TRACE_STATISTICS_FAILED");
+  const expectedStatisticsTypography = ["overline", "h2", "subtitle1", "body1", "body2", "caption"];
+  if (statistics.navigationNote !== "Exact inventory · recorded-time aggregates · no inferred causality" ||
+      expectedStatisticsTypography.some((variant) => !statistics.typography.includes(variant))) {
+    throw new Error(`HARNESS_STUDIO_TRACE_STATISTICS_SEMANTICS_INVALID: ${JSON.stringify(statistics)}`);
+  }
+  const studioStatisticsScreenshot = await captureScreenshot(cdp, "studio-trace-statistics-dark-desktop");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Tree').click(); })()`);
+  await waitFor(async () => cdp.evaluate(`document.querySelector('[data-trace-renderer="tree"]') !== null`), "HARNESS_STUDIO_TRACE_TREE_RESTORE_FAILED");
+  const trace = { waterfall, tree, statistics };
   const storedLocation = await cdp.evaluate(`sessionStorage.getItem('wsr.studio.location@1')`);
   const urlLocation = await cdp.evaluate(`new URL(location.href).searchParams.get('wsr-studio')`);
   if (!storedLocation?.startsWith('/evaluate/trace/') || urlLocation !== null) {
     throw new Error(`HARNESS_STUDIO_LOCATION_FAILED: ${JSON.stringify({ storedLocation, urlLocation })}`);
   }
   await cdp.command("Emulation.setDeviceMetricsOverride", { width: 360, height: 720, deviceScaleFactor: 1, mobile: false });
-  const narrow = await cdp.evaluate(`(() => { const view = document.querySelector('[data-wsr-studio-view="evaluate"]'); return view.scrollWidth <= view.clientWidth; })()`);
-  if (!narrow) throw new Error("HARNESS_STUDIO_NARROW_OVERFLOW");
+  await cdp.evaluate(`(() => {
+    const shell = document.querySelector('[data-sidebar-collapsed]');
+    if (shell?.getAttribute('data-sidebar-collapsed') === 'true') return;
+    const toggle = [...document.querySelectorAll('button')].find((node) => node.getAttribute('aria-label')?.includes('侧边栏'));
+    toggle?.click();
+  })()`);
+  await waitFor(async () => cdp.evaluate(`(() => { const sidebar = document.querySelector('[data-slot="sidebar"] > div'); return document.querySelector('[data-sidebar-collapsed="true"]') !== null && sidebar !== null && sidebar.getBoundingClientRect().width <= 60; })()`), "HARNESS_STUDIO_NARROW_SIDEBAR_FAILED", 3_000);
+  const narrow = await waitFor(async () => cdp.evaluate(`(() => {
+    const view = document.querySelector('[data-wsr-studio-view="evaluate"]');
+    if (view === null) return undefined;
+    const passport = view.querySelector('.span-passport');
+    const coreStyle = view.querySelector('style[data-wsr-bi-styles]');
+    return { pass: view.scrollWidth <= view.clientWidth, scrollWidth: view.scrollWidth, clientWidth: view.clientWidth, innerWidth: window.innerWidth,
+      media64: matchMedia('(max-width: 64rem)').matches, passportDisplay: passport === null ? null : getComputedStyle(passport).display,
+      coreStyleLength: coreStyle?.textContent.length ?? 0, coreStyleSheetRules: coreStyle?.sheet?.cssRules?.length ?? -1,
+      offenders: [...view.querySelectorAll('*')].filter((node) => node.scrollWidth > node.clientWidth + 1).slice(0, 8).map((node) => ({ tag: node.tagName, className: typeof node.className === 'string' ? node.className : node.getAttribute('class'), scrollWidth: node.scrollWidth, clientWidth: node.clientWidth })) };
+  })()`), "HARNESS_STUDIO_NARROW_UNAVAILABLE", 3_000);
+  if (!narrow.pass) throw new Error(`HARNESS_STUDIO_NARROW_OVERFLOW: ${JSON.stringify(narrow)}`);
+  const studioNarrowScreenshot = await captureScreenshot(cdp, "studio-trace-tree-dark-narrow");
+  const darkDocumentOrigin = await cdp.evaluate(`performance.timeOrigin`);
   await cdp.command("Page.reload", { ignoreCache: true });
   const restored = await waitFor(async () => cdp.evaluate(`(() => {
     const view = document.querySelector('[data-wsr-studio-view="evaluate"]');
-    return Boolean(view && document.body.innerText.includes('NODE · trace-node-1'));
+    const waterfall = document.querySelector('[data-trace-renderer="waterfall"]');
+    return Boolean(performance.timeOrigin !== ${JSON.stringify(darkDocumentOrigin)} && view && waterfall && waterfall.textContent.includes('Qualification evaluate'));
   })()`), "HARNESS_STUDIO_REFRESH_RECOVERY_FAILED", 30_000);
+  await cdp.command("Emulation.setEmulatedMedia", {
+    media: "screen",
+    features: [{ name: "prefers-color-scheme", value: "light" }],
+  });
+  const lightDocumentOrigin = await cdp.evaluate(`performance.timeOrigin`);
+  await cdp.command("Page.reload", { ignoreCache: true });
+  const lightTheme = await waitFor(async () => cdp.evaluate(`performance.timeOrigin !== ${JSON.stringify(lightDocumentOrigin)} && document.querySelector('.wsr-bi[data-theme="light"]') !== null && document.querySelector('[data-trace-renderer="waterfall"]') !== null`), "HARNESS_STUDIO_LIGHT_THEME_FAILED", 30_000);
+  const studioLightScreenshot = await captureScreenshot(cdp, "studio-trace-waterfall-light-narrow");
   fixtureAvailable = false;
-  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Back to Metric Results').click(); })()`);
-  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Load Tasks').click(); })()`);
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Back to Dashboard').click(); })()`);
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Change evaluation').click(); })()`);
+  await waitFor(async () => cdp.evaluate(`document.querySelector('[data-wsr-studio-page="selection"]') !== null && document.querySelector('[data-wsr-dashboard-layout]') === null`), "HARNESS_STUDIO_DEGRADED_SELECTION_PAGE_FAILED");
+  await cdp.evaluate(`(() => { [...document.querySelectorAll('button')].find((node) => node.textContent.trim() === 'Load tasks').click(); })()`);
   const degraded = await waitFor(async () => cdp.evaluate(`(() => {
     const alert = [...document.querySelectorAll('[role="alert"]')].find((node) => node.textContent.includes('Task list unavailable'));
     return alert?.textContent.trim();
@@ -522,7 +1007,17 @@ try {
       activation: ["wsr-execution", "wsr-studio"],
     },
     browser: { deliveryInventory: terminalFixture ? shell.terminalRows : "empty-ready", terminalView: terminalView ?? null, commandDiagnostic, keyboardDisclosure: `${before.expanded}->${after}`, tabOrder: shell.tabOrder, studio,
-      evaluate: "compare-metric-receipt-fact-trace", storedLocation, urlLocation, refreshRecovery: restored,
+      evaluate: "single-adjustable-dashboard-compare-metric-receipt-fact-trace", dashboard, savedDashboard,
+      themes: { dark: dashboard.coreTheme, light: lightTheme ? "light" : "invalid" }, storedLocation, urlLocation, refreshRecovery: restored,
+      screenshots: {
+        selectionDarkDesktop: studioSelectionScreenshot,
+        dashboardDarkDesktop: studioDashboardScreenshot,
+        waterfallDarkDesktop: studioWaterfallScreenshot,
+        treeDarkDesktop: studioTreeScreenshot,
+        statisticsDarkDesktop: studioStatisticsScreenshot,
+        treeDarkNarrow: studioNarrowScreenshot,
+        waterfallLightNarrow: studioLightScreenshot,
+      },
       escapeBehavior: retainedAfterEscape ? "conversation-view-retained" : "invalid", degraded, narrow, trace, errors: 0 },
   }, null, 2)}\n`);
 } catch (error) {
