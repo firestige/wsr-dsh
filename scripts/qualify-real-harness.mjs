@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer as createHttpServer } from "node:http";
 import { createServer as createNetServer } from "node:net";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 
 import { packWorkspaces } from "./lib/package-artifacts.mjs";
@@ -156,7 +156,9 @@ try {
   const archives = await packWorkspaces({ root, output: packages });
   const executionArchive = archives.find((path) => path.includes("dsh-wsr-execution-"));
   const studioArchive = archives.find((path) => path.includes("dsh-wsr-studio-"));
-  const suiteArchive = archives.find((path) => /dsh-wsr-0\.2\.1\.tgz$/u.test(path));
+  const suiteArchive = archives.find((path) => basename(path).startsWith("dsh-wsr-")
+    && !basename(path).startsWith("dsh-wsr-execution-")
+    && !basename(path).startsWith("dsh-wsr-studio-"));
   if (executionArchive === undefined || studioArchive === undefined || suiteArchive === undefined) throw new Error("HARNESS_ARCHIVE_MISSING");
 
   const home = join(temporary, "home");

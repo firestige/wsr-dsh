@@ -71,6 +71,8 @@ test("the real Harness qualification boots the v2 runner with repository Role Pr
   assert.match(source, /implementationKey: "runner\.v2"/u);
   assert.match(source, /\.wsr", "role-provider-bindings\.json"/u);
   assert.match(source, /"role\.greeter"[\s\S]*provider\.copilot[\s\S]*"role\.reviewer"[\s\S]*provider\.codex/u);
+  assert.match(source, /basename\(path\)\.startsWith\("dsh-wsr-"\)/u);
+  assert.doesNotMatch(source, /dsh-wsr-0\.2\.1\.tgz/u);
 });
 
 test("the real Harness qualifies the semantic trace DataZoom contract", async () => {
