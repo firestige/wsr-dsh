@@ -2,7 +2,7 @@
 
 This repository is the release authority for the WSR Execution, WSR Studio, and combined WSR suite integrations for DeepSeek Harness.
 
-Release set `0.2.7` qualifies Execution `0.2.6`, Studio `0.1.2`, and suite `0.2.6` coordinates.
+Release set `0.2.8` qualifies Execution `0.2.7`, Studio `0.1.2`, and suite `0.2.7` coordinates.
 
 Workspace packages:
 
@@ -11,12 +11,12 @@ Workspace packages:
 - `dsh-wsr` — compatible combination suite with no additional UI identity
 
 Packages follow semantic versioning independently. The suite accepts
-`dsh-wsr-execution@^0.2.6` and `dsh-wsr-studio@^0.1.2`. DeepSeek Harness
+`dsh-wsr-execution@^0.2.7` and `dsh-wsr-studio@^0.1.2`. DeepSeek Harness
 compatibility remains fixed at `0.1.1-rc.2`; immutable release evidence records
 the exact Execution owner revision and asset digest used for qualification.
 The current owner package is qualified from stable asset
-`wsr-execution-0.2.5.tgz` in release `0.2.5` (SHA-256
-`695abb105397c8baac2aed2cbb881749585cc2161e49729a4da1a781d147cce2`).
+`wsr-execution-0.2.6.tgz` in release `0.2.6` (SHA-256
+`8aee92d34018a9e48ec52630faf9774f02e563b846d910a77e8adab165eb468e`).
 There is no ambient npm resolution of `wsr-execution`: DSH profiles install that
 asset explicitly as a top-level root because DSH blocks exotic transitive
 dependencies.
