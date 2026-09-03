@@ -162,6 +162,57 @@ test("no-ID abandon infers only the Delivery bound to the current Session", asyn
   }
 });
 
+test("no-ID abandon returns the terminal result when the owner projection is transiently stale", async () => {
+  const root = await mkdtemp(join(tmpdir(), "wsr-intake-abandon-terminal-"));
+  try {
+    const worktree = await realpath(root);
+    const deliveryId = "delivery-bound";
+    const deliveryBindingIdentity = identity(deliveryId);
+    const correlation = "correlation-a";
+    let snapshots = 0;
+    const application = Object.freeze({
+      async start() {}, async execute() {}, async inspect() {},
+      async cancel(candidate) {
+        assert.equal(candidate, deliveryId);
+        return { kind: "TERMINAL", worktree, deliveryId, outcome: "CANCELLED" };
+      },
+      status() { return { state: "READY" }; }, async close() {},
+    });
+    const ownerProjection = Object.freeze({ async snapshot() {
+      snapshots += 1;
+      if (snapshots === 2) {
+        throw Object.assign(new Error("transient stale binding"), { code: "DELIVERY_PROJECTION_STALE_BINDING" });
+      }
+      return {
+        schemaVersion: "execution.delivery-control-plane@1.0.0", generation: snapshots,
+        deliveries: [{
+          deliveryId, deliveryBindingIdentity, worktree,
+          lifecycle: "TERMINAL", detached: false, recoverable: false,
+          navigation: { sessionCorrelation: correlation }, current: null,
+          timing: { updatedAt: 100 }, terminal: { outcome: "CANCELLED", finishedAt: 100 }, error: null,
+        }],
+      };
+    } });
+    const runtime = await createPluginRuntime({ configFile: join(root, "execution.json"), bindingFile: join(root, "bindings.json") }, {
+      moduleLoader: async () => executionApi,
+      factory: Object.freeze({ async create() { return application; } }),
+      control: Object.freeze({ async bindingInventory() { return []; } }),
+      ownerProjection,
+    });
+    await runtime.bindings.claim({ sessionKey: "session-a", correlation, deliveryId, worktree, deliveryBindingIdentity });
+
+    assert.deepEqual(await runtime.invokeForSession({
+      sessionKey: "session-a", agent: { id: "session-a" }, operation: parseWsrCommand("abandon"), images: [],
+    }), { kind: "TERMINAL", worktree, deliveryId, outcome: "CANCELLED" });
+    assert.equal(snapshots, 3);
+    assert.equal(await runtime.bindings.bySession("session-a"), undefined);
+    assert.equal((await runtime.bindings.listProjection())[0]?.state, "HISTORICAL");
+    await runtime.close();
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("registration polling survives a cold-start timeout and commits the Session binding before terminal", async () => {
   const root = await mkdtemp(join(tmpdir(), "wsr-intake-cold-registration-"));
   try {
