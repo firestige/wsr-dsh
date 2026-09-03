@@ -206,6 +206,13 @@ test("clean-profile command failures preserve package-manager stdout and stderr"
 
 test("local suite qualification resolves independently versioned dependencies only from supplied archives", () => {
   assert.deepEqual(localSuiteOverrides({
+    execution: "/tmp/dsh-wsr-execution-0.2.4.tgz",
+    studio: "/tmp/dsh-wsr-studio-0.1.2.tgz",
+  }), {
+    "dsh-wsr-execution@0.2.4": "file:/tmp/dsh-wsr-execution-0.2.4.tgz",
+    "dsh-wsr-studio@0.1.2": "file:/tmp/dsh-wsr-studio-0.1.2.tgz",
+  });
+  assert.deepEqual(localSuiteOverrides({
     execution: "/tmp/dsh-wsr-execution.tgz",
     studio: "/tmp/dsh-wsr-studio.tgz",
   }, { execution: "0.2.1", studio: "0.1.1" }), {
