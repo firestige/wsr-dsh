@@ -127,6 +127,41 @@ test("pre-registration ERROR creates no historical association", async () => {
   }
 });
 
+test("no-ID abandon infers only the Delivery bound to the current Session", async () => {
+  const root = await mkdtemp(join(tmpdir(), "wsr-intake-abandon-"));
+  try {
+    const worktree = await realpath(root);
+    const cancelled = [];
+    const application = Object.freeze({
+      async start() {}, async execute() {}, async inspect() {},
+      async cancel(deliveryId) { cancelled.push(deliveryId); return { kind: "ERROR", code: "CANCEL_PENDING", message: "CANCEL_PENDING" }; },
+      status() { return { state: "READY" }; }, async close() {},
+    });
+    const runtime = await createPluginRuntime({ configFile: join(root, "execution.json"), bindingFile: join(root, "bindings.json") }, {
+      moduleLoader: async () => executionApi,
+      factory: Object.freeze({ async create() { return application; } }),
+      control: Object.freeze({ async bindingInventory() { return []; } }),
+      ownerProjection: Object.freeze({ async snapshot() { return { schemaVersion: "execution.delivery-control-plane@1.0.0", generation: 1, deliveries: [] }; } }),
+    });
+    await runtime.bindings.claim({
+      sessionKey: "session-a", correlation: "correlation-a", deliveryId: "delivery-bound",
+      worktree, deliveryBindingIdentity: identity("delivery-bound"),
+    });
+
+    assert.equal((await runtime.invokeForSession({
+      sessionKey: "session-a", agent: { id: "session-a" }, operation: parseWsrCommand("abandon"), images: [],
+    })).code, "CANCEL_PENDING");
+    assert.deepEqual(cancelled, ["delivery-bound"]);
+    assert.equal((await runtime.invokeForSession({
+      sessionKey: "session-b", agent: { id: "session-b" }, operation: parseWsrCommand("abandon"), images: [],
+    })).code, "WSR_COMMAND_INVALID");
+    assert.deepEqual(cancelled, ["delivery-bound"]);
+    await runtime.close();
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("registration polling survives a cold-start timeout and commits the Session binding before terminal", async () => {
   const root = await mkdtemp(join(tmpdir(), "wsr-intake-cold-registration-"));
   try {

@@ -3,6 +3,8 @@ import { parseExecutionPresentation, projectExecutionPresentation, resolveDisclo
 const DOT_STATE = Object.freeze({
   running: "ongoing",
   recovering: "ongoing",
+  uncertain: "warning",
+  unresolved: "warning",
   completed: "done",
   waiting: "warning",
   failed: "error",
@@ -42,6 +44,14 @@ export function createActionPresentationView({
 
   return function WsrExecutionPresentationView({ node, technicalDetails }) {
     const presentation = node.data;
+    const presentationKind = typeof technicalDetails?.kind === "string"
+      ? technicalDetails.kind
+      : presentation.layer === "final" ? "terminal-result"
+        : presentation.state === "waiting" ? "action-input-request"
+          : ["action", "tool"].includes(presentation.layer) ? "action-output"
+            : presentation.state === "failed" && presentation.title === "Workflow presentation" ? "error"
+              : presentation.layer === "progress" && presentation.state === "running" ? "command-accepted"
+                : "delivery-status";
     const [open, setOpen] = React.useState(presentation.defaultOpen);
     const [copyState, setCopyState] = React.useState("idle");
     const bodyRef = React.useRef(null);
@@ -96,6 +106,8 @@ export function createActionPresentationView({
       };
       return React.createElement("article", {
         "data-wsr-presentation": "true",
+        "data-wsr-kind": presentationKind,
+        "data-wsr-surface": "chat",
         "data-wsr-layer": "final",
         "data-wsr-state": presentation.state,
         "data-wsr-correlation": presentation.correlation,
@@ -120,7 +132,7 @@ export function createActionPresentationView({
     const expandable = (presentation.body !== undefined || technicalDetails !== undefined) && !waiting;
     const body = presentation.body === undefined && technicalDetails === undefined ? undefined : React.createElement("div", {
       ref: bodyRef,
-      "data-wsr-presentation": "true",
+      "data-wsr-presentation-body": "true",
       "data-wsr-layer": presentation.layer,
       "data-wsr-state": presentation.state,
       "data-wsr-correlation": presentation.correlation,
@@ -151,7 +163,13 @@ export function createActionPresentationView({
       keepContentWhenOpen: true,
       collapsedContent: React.createElement("span", {
         role: presentation.role,
-        "aria-live": ["running", "recovering", "waiting"].includes(presentation.state) ? "polite" : undefined,
+        "data-wsr-presentation": "true",
+        "data-wsr-kind": presentationKind,
+      "data-wsr-surface": "chat",
+      "data-wsr-chat-role": "assistant",
+      "data-wsr-correlation": presentation.correlation,
+      "data-wsr-state": presentation.state,
+      "aria-live": ["running", "recovering", "waiting"].includes(presentation.state) ? "polite" : undefined,
       }, presentation.summary),
     }, body);
   };
@@ -172,16 +190,29 @@ function reconcileDeliveryPresentation(presentation, admitted, inventoryState) {
     ? inventoryState.snapshot.deliveries
     : [];
   const matches = deliveryId === undefined ? [] : deliveries.filter((delivery) => delivery?.deliveryId === deliveryId);
-  const terminal = matches.length === 1 && matches[0]?.lifecycle === "TERMINAL"
-    ? TERMINAL_PRESENTATION[matches[0]?.terminal?.outcome]
+  const exact = matches.length === 1 ? matches[0] : undefined;
+  const terminal = exact?.lifecycle === "TERMINAL"
+    ? TERMINAL_PRESENTATION[exact?.terminal?.outcome]
     : undefined;
-  if (terminal === undefined) return presentation;
-  return Object.freeze({
-    ...presentation,
-    state: terminal.state,
-    summary: `${terminal.label} · ${deliveryId}`,
-    defaultOpen: false,
-  });
+  if (terminal !== undefined) return Object.freeze({
+      ...presentation,
+      state: terminal.state,
+      summary: `${terminal.label} · ${deliveryId}`,
+      defaultOpen: false,
+    });
+  if (exact === undefined || typeof exact.lifecycle !== "string") return presentation;
+  const lifecycle = new Set(["BOUND", "START_UNCERTAIN", "RUNNING_CORRELATED", "START_FAILED", "RESULT_UNRESOLVED", "TERMINAL_HANDLING"]);
+  return lifecycle.has(exact.lifecycle)
+    ? projectExecutionPresentation({
+      correlation: presentation.correlation,
+      kind: "delivery-status",
+      data: {
+        deliveryId,
+        state: exact.lifecycle,
+        ...(admitted?.data?.diagnostic === undefined ? {} : { diagnostic: admitted.data.diagnostic }),
+      },
+    })
+    : presentation;
 }
 
 function commandPresentation(node, admitted, inventoryState) {

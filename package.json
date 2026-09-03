@@ -1,6 +1,6 @@
 {
   "name": "wsr-dsh-monorepo",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "type": "module",
   "packageManager": "npm@11.6.2",
@@ -27,6 +27,7 @@
     "qualify:real-harness": "node scripts/qualify-real-harness.mjs",
     "studio:dev": "node scripts/serve-studio-dev-harness.mjs",
     "release:candidate": "node scripts/build-release-candidate.mjs",
+    "release:owner:verify": "node scripts/lib/execution-owner-release.mjs config/dsh-compatibility.json",
     "release:qualify": "node scripts/write-release-qualification.mjs",
     "release:verify": "node scripts/verify-release-set.mjs",
     "release:publish": "node scripts/publish-npm-set.mjs"
@@ -36,6 +37,6 @@
     "esbuild": "0.25.9",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "wsr-execution": "https://github.com/firestige/wsr-execution/releases/download/0.2.1/wsr-execution-0.2.1.tgz"
+    "wsr-execution": "https://github.com/firestige/wsr-execution/releases/download/0.2.2/wsr-execution-0.2.2.tgz"
   }
 }

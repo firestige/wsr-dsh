@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.4 — 2026-09-03
+
+- Bind the adapter to the immutable `wsr-execution@0.2.2` owner release and verify its tag, revision, qualification record, and exact remote archive bytes before candidate construction.
+- Preserve bounded Execution diagnostics in command replay and expose unresolved outcomes consistently in Chat and Delivery views.
+- Accept selector-only create intake as a prompt-bearing Task diagnostic and infer no-ID abandon only from the Delivery occupying the current Session slot.
+- Publish `dsh-wsr-execution@0.2.3` and the compatible `dsh-wsr@0.2.3` suite while retaining unchanged `dsh-wsr-studio@0.1.2` bytes.
+
 ## 0.2.3 — 2026-09-02
 
 - Render WSR Studio as the native conversation tab immediately after Delivery without changing the SPA URL.
