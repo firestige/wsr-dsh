@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.9 — 2026-09-04
+
+- Preserve a successful no-ID abandon result while the exact terminal owner projection crosses a transient stale-binding window.
+- Publish `dsh-wsr-execution@0.2.8` and the compatible `dsh-wsr@0.2.8` suite while retaining unchanged `dsh-wsr-studio@0.1.2` bytes and `wsr-execution@0.2.6` owner coordinates.
+
 ## 0.2.8 — 2026-09-04
 
 - Bind the adapter to immutable `wsr-execution@0.2.6`, including recursive custody scopes and controlled terminal failure presentation.
