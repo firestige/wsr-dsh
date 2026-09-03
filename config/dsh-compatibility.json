@@ -13,12 +13,12 @@
     "schemaVersion": "execution.owner-release@1.0.0",
     "package": "wsr-execution",
     "repository": "firestige/wsr-execution",
-    "version": "0.2.4",
-    "release": "0.2.4",
-    "coordinate": "https://github.com/firestige/wsr-execution/releases/download/0.2.4/wsr-execution-0.2.4.tgz",
-    "assetSha256": "f38f3b3af21ace416418385b860aa70a89ce8388e9e5eef436eb706f63b6c6f1",
-    "revision": "3c2f23e8a06b8a8dd5d61d4ed07637092323b93e",
-    "qualificationCoordinate": "https://github.com/firestige/wsr-execution/releases/download/0.2.4/release-qualification.json",
+    "version": "0.2.5",
+    "release": "0.2.5",
+    "coordinate": "https://github.com/firestige/wsr-execution/releases/download/0.2.5/wsr-execution-0.2.5.tgz",
+    "assetSha256": "695abb105397c8baac2aed2cbb881749585cc2161e49729a4da1a781d147cce2",
+    "revision": "5d71c8d32da3e7857145751dc498715a3e5ac216",
+    "qualificationCoordinate": "https://github.com/firestige/wsr-execution/releases/download/0.2.5/release-qualification.json",
     "projection": "execution.delivery-control-plane@1.0.0"
   }
 }
