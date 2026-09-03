@@ -465,7 +465,7 @@ export async function createPluginRuntime(config, options = {}) {
     const result = await service.invoke(Object.freeze({ operation: "abandon", deliveryId, correlation }));
     if (result.kind === "TERMINAL") {
       const detached = await bindings.byDelivery(deliveryId);
-      if (detached !== undefined) await archiveTerminal(detached.sessionKey, detached.correlation, deliveryId);
+      if (detached !== undefined) await bindings.archiveTerminalResult(detached.sessionKey, result);
       if (detached !== undefined) sessionByCorrelation.delete(detached.correlation);
     }
     return result;

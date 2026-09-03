@@ -162,7 +162,7 @@ test("no-ID abandon infers only the Delivery bound to the current Session", asyn
   }
 });
 
-test("no-ID abandon returns the terminal result when the owner projection is transiently stale", async () => {
+test("no-ID abandon archives its authoritative terminal result without a projection round trip", async () => {
   const root = await mkdtemp(join(tmpdir(), "wsr-intake-abandon-terminal-"));
   try {
     const worktree = await realpath(root);
@@ -204,7 +204,52 @@ test("no-ID abandon returns the terminal result when the owner projection is tra
     assert.deepEqual(await runtime.invokeForSession({
       sessionKey: "session-a", agent: { id: "session-a" }, operation: parseWsrCommand("abandon"), images: [],
     }), { kind: "TERMINAL", worktree, deliveryId, outcome: "CANCELLED" });
-    assert.equal(snapshots, 3);
+    assert.equal(snapshots, 1);
+    assert.equal(await runtime.bindings.bySession("session-a"), undefined);
+    assert.equal((await runtime.bindings.listProjection())[0]?.state, "HISTORICAL");
+    await runtime.close();
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("terminal abandon archives from its authoritative result without consulting a circularly stale projection", async () => {
+  const root = await mkdtemp(join(tmpdir(), "wsr-intake-abandon-result-"));
+  try {
+    const worktree = await realpath(root);
+    const deliveryId = "delivery-bound";
+    const deliveryBindingIdentity = identity(deliveryId);
+    const correlation = "correlation-a";
+    let snapshots = 0;
+    const application = Object.freeze({
+      async start() {}, async execute() {}, async inspect() {},
+      async cancel(candidate) {
+        assert.equal(candidate, deliveryId);
+        return { kind: "TERMINAL", worktree, deliveryId, outcome: "CANCELLED" };
+      },
+      status() { return { state: "READY" }; }, async close() {},
+    });
+    const ownerProjection = Object.freeze({ async snapshot() {
+      snapshots += 1;
+      if (snapshots > 1) {
+        throw Object.assign(new Error("binding makes projection permanently stale after slot release"), {
+          code: "DELIVERY_PROJECTION_STALE_BINDING",
+        });
+      }
+      return { schemaVersion: "execution.delivery-control-plane@1.0.0", generation: 1, deliveries: [] };
+    } });
+    const runtime = await createPluginRuntime({ configFile: join(root, "execution.json"), bindingFile: join(root, "bindings.json") }, {
+      moduleLoader: async () => executionApi,
+      factory: Object.freeze({ async create() { return application; } }),
+      control: Object.freeze({ async bindingInventory() { return []; } }),
+      ownerProjection,
+    });
+    await runtime.bindings.claim({ sessionKey: "session-a", correlation, deliveryId, worktree, deliveryBindingIdentity });
+
+    assert.deepEqual(await runtime.invokeForSession({
+      sessionKey: "session-a", agent: { id: "session-a" }, operation: parseWsrCommand("abandon"), images: [],
+    }), { kind: "TERMINAL", worktree, deliveryId, outcome: "CANCELLED" });
+    assert.equal(snapshots, 1);
     assert.equal(await runtime.bindings.bySession("session-a"), undefined);
     assert.equal((await runtime.bindings.listProjection())[0]?.state, "HISTORICAL");
     await runtime.close();

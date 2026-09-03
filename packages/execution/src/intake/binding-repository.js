@@ -214,6 +214,40 @@ export class IntakeSessionBindingRepository {
     return candidate;
   }
 
+  async archiveTerminalResult(sessionKey, result) {
+    this.#ready();
+    if (typeof sessionKey !== "string" || sessionKey.length === 0
+      || result === null || typeof result !== "object" || Array.isArray(result)
+      || result.kind !== "TERMINAL"
+      || typeof result.deliveryId !== "string" || result.deliveryId.length === 0
+      || typeof result.worktree !== "string" || !isAbsolute(result.worktree)
+      || !["SUCCEEDED", "FAILED", "CANCELLED"].includes(result.outcome)) {
+      throw new IntakeBindingError("INTAKE_BINDING_INVARIANT_VIOLATION");
+    }
+    const worktree = resolve(result.worktree);
+    const historical = this.#historical.find((entry) => entry.deliveryId === result.deliveryId);
+    if (historical !== undefined) {
+      if (historical.sessionKey === sessionKey && historical.worktree === worktree) return historical;
+      throw new IntakeBindingError("INTAKE_BINDING_INVARIANT_VIOLATION");
+    }
+    const active = this.#active.find((entry) => entry.deliveryId === result.deliveryId);
+    if (active === undefined || active.sessionKey !== sessionKey || active.worktree !== worktree) {
+      throw new IntakeBindingError("INTAKE_BINDING_INVARIANT_VIOLATION");
+    }
+    const candidate = exactHistorical({
+      sessionKey: active.sessionKey,
+      correlation: active.correlation,
+      deliveryId: active.deliveryId,
+      deliveryBindingIdentity: active.deliveryBindingIdentity,
+      worktree: active.worktree,
+    });
+    this.#active.splice(this.#active.indexOf(active), 1);
+    this.#historical.push(candidate);
+    validateTogether(this.#active, this.#historical);
+    await this.#persist();
+    return candidate;
+  }
+
   async markDetached(deliveryId) {
     this.#ready();
     const index = this.#active.findIndex((entry) => entry.deliveryId === deliveryId);
