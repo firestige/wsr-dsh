@@ -1,6 +1,6 @@
 {
   "name": "dsh-wsr-execution",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "DeepSeek Harness adapter bundle for WSR Intake, Delivery resources, Session state, Actions, and final results.",
   "type": "module",
   "main": "./src/index.js",
@@ -39,10 +39,10 @@
     "displayName": "WSR",
     "role": "execution-adapter",
     "foundationOnly": false,
-    "ownerRevision": "b4b3b487af7f163c5934aa758d86b183d64115ec",
+    "ownerRevision": "d4287b9230da4b6be1f06785cbb841db048b4a84",
     "ownerAsset": {
-      "url": "https://github.com/firestige/wsr-execution/releases/download/0.2.2/wsr-execution-0.2.2.tgz",
-      "sha256": "d07eb0aaa4e0498e9e3f5f9bbf3ae4c6a1a9a7ea6c648d15cdfdcccbf53bb41e"
+      "url": "https://github.com/firestige/wsr-execution/releases/download/0.2.3/wsr-execution-0.2.3.tgz",
+      "sha256": "6066972da9d3ff20ab370bdd921d14754cfc8de8069e3f1c985ef5a98ac273fd"
     }
   },
   "dependencies": {

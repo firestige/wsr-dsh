@@ -31,35 +31,35 @@ test("Execution and Studio activate one Host and one generated browser module ea
     ],
     platform: "web",
   });
-  const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.2.2/wsr-execution-0.2.2.tgz";
+  const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.2.3/wsr-execution-0.2.3.tgz";
   assert.equal(execution.dependencies?.["wsr-execution"], undefined);
   assert.equal(execution.peerDependencies["wsr-execution"], "^0.2.0");
   assert.deepEqual(execution.wsr.ownerAsset, {
     url: ownerAsset,
-    sha256: "d07eb0aaa4e0498e9e3f5f9bbf3ae4c6a1a9a7ea6c648d15cdfdcccbf53bb41e",
+    sha256: "6066972da9d3ff20ab370bdd921d14754cfc8de8069e3f1c985ef5a98ac273fd",
   });
   const rootManifest = await json("package.json");
   assert.equal(rootManifest.devDependencies["wsr-execution"], ownerAsset);
   assert.equal(execution.dependencies["@deepseek-ai/dsh-client-ui-workspace"], "0.1.1-rc.2");
-  assert.equal(execution.wsr.ownerRevision, "b4b3b487af7f163c5934aa758d86b183d64115ec");
+  assert.equal(execution.wsr.ownerRevision, "d4287b9230da4b6be1f06785cbb841db048b4a84");
 
   const lock = await json("package-lock.json");
   const owner = lock.packages["node_modules/wsr-execution"];
-  assert.equal(owner.version, "0.2.2");
+  assert.equal(owner.version, "0.2.3");
   assert.equal(owner.resolved, ownerAsset);
-  assert.equal(owner.integrity, "sha512-K8tnXMb0c9rr6z0sx3+2a1h05xa8RRCx/9D6UyWrjTitE5Z6Fkx8+i21IzaRvKmiHTt8TG3ispNK3oTGHTEMFQ==");
+  assert.equal(owner.integrity, "sha512-oyfHik5Bqcj4zsQWtyyeesyFzRFQA2gOFa+DWN0E8KTaJbYAoaGuxeJUx6F467lXnXmgDGAEAxZkMqPd7hvAvA==");
 
   const compatibility = await json("config/dsh-compatibility.json");
   assert.deepEqual(compatibility.executionOwner, {
     schemaVersion: "execution.owner-release@1.0.0",
     package: "wsr-execution",
     repository: "firestige/wsr-execution",
-    version: "0.2.2",
-    release: "0.2.2",
+    version: "0.2.3",
+    release: "0.2.3",
     coordinate: ownerAsset,
-    assetSha256: "d07eb0aaa4e0498e9e3f5f9bbf3ae4c6a1a9a7ea6c648d15cdfdcccbf53bb41e",
-    revision: "b4b3b487af7f163c5934aa758d86b183d64115ec",
-    qualificationCoordinate: "https://github.com/firestige/wsr-execution/releases/download/0.2.2/release-qualification.json",
+    assetSha256: "6066972da9d3ff20ab370bdd921d14754cfc8de8069e3f1c985ef5a98ac273fd",
+    revision: "d4287b9230da4b6be1f06785cbb841db048b4a84",
+    qualificationCoordinate: "https://github.com/firestige/wsr-execution/releases/download/0.2.3/release-qualification.json",
     projection: "execution.delivery-control-plane@1.0.0",
   });
 

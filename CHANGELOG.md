@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.5 — 2026-09-03
+
+- Bind the adapter to the immutable `wsr-execution@0.2.3` owner release containing the DSL2 omitted-Action-input admission correction.
+- Publish `dsh-wsr-execution@0.2.4` and the compatible `dsh-wsr@0.2.4` suite while retaining unchanged `dsh-wsr-studio@0.1.2` bytes.
+
 ## 0.2.4 — 2026-09-03
 
 - Bind the adapter to the immutable `wsr-execution@0.2.2` owner release and verify its tag, revision, qualification record, and exact remote archive bytes before candidate construction.
