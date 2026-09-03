@@ -15,7 +15,7 @@ const KINDS = new Set([
   "terminal-result",
   "error",
 ]);
-const ACTION_STATES = new Set(["running", "completed", "failed", "cancelled", "waiting", "recovering"]);
+const ACTION_STATES = new Set(["running", "completed", "failed", "cancelled", "waiting", "recovering", "uncertain", "unresolved"]);
 const TERMINAL_OUTCOMES = new Set(["SUCCEEDED", "FAILED", "CANCELLED"]);
 const DELIVERY_STATES = new Set([
   "BOUND", "START_UNCERTAIN", "RUNNING_CORRELATED", "START_FAILED", "RESULT_UNRESOLVED", "TERMINAL_HANDLING",
@@ -70,8 +70,13 @@ function hasValidTypedData(value) {
     return typeof value.data.outcome === "string" && TERMINAL_OUTCOMES.has(value.data.outcome) && outputValid;
   }
   if (value.kind === "delivery-running" || value.kind === "delivery-status") {
-    return value.data.state === undefined
-      || (typeof value.data.state === "string" && DELIVERY_STATES.has(value.data.state));
+    const diagnostic = value.data.diagnostic;
+    const diagnosticValid = diagnostic === undefined || (diagnostic !== null && typeof diagnostic === "object" && !Array.isArray(diagnostic)
+      && Object.keys(diagnostic).sort().join(",") === "causeCode,stage"
+      && typeof diagnostic.stage === "string" && /^[A-Z][A-Z0-9_]{0,63}$/u.test(diagnostic.stage)
+      && typeof diagnostic.causeCode === "string" && /^[A-Z][A-Z0-9_]{0,127}$/u.test(diagnostic.causeCode));
+    return diagnosticValid && (value.data.state === undefined
+      || (typeof value.data.state === "string" && DELIVERY_STATES.has(value.data.state)));
   }
   return true;
 }
@@ -120,8 +125,10 @@ function normalizedLifecycle(value, fallback) {
   if (["cancelled", "canceled"].includes(normalized)) return "cancelled";
   if (["waiting", "awaiting-input"].includes(normalized)) return "waiting";
   if (["start-failed"].includes(normalized)) return "failed";
-  if (["recovering", "recovery", "running-correlated", "result-unresolved", "terminal-handling"].includes(normalized)) return "recovering";
-  if (["running", "accepted", "start-uncertain", "bound"].includes(normalized)) return "running";
+  if (normalized === "start-uncertain") return "uncertain";
+  if (normalized === "result-unresolved") return "unresolved";
+  if (["recovering", "recovery", "terminal-handling"].includes(normalized)) return "recovering";
+  if (["running", "accepted", "running-correlated", "bound"].includes(normalized)) return "running";
   return fallback;
 }
 
@@ -132,6 +139,8 @@ const STATE_LABELS = Object.freeze({
   cancelled: "Cancelled",
   waiting: "Waiting for input",
   recovering: "Recovering",
+  uncertain: "Start uncertain",
+  unresolved: "Result unresolved",
 });
 
 function model(input) {
@@ -182,10 +191,12 @@ export function projectExecutionPresentation(event) {
     ? normalizedLifecycle(data.state, "running")
     : normalizedLifecycle(data.state, event.kind === "command-accepted" ? "running" : "running");
   const deliveryId = typeof data.deliveryId === "string" ? data.deliveryId : undefined;
+  const diagnostic = data.diagnostic;
   return model({
     correlation, layer: "progress", state, title: "Workflow delivery",
     summary: `${STATE_LABELS[state]}${deliveryId === undefined ? "" : ` · ${deliveryId}`}`,
-    body: undefined, defaultOpen: false, focusPolicy: "none", role: "status", compatibility: "current",
+    body: diagnostic === undefined ? undefined : `${diagnostic.stage} · ${diagnostic.causeCode}`,
+    defaultOpen: false, focusPolicy: "none", role: "status", compatibility: "current",
   });
 }
 

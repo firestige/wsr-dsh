@@ -2517,7 +2517,7 @@ var KINDS = /* @__PURE__ */ new Set([
   "terminal-result",
   "error"
 ]);
-var ACTION_STATES = /* @__PURE__ */ new Set(["running", "completed", "failed", "cancelled", "waiting", "recovering"]);
+var ACTION_STATES = /* @__PURE__ */ new Set(["running", "completed", "failed", "cancelled", "waiting", "recovering", "uncertain", "unresolved"]);
 var TERMINAL_OUTCOMES = /* @__PURE__ */ new Set(["SUCCEEDED", "FAILED", "CANCELLED"]);
 var DELIVERY_STATES = /* @__PURE__ */ new Set([
   "BOUND",
@@ -2573,7 +2573,9 @@ function hasValidTypedData(value) {
     return typeof value.data.outcome === "string" && TERMINAL_OUTCOMES.has(value.data.outcome) && outputValid;
   }
   if (value.kind === "delivery-running" || value.kind === "delivery-status") {
-    return value.data.state === void 0 || typeof value.data.state === "string" && DELIVERY_STATES.has(value.data.state);
+    const diagnostic2 = value.data.diagnostic;
+    const diagnosticValid = diagnostic2 === void 0 || diagnostic2 !== null && typeof diagnostic2 === "object" && !Array.isArray(diagnostic2) && Object.keys(diagnostic2).sort().join(",") === "causeCode,stage" && typeof diagnostic2.stage === "string" && /^[A-Z][A-Z0-9_]{0,63}$/u.test(diagnostic2.stage) && typeof diagnostic2.causeCode === "string" && /^[A-Z][A-Z0-9_]{0,127}$/u.test(diagnostic2.causeCode);
+    return diagnosticValid && (value.data.state === void 0 || typeof value.data.state === "string" && DELIVERY_STATES.has(value.data.state));
   }
   return true;
 }
@@ -2612,8 +2614,10 @@ function normalizedLifecycle(value, fallback) {
   if (["cancelled", "canceled"].includes(normalized)) return "cancelled";
   if (["waiting", "awaiting-input"].includes(normalized)) return "waiting";
   if (["start-failed"].includes(normalized)) return "failed";
-  if (["recovering", "recovery", "running-correlated", "result-unresolved", "terminal-handling"].includes(normalized)) return "recovering";
-  if (["running", "accepted", "start-uncertain", "bound"].includes(normalized)) return "running";
+  if (normalized === "start-uncertain") return "uncertain";
+  if (normalized === "result-unresolved") return "unresolved";
+  if (["recovering", "recovery", "terminal-handling"].includes(normalized)) return "recovering";
+  if (["running", "accepted", "running-correlated", "bound"].includes(normalized)) return "running";
   return fallback;
 }
 var STATE_LABELS = Object.freeze({
@@ -2622,7 +2626,9 @@ var STATE_LABELS = Object.freeze({
   failed: "Failed",
   cancelled: "Cancelled",
   waiting: "Waiting for input",
-  recovering: "Recovering"
+  recovering: "Recovering",
+  uncertain: "Start uncertain",
+  unresolved: "Result unresolved"
 });
 function model(input) {
   return deepFreeze(input);
@@ -2691,13 +2697,14 @@ function projectExecutionPresentation(event) {
   }
   const state = event.kind === "delivery-running" ? normalizedLifecycle(data.state, "running") : normalizedLifecycle(data.state, event.kind === "command-accepted" ? "running" : "running");
   const deliveryId = typeof data.deliveryId === "string" ? data.deliveryId : void 0;
+  const diagnostic2 = data.diagnostic;
   return model({
     correlation,
     layer: "progress",
     state,
     title: "Workflow delivery",
     summary: `${STATE_LABELS[state]}${deliveryId === void 0 ? "" : ` \xB7 ${deliveryId}`}`,
-    body: void 0,
+    body: diagnostic2 === void 0 ? void 0 : `${diagnostic2.stage} \xB7 ${diagnostic2.causeCode}`,
     defaultOpen: false,
     focusPolicy: "none",
     role: "status",
@@ -2714,6 +2721,8 @@ function resolveDisclosureOpen({ current, previousState, nextState, containsFocu
 var DOT_STATE = Object.freeze({
   running: "ongoing",
   recovering: "ongoing",
+  uncertain: "warning",
+  unresolved: "warning",
   completed: "done",
   waiting: "warning",
   failed: "error",
@@ -2745,6 +2754,7 @@ function createActionPresentationView({
   installActionPresentationStyle();
   return function WsrExecutionPresentationView({ node, technicalDetails }) {
     const presentation = node.data;
+    const presentationKind = typeof technicalDetails?.kind === "string" ? technicalDetails.kind : presentation.layer === "final" ? "terminal-result" : presentation.state === "waiting" ? "action-input-request" : ["action", "tool"].includes(presentation.layer) ? "action-output" : presentation.state === "failed" && presentation.title === "Workflow presentation" ? "error" : presentation.layer === "progress" && presentation.state === "running" ? "command-accepted" : "delivery-status";
     const [open, setOpen] = React2.useState(presentation.defaultOpen);
     const [copyState, setCopyState] = React2.useState("idle");
     const bodyRef = React2.useRef(null);
@@ -2798,6 +2808,8 @@ function createActionPresentationView({
         "article",
         {
           "data-wsr-presentation": "true",
+          "data-wsr-kind": presentationKind,
+          "data-wsr-surface": "chat",
           "data-wsr-layer": "final",
           "data-wsr-state": presentation.state,
           "data-wsr-correlation": presentation.correlation,
@@ -2822,7 +2834,7 @@ function createActionPresentationView({
     const expandable = (presentation.body !== void 0 || technicalDetails !== void 0) && !waiting;
     const body = presentation.body === void 0 && technicalDetails === void 0 ? void 0 : React2.createElement("div", {
       ref: bodyRef,
-      "data-wsr-presentation": "true",
+      "data-wsr-presentation-body": "true",
       "data-wsr-layer": presentation.layer,
       "data-wsr-state": presentation.state,
       "data-wsr-correlation": presentation.correlation,
@@ -2853,6 +2865,12 @@ function createActionPresentationView({
       keepContentWhenOpen: true,
       collapsedContent: React2.createElement("span", {
         role: presentation.role,
+        "data-wsr-presentation": "true",
+        "data-wsr-kind": presentationKind,
+        "data-wsr-surface": "chat",
+        "data-wsr-chat-role": "assistant",
+        "data-wsr-correlation": presentation.correlation,
+        "data-wsr-state": presentation.state,
         "aria-live": ["running", "recovering", "waiting"].includes(presentation.state) ? "polite" : void 0
       }, presentation.summary)
     }, body);
@@ -2867,14 +2885,25 @@ function reconcileDeliveryPresentation(presentation, admitted, inventoryState) {
   const deliveryId = admitted?.kind === "delivery-running" && typeof admitted.data.deliveryId === "string" ? admitted.data.deliveryId : void 0;
   const deliveries = ["ready", "reconnecting"].includes(inventoryState?.kind) && Array.isArray(inventoryState.snapshot?.deliveries) ? inventoryState.snapshot.deliveries : [];
   const matches = deliveryId === void 0 ? [] : deliveries.filter((delivery) => delivery?.deliveryId === deliveryId);
-  const terminal = matches.length === 1 && matches[0]?.lifecycle === "TERMINAL" ? TERMINAL_PRESENTATION[matches[0]?.terminal?.outcome] : void 0;
-  if (terminal === void 0) return presentation;
-  return Object.freeze({
+  const exact = matches.length === 1 ? matches[0] : void 0;
+  const terminal = exact?.lifecycle === "TERMINAL" ? TERMINAL_PRESENTATION[exact?.terminal?.outcome] : void 0;
+  if (terminal !== void 0) return Object.freeze({
     ...presentation,
     state: terminal.state,
     summary: `${terminal.label} \xB7 ${deliveryId}`,
     defaultOpen: false
   });
+  if (exact === void 0 || typeof exact.lifecycle !== "string") return presentation;
+  const lifecycle = /* @__PURE__ */ new Set(["BOUND", "START_UNCERTAIN", "RUNNING_CORRELATED", "START_FAILED", "RESULT_UNRESOLVED", "TERMINAL_HANDLING"]);
+  return lifecycle.has(exact.lifecycle) ? projectExecutionPresentation({
+    correlation: presentation.correlation,
+    kind: "delivery-status",
+    data: {
+      deliveryId,
+      state: exact.lifecycle,
+      ...admitted?.data?.diagnostic === void 0 ? {} : { diagnostic: admitted.data.diagnostic }
+    }
+  }) : presentation;
 }
 function commandPresentation(node, admitted, inventoryState) {
   if (node.outcome === null) return Object.freeze({

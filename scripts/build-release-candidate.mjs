@@ -7,6 +7,7 @@ import { spawnSync } from "node:child_process";
 import { createProvenanceStatement, validateReleaseRequest, validateRepository } from "./lib/foundation-policy.mjs";
 import { packWorkspaces } from "./lib/package-artifacts.mjs";
 import { assertCandidateTag } from "./lib/release-policy.mjs";
+import { validateExecutionOwnerRelease, verifyConfiguredExecutionOwnerRelease } from "./lib/execution-owner-release.mjs";
 
 const root = new URL("../", import.meta.url).pathname;
 const output = resolve(process.argv[2] ?? resolve(root, "artifacts/candidate"));
@@ -28,6 +29,8 @@ try {
   const candidateTag = process.env.WSR_CANDIDATE_TAG;
   validateReleaseRequest({ channel: process.env.WSR_RELEASE_CHANNEL, clean, commit, version: repository.version });
   assertCandidateTag(candidateTag, repository.version);
+  const compatibilityFile = resolve(root, "config/dsh-compatibility.json");
+  await verifyConfiguredExecutionOwnerRelease(compatibilityFile);
   await rm(output, { recursive: true, force: true });
   await mkdir(output, { recursive: true });
   const archives = await packWorkspaces({ root, output });
@@ -41,11 +44,12 @@ try {
   packages.sort((left, right) => order.indexOf(left.package) - order.indexOf(right.package));
   const provenance = await createProvenanceStatement({ artifacts: archives, commit, version: repository.version });
   await writeFile(resolve(output, "provenance.json"), `${JSON.stringify(provenance, null, 2)}\n`, { flag: "wx" });
-  const frozen = JSON.parse(await readFile(resolve(root, "config/dsh-compatibility.json"), "utf8"));
+  const frozen = JSON.parse(await readFile(compatibilityFile, "utf8"));
+  const executionOwner = validateExecutionOwnerRelease(frozen.executionOwner);
   const compatibility = {
     schemaVersion: "wsr.dsh.release-compatibility@1.0.0", packageVersion: repository.version,
     dsh: repository.dshVersion, node: "24.12.0", npm: "11.6.2",
-    executionOwner: frozen.executionOwner, packageVersions: repository.packageVersions,
+    executionOwner, packageVersions: repository.packageVersions,
     packages: packages.map(({ package: name }) => name),
   };
   await writeFile(resolve(output, "compatibility-matrix.json"), `${JSON.stringify(compatibility, null, 2)}\n`, { flag: "wx" });

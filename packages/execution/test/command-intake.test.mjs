@@ -7,9 +7,19 @@ import test from "node:test";
 import { promisify } from "node:util";
 
 import { parseWsrCommand, promptDiagnostic } from "../src/intake/command.js";
-import { ensureGitWorktree, presentToDshSession, recordWsrCommandInput } from "../src/intake/plugin.js";
+import { ensureGitWorktree, mapIntakeToolOperation, presentToDshSession, recordWsrCommandInput } from "../src/intake/plugin.js";
 
 const execute = promisify(execFile);
+
+test("accepts no-ID abandon and returns a typed usage diagnostic for invalid command input", () => {
+  assert.deepEqual(parseWsrCommand("abandon"), { operation: "abandon" });
+  assert.deepEqual(mapIntakeToolOperation({ operation: "abandon" }), { operation: "abandon" });
+  assert.throws(
+    () => parseWsrCommand("abandon\nunexpected"),
+    (error) => error?.code === "WSR_COMMAND_INVALID"
+      && /Usage: \/wsr abandon \[delivery-id\]/u.test(error.message),
+  );
+});
 
 test("selector-only create returns an actionable safe Task diagnostic before Core admission", () => {
   const operation = parseWsrCommand("create hello-world-workflow@0.2.0");

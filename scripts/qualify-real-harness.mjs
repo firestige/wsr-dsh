@@ -12,7 +12,7 @@ import { localSuiteOverrideYaml, localSuiteOverrides, suiteOnlyLayers } from "./
 
 const root = resolve(new URL("../", import.meta.url).pathname);
 const chromeBinary = process.env.WSR_CHROME_BINARY ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.2.1/wsr-execution-0.2.1.tgz";
+const ownerAsset = JSON.parse(await readFile(resolve(root, "config/dsh-compatibility.json"), "utf8")).executionOwner.coordinate;
 const terminalFixture = process.env.WSR_QUALIFY_TERMINAL === "1";
 const screenshotDirectory = process.env.WSR_QUALIFY_SCREENSHOT_DIR;
 
@@ -540,16 +540,19 @@ try {
   const commandDiagnostic = await waitFor(async () => cdp.evaluate(`(() => {
     const presentations = [...document.querySelectorAll('[data-wsr-presentation="true"]')];
     if (presentations.length !== 1) return undefined;
-    const detail = presentations[0]?.querySelector('details');
+    const row = presentations[0]?.closest('button,[role="button"]')?.parentElement;
+    const detailSummary = [...(row?.querySelectorAll('details > summary') ?? [])]
+      .find((summary) => summary.textContent.trim() === 'Technical details');
     const inputs = [...document.querySelectorAll('*')]
       .filter((node) => node.textContent.includes('/wsr') && node.textContent.includes('create hello-world-workflow@0.2.0'))
       .sort((left, right) => left.textContent.length - right.textContent.length);
     const ordered = inputs.length > 0
       && Boolean(inputs[0].compareDocumentPosition(presentations[0]) & Node.DOCUMENT_POSITION_FOLLOWING);
-    return { presentations: presentations.length, technicalDetails: detail !== null, userBeforePresentation: ordered,
-      presentationText: presentations[0].textContent, errorCode: document.body.textContent.includes('TASK_PROMPT_REQUIRED') };
+    return { presentations: presentations.length, technicalDetails: detailSummary !== undefined, userBeforePresentation: ordered,
+      presentationText: row?.textContent ?? '', errorCode: document.body.textContent.includes('TASK_PROMPT_REQUIRED') };
   })()`), "HARNESS_COMMAND_DIAGNOSTIC_UNAVAILABLE");
-  if (!commandDiagnostic.presentationText.includes("Add a Task instruction") || !commandDiagnostic.errorCode || !commandDiagnostic.userBeforePresentation) {
+  if (!commandDiagnostic.presentationText.includes("Add a Task instruction") || !commandDiagnostic.technicalDetails
+    || !commandDiagnostic.errorCode || !commandDiagnostic.userBeforePresentation) {
     throw new Error(`HARNESS_COMMAND_DIAGNOSTIC_INVALID: ${JSON.stringify(commandDiagnostic)}`);
   }
 

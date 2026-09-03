@@ -93,6 +93,86 @@ test("projects durable Execution progress, tool, Action and final facts without 
   });
 });
 
+test("projects uncertain, correlated, and unresolved Delivery states without an endless recovering spinner", () => {
+  const states = [
+    ["START_UNCERTAIN", "uncertain", "Start uncertain"],
+    ["RUNNING_CORRELATED", "running", "Running"],
+    ["RESULT_UNRESOLVED", "unresolved", "Result unresolved"],
+  ];
+  for (const [input, state, label] of states) {
+    assert.deepEqual(projectExecutionPresentation(parseExecutionPresentation(valid("delivery-status", {
+      deliveryId: "delivery-1", state: input,
+    }))), {
+      correlation: "delivery-1:action-1", layer: "progress", state,
+      title: "Workflow delivery", summary: `${label} · delivery-1`, body: undefined,
+      defaultOpen: false, focusPolicy: "none", role: "status", compatibility: "current",
+    });
+  }
+  assert.deepEqual(projectExecutionPresentation(parseExecutionPresentation(valid("delivery-status", {
+    deliveryId: "delivery-1", state: "RESULT_UNRESOLVED",
+    diagnostic: { stage: "HOST_START", causeCode: "CHECKPOINT_ORDER_VIOLATION" },
+  }))).body, "HOST_START · CHECKPOINT_ORDER_VIOLATION");
+});
+
+test("reconciles an initial START_UNCERTAIN command card from the correlated owner projection", () => {
+  const React = {
+    createElement(type, props, ...children) { return { type, props: { ...(props ?? {}), children } }; },
+    useEffect() {}, useRef(value) { return { current: value }; }, useState(value) { return [value, () => undefined]; },
+    useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot(); },
+  };
+  const inventory = {
+    subscribe() { return () => undefined; },
+    getSnapshot() {
+      return { kind: "ready", snapshot: { deliveries: [{ deliveryId: "delivery-1", lifecycle: "RUNNING_CORRELATED", terminal: null }] } };
+    },
+  };
+  const View = createWsrCommandView({
+    React, inventory,
+    DisclosureRow: (props) => ({ type: "DisclosureRow", props }),
+    MessageText: (props) => ({ type: "MessageText", props }),
+    StateDot: (props) => ({ type: "StateDot", props }),
+  });
+  const tree = View({ node: {
+    commandId: "command-1", name: "wsr",
+    outcome: { kind: "success", text: JSON.stringify(valid("delivery-running", {
+      deliveryId: "delivery-1", state: "START_UNCERTAIN",
+    })) },
+  } });
+  assert.equal(tree.props.icon.props.state, "ongoing");
+  assert.match(JSON.stringify(tree.props.collapsedContent), /Running · delivery-1/u);
+  assert.doesNotMatch(JSON.stringify(tree.props.collapsedContent), /uncertain/iu);
+});
+
+test("preserves the bounded cause while reconciling an unresolved command card and exposes its semantic state", () => {
+  const React = {
+    createElement(type, props, ...children) { return { type, props: { ...(props ?? {}), children } }; },
+    useEffect() {}, useRef(value) { return { current: value }; }, useState(value) { return [value, () => undefined]; },
+    useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot(); },
+  };
+  const inventory = {
+    subscribe() { return () => undefined; },
+    getSnapshot() {
+      return { kind: "ready", snapshot: { deliveries: [{ deliveryId: "delivery-1", lifecycle: "RESULT_UNRESOLVED", terminal: null }] } };
+    },
+  };
+  const View = createWsrCommandView({
+    React, inventory,
+    DisclosureRow: (props) => ({ type: "DisclosureRow", props }),
+    MessageText: (props) => ({ type: "MessageText", props }),
+    StateDot: (props) => ({ type: "StateDot", props }),
+  });
+  const tree = View({ node: {
+    commandId: "command-1", name: "wsr",
+    outcome: { kind: "success", text: JSON.stringify(valid("delivery-status", {
+      deliveryId: "delivery-1", state: "RESULT_UNRESOLVED",
+      diagnostic: { stage: "HOST_START", causeCode: "DATAFLOW_BINDING_INVALID" },
+    })) },
+  } });
+
+  assert.match(JSON.stringify(tree), /HOST_START.*DATAFLOW_BINDING_INVALID/u);
+  assert.equal(tree.props.collapsedContent.props["data-wsr-state"], "unresolved");
+});
+
 test("keeps Action input visible and focusable instead of hiding it behind a completed disclosure", () => {
   assert.deepEqual(projectExecutionPresentation(parseExecutionPresentation(valid("action-input-request", {
     label: "Choose deployment", prompt: { question: "Promote now?" },
@@ -272,6 +352,26 @@ test("renders friendly diagnostics and the complete bounded presentation JSON fr
   assert.equal(detail.props.children[1].props.copyable, true);
 });
 
+test("marks a pending WSR command as command-accepted for browser-visible lifecycle observation", () => {
+  const React = {
+    createElement(type, props, ...children) { return { type, props: { ...(props ?? {}), children } }; },
+    useEffect() {},
+    useRef(value) { return { current: value }; },
+    useState(value) { return [value, () => undefined]; },
+  };
+  const View = createWsrCommandView({
+    React,
+    DisclosureRow: (props) => ({ type: "DisclosureRow", props }),
+    MessageText: (props) => ({ type: "MessageText", props }),
+    StateDot: (props) => ({ type: "StateDot", props }),
+  });
+
+  const tree = View({ node: { commandId: "command-1", name: "wsr", outcome: null } });
+
+  assert.equal(tree.props.collapsedContent.props["data-wsr-kind"], "command-accepted");
+  assert.equal(tree.props.collapsedContent.props["data-wsr-surface"], "chat");
+});
+
 test("reconciles the original Delivery command row with its authoritative terminal outcome", () => {
   let outcome = "SUCCEEDED";
   const React = {
@@ -362,11 +462,14 @@ test("renders process through DisclosureRow and final output as a persistent ass
 
   const processTree = View({ node: { data: projectExecutionPresentation(parseExecutionPresentation(valid("action-output", {
     state: "failed", content: { text: "compiler failed" },
-  }))) } });
+  }))) }, technicalDetails: valid("action-output", { state: "failed", content: { text: "compiler failed" } }) });
   assert.equal(processTree.type, DisclosureRow);
   assert.equal(processTree.props.open, false);
   assert.equal(processTree.props.expandOnRowClick, true);
   assert.equal(processTree.props.previewChevron, false);
+  assert.equal(processTree.props.collapsedContent.props["data-wsr-presentation"], "true");
+  assert.equal(processTree.props.collapsedContent.props["data-wsr-kind"], "action-output");
+  assert.equal(processTree.props.collapsedContent.props["data-wsr-surface"], "chat");
   assert.equal(processTree.props.children[0].props["data-wsr-layer"], "action");
   assert.equal(processTree.props.children[0].props.children[0].props.style.maxHeight, "20rem");
 

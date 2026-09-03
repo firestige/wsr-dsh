@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { basename, dirname, isAbsolute, relative, resolve, sep } from "node:path";
+import { validateExecutionOwnerRelease } from "./execution-owner-release.mjs";
 
 const EXPECTED_PACKAGES = Object.freeze([
   Object.freeze({ path: "packages/execution", name: "dsh-wsr-execution", displayName: "WSR", role: "execution-adapter" }),
@@ -193,6 +194,9 @@ export async function validateRepository(root) {
   const rootManifest = await json(resolve(repositoryRoot, "package.json"));
   const policy = await json(resolve(repositoryRoot, "config/boundary-policy.json"));
   const compatibility = await json(resolve(repositoryRoot, "config/dsh-compatibility.json"));
+  let owner;
+  try { owner = validateExecutionOwnerRelease(compatibility.executionOwner); }
+  catch { throw new BoundaryViolation("EXECUTION_OWNER_RECORD_INVALID", "config/dsh-compatibility.json"); }
   const version = rootManifest.version;
   const dshVersion = compatibility.dsh;
 
@@ -203,9 +207,7 @@ export async function validateRepository(root) {
   if (compatibility.workspaceUiFork?.strategy !== "fixed-version-fork"
     || compatibility.workspaceUiFork?.sourceVersion !== dshVersion
     || compatibility.workspaceUiFork?.activation !== "active-in-wave7"
-    || !/^[0-9a-f]{40}$/u.test(compatibility.executionOwner?.revision ?? "")
-    || !/^[0-9a-f]{64}$/u.test(compatibility.executionOwner?.assetSha256 ?? "")
-    || compatibility.executionOwner?.projection !== "execution.delivery-control-plane@1.0.0") {
+    || owner.projection !== "execution.delivery-control-plane@1.0.0") {
     throw new BoundaryViolation("WORKSPACE_UI_FORK_DRIFT", "the active fixed-version fork or owner projection coordinate changed");
   }
 
@@ -229,11 +231,10 @@ export async function validateRepository(root) {
     if (!satisfiesCaret(dependencyVersion, pkg.manifest.version)) throw new BoundaryViolation("SUITE_VERSION_DRIFT", `${pkg.name} is ${dependencyVersion}`);
   }
   const execution = packages[0].manifest;
-  const owner = compatibility.executionOwner;
   if (execution.wsr?.ownerRevision !== owner.revision
     || execution.wsr?.ownerAsset?.sha256 !== owner.assetSha256
     || !satisfiesCaret(execution.peerDependencies?.["wsr-execution"], owner.version)
-    || execution.wsr?.ownerAsset?.url !== `https://github.com/firestige/wsr-execution/releases/download/${owner.release}/wsr-execution-${owner.version}.tgz`) {
+    || execution.wsr?.ownerAsset?.url !== owner.coordinate) {
     throw new BoundaryViolation("EXECUTION_OWNER_EVIDENCE_DRIFT", execution.name);
   }
   for (const pkg of packages.slice(0, 2)) {

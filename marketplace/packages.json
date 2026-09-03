@@ -4,7 +4,7 @@
     {
       "name": "dsh-wsr-execution",
       "displayName": "WSR",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "summary": "Operate WSR Intake, Deliveries, Actions, and canonical results in DSH.",
       "icon": "./icon.svg",
       "license": "Apache-2.0",
@@ -22,7 +22,7 @@
     {
       "name": "dsh-wsr",
       "displayName": "WSR suite",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "summary": "Install the qualified compatible WSR Execution and Studio pair.",
       "icon": "./icon.svg",
       "license": "Apache-2.0",
