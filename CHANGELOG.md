@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.7 — 2026-09-04
+
+- Bind the adapter to immutable `wsr-execution@0.2.5`, including admitted Role/Action/Skill instruction projection with fail-closed digest verification.
+- Publish `dsh-wsr-execution@0.2.6` and the compatible `dsh-wsr@0.2.6` suite while retaining unchanged `dsh-wsr-studio@0.1.2` bytes.
+
 ## 0.2.6 — 2026-09-03
 
 - Bind the adapter to immutable `wsr-execution@0.2.4`, including configurable accept-all Runtime Actions that preserve controlled rejection.
