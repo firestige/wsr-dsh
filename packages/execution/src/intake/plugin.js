@@ -271,7 +271,16 @@ export async function createPluginRuntime(config, options = {}) {
   const ownerProjection = options.ownerProjection ?? api.getExecutionControlPlaneProjection(application);
   const bindingInventory = () => typeof control.bindingInventory === "function" ? control.bindingInventory() : control.list();
   const archiveTerminal = async (sessionKey, correlation, deliveryId) => {
-    const snapshot = await ownerProjection.snapshot();
+    let snapshot;
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      try {
+        snapshot = await ownerProjection.snapshot();
+        break;
+      } catch (cause) {
+        if (cause?.code !== "DELIVERY_PROJECTION_STALE_BINDING" || attempt === 99) throw cause;
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+    }
     const matches = snapshot.deliveries.filter((delivery) => delivery.lifecycle === "TERMINAL"
       && delivery.navigation?.sessionCorrelation === correlation
       && (deliveryId === undefined || delivery.deliveryId === deliveryId));
