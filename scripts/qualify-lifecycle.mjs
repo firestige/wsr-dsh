@@ -81,7 +81,7 @@ try {
   const home = join(temporary, "home-suite");
   const env = { ...process.env, DSH_HOME: home };
   run("dsh", ["plugin", "--profile", "web", "add", ownerAsset, current.execution, current.studio, "--ignore-scripts"], { env });
-  await setSuitePolicy(home, { execution: current.execution, studio: current.studio }, { execution: "0.2.4", studio: "0.1.2" });
+  await setSuitePolicy(home, { execution: current.execution, studio: current.studio }, { execution: "0.2.5", studio: "0.1.2" });
   run("dsh", ["plugin", "--profile", "web", "add", current.suite, "--ignore-scripts"], { env });
   await setLayers(home, suiteOnlyLayers);
   dump(env, ["wsr-execution", "wsr-studio"]);
