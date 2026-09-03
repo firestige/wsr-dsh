@@ -1,3 +1,3 @@
 # WSR suite
 
-`dsh-wsr` is a compatible composition bundle. It installs and activates `dsh-wsr-execution@^0.2.4` and `dsh-wsr-studio@^0.1.2`; it has no runtime entry point, display name, or UI registration of its own.
+`dsh-wsr` is a compatible composition bundle. It installs and activates `dsh-wsr-execution@^0.2.5` and `dsh-wsr-studio@^0.1.2`; it has no runtime entry point, display name, or UI registration of its own.

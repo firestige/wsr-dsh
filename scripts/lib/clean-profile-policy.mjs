@@ -25,7 +25,7 @@ export function commandFailureDetail({ stdout, stderr }) {
   return [stdout, stderr].map((value) => value?.trim()).filter(Boolean).join("\n");
 }
 
-export function localSuiteOverrides({ execution, studio }, versions = { execution: "0.2.4", studio: "0.1.2" }) {
+export function localSuiteOverrides({ execution, studio }, versions = { execution: "0.2.5", studio: "0.1.2" }) {
   return {
     [`dsh-wsr-execution@${versions.execution}`]: `file:${execution}`,
     [`dsh-wsr-studio@${versions.studio}`]: `file:${studio}`,

@@ -15,9 +15,9 @@ DeepSeek) without DOM reparenting. Exact source, integrity, hashes, and license
 attribution ship in `dsh-wsr-execution`.
 
 The Execution domain owner is installed from the immutable
-`wsr-execution-0.2.3.tgz` stable GitHub release asset (`0.2.3`, SHA-256
-`6066972da9d3ff20ab370bdd921d14754cfc8de8069e3f1c985ef5a98ac273fd`),
+`wsr-execution-0.2.4.tgz` stable GitHub release asset (`0.2.4`, SHA-256
+`f38f3b3af21ace416418385b860aa70a89ce8388e9e5eef436eb706f63b6c6f1`),
 corresponding to owner revision
-`d4287b9230da4b6be1f06785cbb841db048b4a84`. Its source and license remain
+`3c2f23e8a06b8a8dd5d61d4ed07637092323b93e`. Its source and license remain
 owned and distributed by `firestige/wsr-execution`; no domain source is
 copied into this adapter repository.
