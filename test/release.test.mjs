@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
@@ -53,6 +56,51 @@ test("npm publication is ordered components before suite and fails on immutable 
     planNpmPublication(artifacts, async () => ({ sha256: `sha256:${"f".repeat(64)}` })),
     /NPM_VERSION_DIGEST_COLLISION/u,
   );
+});
+
+test("promotion rejects a candidate whose qualified package bytes were replaced", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "wsr-dsh-promotion-swap-"));
+  try {
+    const artifact = "dsh-wsr-execution-0.2.9.tgz";
+    await writeFile(path.join(directory, artifact), "swapped-package-bytes\n");
+    const metadata = {
+      schemaVersion: "wsr.dsh.release-metadata@1.0.0",
+      repository: "firestige/wsr-dsh",
+      commit: "a".repeat(40),
+      candidateTag: "0.2.10-rc.1",
+      packageVersion: "0.2.10",
+      packages: [{
+        package: "dsh-wsr-execution",
+        version: "0.2.9",
+        file: artifact,
+        sha256: `sha256:${createHash("sha256").update("qualified-package-bytes\n").digest("hex")}`,
+      }],
+      supportFiles: [],
+    };
+    const metadataBytes = `${JSON.stringify(metadata, null, 2)}\n`;
+    await writeFile(path.join(directory, "release-metadata.json"), metadataBytes);
+    await writeFile(path.join(directory, "release-qualification.json"), `${JSON.stringify({
+      schemaVersion: "wsr.dsh.release-qualification@1.0.0",
+      packageVersion: metadata.packageVersion,
+      candidateTag: metadata.candidateTag,
+      commit: metadata.commit,
+      artifactMetadataSha256: `sha256:${createHash("sha256").update(metadataBytes).digest("hex")}`,
+      gates: {
+        cleanProfile: "PASS",
+        lifecycle: "PASS",
+        realHarness: "PASS",
+        loopbackOutage: "PASS",
+        providerRouting: "PASS",
+        remoteArtifacts: "PASS",
+      },
+    }, null, 2)}\n`);
+
+    const result = spawnSync(process.execPath, [path.join(root, "scripts/verify-release-set.mjs"), directory], { encoding: "utf8" });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /RELEASE_ARTIFACT_DIGEST_MISMATCH/u);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test("release workflows reuse candidate qualification, npm OIDC, and the scoped release App", async () => {
