@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import test from "node:test";
 
 import {
@@ -36,6 +36,36 @@ test("the repository admits independently versioned compatible bundles", async (
     "dsh-wsr-execution": "WSR",
     "dsh-wsr-studio": "WSR Studio",
   });
+});
+
+test("an old Execution owner coordinate cannot qualify the current DSH adapter", async () => {
+  const temporary = await mkdtemp(join(tmpdir(), "wsr-dsh-old-owner-"));
+  const repository = join(temporary, "repository");
+  try {
+    await cp(root, repository, {
+      recursive: true,
+      filter: (path) => ![".git", "artifacts", "node_modules"].includes(basename(path)),
+    });
+    const compatibilityPath = join(repository, "config/dsh-compatibility.json");
+    const compatibility = JSON.parse(await readFile(compatibilityPath, "utf8"));
+    compatibility.executionOwner = {
+      ...compatibility.executionOwner,
+      version: "0.2.1",
+      release: "0.2.1",
+      coordinate: "https://github.com/firestige/wsr-execution/releases/download/0.2.1/wsr-execution-0.2.1.tgz",
+      assetSha256: "a".repeat(64),
+      revision: "b".repeat(40),
+      qualificationCoordinate: "https://github.com/firestige/wsr-execution/releases/download/0.2.1/release-qualification.json",
+    };
+    await writeFile(compatibilityPath, `${JSON.stringify(compatibility, null, 2)}\n`);
+
+    await assert.rejects(
+      validateRepository(repository),
+      (error) => error instanceof BoundaryViolation && error.code === "EXECUTION_OWNER_EVIDENCE_DRIFT",
+    );
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
 });
 
 test("the suite composes compatible Execution and Studio versions without an activation or UI identity", async () => {
