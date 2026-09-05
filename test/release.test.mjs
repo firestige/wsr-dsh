@@ -106,7 +106,9 @@ test("promotion rejects a candidate whose qualified package bytes were replaced"
 test("release workflows reuse candidate qualification, npm OIDC, and the scoped release App", async () => {
   const candidate = await readFile(path.join(root, ".github/workflows/release-candidate.yml"), "utf8");
   const promote = await readFile(path.join(root, ".github/workflows/release-promote.yml"), "utf8");
-  assert.match(candidate, /workflow_dispatch:/u);
+  assert.match(candidate, /push:\s*\n\s*branches:\s*\n\s*- release\/next/u);
+  assert.doesNotMatch(candidate, /workflow_dispatch:|workflow_call:/u);
+  assert.match(candidate, /release\/request\.json/u);
   assert.match(candidate, /release-qualification\.json/u);
   assert.match(candidate, /qualify:clean-profile/u);
   assert.match(candidate, /qualify:real-harness/u);
@@ -114,7 +116,16 @@ test("release workflows reuse candidate qualification, npm OIDC, and the scoped 
   assert.doesNotMatch(candidate, /wsr-execution-0\.2\.2\.tgz|d07eb0aaa4e0498/u);
   assert.match(promote, /id-token: write/u);
   assert.match(promote, /publish-npm-set\.mjs/u);
-  assert.match(promote, /actions\/create-github-app-token@v2/u);
+  for (const workflow of [candidate, promote]) {
+    assert.match(workflow, /actions\/create-github-app-token@v3/u);
+    assert.match(workflow, /client-id: \$\{\{ vars\.WSR_RELEASE_CLIENT_ID \}\}/u);
+    assert.doesNotMatch(workflow, /app-id:/u);
+  }
+  const allWorkflows = await Promise.all([
+    "release-candidate.yml", "release-promote.yml", "verify.yml",
+  ].map((name) => readFile(path.join(root, ".github/workflows", name), "utf8")));
+  const actions = allWorkflows.join("\n");
+  assert.doesNotMatch(actions, /actions\/(?:checkout|setup-node|upload-artifact)@v4\b/u);
   assert.match(promote, /repositories: wsr-dsh/u);
   assert.doesNotMatch(promote, /Publishing is not enabled yet|STABLE_PROMOTION_DISABLED/u);
 });
