@@ -6,6 +6,8 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
 
+import { stopChildProcess } from "./stop-child-process.mjs";
+
 const root = resolve(import.meta.dirname, "../../..");
 const chromeBinary = process.env.WSR_CHROME_BINARY ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
@@ -68,16 +70,6 @@ class Cdp {
   }
 
   close() { this.socket.close(); }
-}
-
-async function stop(child) {
-  if (child === undefined || child.exitCode !== null || child.signalCode !== null) return;
-  child.kill("SIGTERM");
-  await Promise.race([
-    new Promise((accept) => child.once("exit", accept)),
-    new Promise((accept) => setTimeout(accept, 5_000)),
-  ]);
-  if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
 }
 
 test("real Chrome follows Dashboard to exact Evidence and Trace while preserving semantic styles and renderer hierarchy", { timeout: 60_000 }, async () => {
@@ -165,8 +157,8 @@ test("real Chrome follows Dashboard to exact Evidence and Trace while preserving
     assert.equal(await waitFor(() => cdp.evaluate(`document.querySelector('[data-trace-renderer]') !== null`), "STUDIO_TOP_TRACE_RESTORE_FAILED"), true);
   } finally {
     cdp?.close();
-    await stop(chrome);
-    await stop(server);
+    await stopChildProcess(chrome);
+    await stopChildProcess(server);
     await rm(temporary, { recursive: true, force: true });
   }
 });
