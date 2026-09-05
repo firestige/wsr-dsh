@@ -6,9 +6,12 @@ import { spawnSync } from "node:child_process";
 
 import { assertCompositionDump, commandFailureDetail, localSuiteOverrideYaml, localSuiteOverrides, reconcileSuiteLayers, suiteOnlyLayers } from "./lib/clean-profile-policy.mjs";
 import { packWorkspaces } from "./lib/package-artifacts.mjs";
+import { resolveQualificationExecutionAsset } from "./lib/qualification-execution-asset.mjs";
 
 const root = resolve(new URL("../", import.meta.url).pathname);
-const ownerAsset = JSON.parse(await readFile(resolve(root, "config/dsh-compatibility.json"), "utf8")).executionOwner.coordinate;
+const compatibility = JSON.parse(await readFile(resolve(root, "config/dsh-compatibility.json"), "utf8"));
+const executionAsset = await resolveQualificationExecutionAsset({ compatibility });
+const ownerAsset = executionAsset.coordinate;
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: "utf8", ...options });
@@ -81,7 +84,7 @@ try {
   const home = join(temporary, "home-suite");
   const env = { ...process.env, DSH_HOME: home };
   run("dsh", ["plugin", "--profile", "web", "add", ownerAsset, current.execution, current.studio, "--ignore-scripts"], { env });
-  await setSuitePolicy(home, { execution: current.execution, studio: current.studio }, { execution: "0.2.9", studio: "0.1.3" });
+  await setSuitePolicy(home, { execution: current.execution, studio: current.studio }, { execution: "0.2.10", studio: "0.1.4" });
   run("dsh", ["plugin", "--profile", "web", "add", current.suite, "--ignore-scripts"], { env });
   await setLayers(home, suiteOnlyLayers);
   dump(env, ["wsr-execution", "wsr-studio"]);
@@ -92,7 +95,7 @@ try {
   await setLayers(home, (layers) => [...new Set([...layers.filter((name) => name !== "dsh-wsr-studio"), "dsh-wsr-execution"])]);
   dump(env, ["wsr-execution"]);
   reports.push({ id: "suite", singleToSuite: "PASS", reconcile: "PASS", suiteToSingle: "PASS", duplicateUi: "NONE" });
-  process.stdout.write(`${JSON.stringify({ dsh: "0.1.1-rc.2", reports }, null, 2)}\n`);
+  process.stdout.write(`${JSON.stringify({ dsh: "0.1.1-rc.2", executionAsset, reports }, null, 2)}\n`);
 } catch (error) {
   process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`);
   process.exitCode = 1;

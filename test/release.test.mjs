@@ -13,17 +13,17 @@ const root = path.resolve(import.meta.dirname, "..");
 const packages = Object.freeze(["dsh-wsr-execution", "dsh-wsr-studio", "dsh-wsr"]);
 
 test("release policy accepts only an exact qualified candidate for the stable release-set version", () => {
-  assert.doesNotThrow(() => assertCandidateTag("0.2.11-rc.1", "0.2.11"));
-  assert.throws(() => assertCandidateTag("latest", "0.2.11"), /PRERELEASE_TAG_REQUIRED/u);
+  assert.doesNotThrow(() => assertCandidateTag("0.2.12-rc.1", "0.2.12"));
+  assert.throws(() => assertCandidateTag("latest", "0.2.12"), /PRERELEASE_TAG_REQUIRED/u);
   assert.doesNotThrow(() => assertPromotionEligible({
-    finalTag: "0.2.11",
-    candidateTag: "0.2.11-rc.1",
+    finalTag: "0.2.12",
+    candidateTag: "0.2.12-rc.1",
     commit: "a".repeat(40),
     metadataSha256: `sha256:${"b".repeat(64)}`,
     qualification: {
       schemaVersion: "wsr.dsh.release-qualification@1.0.0",
-      packageVersion: "0.2.11",
-      candidateTag: "0.2.11-rc.1",
+      packageVersion: "0.2.12",
+      candidateTag: "0.2.12-rc.1",
       commit: "a".repeat(40),
       artifactMetadataSha256: `sha256:${"b".repeat(64)}`,
       gates: {
@@ -106,10 +106,13 @@ test("promotion rejects a candidate whose qualified package bytes were replaced"
 test("release workflows reuse candidate qualification, npm OIDC, and the scoped release App", async () => {
   const candidate = await readFile(path.join(root, ".github/workflows/release-candidate.yml"), "utf8");
   const promote = await readFile(path.join(root, ".github/workflows/release-promote.yml"), "utf8");
+  const verify = await readFile(path.join(root, ".github/workflows/verify.yml"), "utf8");
   assert.match(candidate, /push:\s*\n\s*branches:\s*\n\s*- release\/next/u);
   assert.doesNotMatch(candidate, /workflow_dispatch:|workflow_call:/u);
   assert.match(candidate, /release\/request\.json/u);
   assert.match(candidate, /release-qualification\.json/u);
+  assert.match(candidate, /- run: npm test\n\s+env:\n\s+WSR_CHROME_BINARY: \/usr\/bin\/google-chrome/u);
+  assert.match(verify, /- run: npm test\n\s+env:\n\s+WSR_CHROME_BINARY: \/usr\/bin\/google-chrome/u);
   assert.match(candidate, /qualify:clean-profile/u);
   assert.match(candidate, /qualify:real-harness/u);
   assert.match(candidate, /release:owner:verify/u);
@@ -137,10 +140,10 @@ test("only changed bundles bump and the suite declares compatible component rang
     "packages/studio/package.json",
     "packages/suite/package.json",
   ].map(async (file) => JSON.parse(await readFile(path.join(root, file), "utf8"))));
-  assert.deepEqual(manifests.map(({ version }) => version), ["0.2.11", "0.2.9", "0.1.3", "0.2.10"]);
+  assert.deepEqual(manifests.map(({ version }) => version), ["0.2.12", "0.2.10", "0.1.4", "0.2.11"]);
   assert.deepEqual(manifests[3].dependencies, {
-    "dsh-wsr-execution": "^0.2.9",
-    "dsh-wsr-studio": "^0.1.3",
+    "dsh-wsr-execution": "^0.2.10",
+    "dsh-wsr-studio": "^0.1.4",
   });
 });
 
@@ -149,7 +152,7 @@ test("marketplace support metadata covers every package and the shared security 
   assert.equal(marketplace.schemaVersion, "wsr.dsh.marketplace@1.0.0");
   assert.deepEqual(marketplace.packages.map(({ name }) => name), packages);
   assert.deepEqual(Object.fromEntries(marketplace.packages.map(({ name, version }) => [name, version])), {
-    "dsh-wsr-execution": "0.2.9", "dsh-wsr-studio": "0.1.3", "dsh-wsr": "0.2.10",
+    "dsh-wsr-execution": "0.2.10", "dsh-wsr-studio": "0.1.4", "dsh-wsr": "0.2.11",
   });
   assert.ok(marketplace.packages.every(({ icon, license, security }) => icon === "./icon.svg"
     && license === "Apache-2.0" && security === "../SECURITY.md"));

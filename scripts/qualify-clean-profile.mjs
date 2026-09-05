@@ -6,9 +6,12 @@ import { spawnSync } from "node:child_process";
 
 import { assertCompositionDump, commandFailureDetail, localSuiteOverrideYaml, localSuiteOverrides, suiteOnlyLayers } from "./lib/clean-profile-policy.mjs";
 import { packWorkspaces } from "./lib/package-artifacts.mjs";
+import { resolveQualificationExecutionAsset } from "./lib/qualification-execution-asset.mjs";
 
 const root = new URL("../", import.meta.url).pathname;
-const ownerAsset = JSON.parse(await readFile(resolve(root, "config/dsh-compatibility.json"), "utf8")).executionOwner.coordinate;
+const compatibility = JSON.parse(await readFile(resolve(root, "config/dsh-compatibility.json"), "utf8"));
+const executionAsset = await resolveQualificationExecutionAsset({ compatibility });
+const ownerAsset = executionAsset.coordinate;
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: "utf8", ...options });
@@ -72,7 +75,7 @@ try {
     temporary,
     id: "suite",
   }));
-  process.stdout.write(`${JSON.stringify({ dsh: version, cases: reports.map(({ id, bundles }) => ({ id, bundles })) }, null, 2)}\n`);
+  process.stdout.write(`${JSON.stringify({ dsh: version, executionAsset, cases: reports.map(({ id, bundles }) => ({ id, bundles })) }, null, 2)}\n`);
 } catch (error) {
   process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
   process.exitCode = 1;

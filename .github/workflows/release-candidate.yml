@@ -32,6 +32,8 @@ jobs:
       - name: Verify the frozen DSH qualification CLI
         run: test "$(dsh --version)" = 0.1.1-rc.2
       - run: npm test
+        env:
+          WSR_CHROME_BINARY: /usr/bin/google-chrome
       - run: npm run build
       - run: npm run pack:verify
       - name: Verify immutable remote owner artifact

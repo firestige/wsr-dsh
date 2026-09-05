@@ -7,7 +7,13 @@ import test from "node:test";
 import { promisify } from "node:util";
 
 import { parseWsrCommand, promptDiagnostic } from "../src/intake/command.js";
-import { ensureGitWorktree, mapIntakeToolOperation, presentToDshSession, recordWsrCommandInput } from "../src/intake/plugin.js";
+import {
+  consumeWsrCommandBeforeModel,
+  ensureGitWorktree,
+  mapIntakeToolOperation,
+  presentToDshSession,
+  recordWsrCommandInput,
+} from "../src/intake/plugin.js";
 
 const execute = promisify(execFile);
 
@@ -38,12 +44,21 @@ test("the handler emits an ordered presentation while the earlier native row rem
   assert.ok(handler.indexOf("recordWsrCommandInput") < handler.indexOf("parseWsrCommand"));
 });
 
-test("records each WSR user turn before its presentation without scheduling a later followup", async () => {
+test("records each WSR command through a host-owned turn before its presentation without invoking the model", async () => {
   const events = [];
+  const inbox = [];
+  let modelCalls = 0;
   const agent = {
     session: { append(type, data, options) { events.push({ type, data, options }); } },
-    followup() { throw new Error("late followup must not be used"); },
-    async whenIdle() { throw new Error("command input must not wait for another agent turn"); },
+    followup(message) { inbox.push(message); },
+    async whenIdle() {
+      const message = inbox.shift();
+      assert.ok(message, "Agent inbox must contain the /wsr command");
+      agent.session.append("turn/start", { turn: 0 });
+      const consumed = consumeWsrCommandBeforeModel({ agent, messages: [message] });
+      if (!consumed) modelCalls += 1;
+      agent.session.append("turn/end", { turn: 0, reason: "rejected" });
+    },
   };
   await recordWsrCommandInput(agent, "create hello-world-workflow@0.2.0\nSay hello.", [], () => "message-1");
   presentToDshSession(agent, {
@@ -53,9 +68,68 @@ test("records each WSR user turn before its presentation without scheduling a la
     data: {},
   }, () => "presentation-command-1");
 
-  assert.deepEqual(events.map(({ type }) => type), ["user/message", "command/run", "command/done"]);
-  assert.equal(events[0].data.content[0].text, "/wsr create hello-world-workflow@0.2.0\nSay hello.");
-  assert.equal(events[1].data.name, "wsr-presentation");
+  assert.deepEqual(events.map(({ type }) => type), ["turn/start", "user/message", "turn/end", "command/run", "command/done"]);
+  assert.equal(events[1].data.content[0].text, "/wsr create hello-world-workflow@0.2.0\nSay hello.");
+  assert.equal(events[3].data.name, "wsr-presentation");
+  assert.deepEqual({
+    blank: !events.some(({ type }) => type === "turn/start"),
+    turns: events.filter(({ type }) => type === "turn/start").length,
+  }, { blank: false, turns: 1 });
+  assert.equal(inbox.length, 0);
+  assert.equal(modelCalls, 0);
+});
+
+test("keeps success, fast-fail, Execution error, and recoverable presentations in non-blank isolated Sessions", async () => {
+  const pathways = [
+    ["success", "terminal-result"],
+    ["usage-fast-fail", "error"],
+    ["execution-error", "error"],
+    ["recoverable-failure", "delivery-status"],
+  ];
+  for (const [label, presentationKind] of pathways) {
+    const sessions = [];
+    let modelCalls = 0;
+    const createAgent = (id) => {
+      const events = [];
+      const inbox = [];
+      const agent = {
+        id,
+        session: { append(type, data, options) { events.push({ type, data, options }); } },
+        followup(message) { inbox.push(message); },
+        async whenIdle() {
+          const message = inbox.shift();
+          agent.session.append("turn/start", { turn: 0 });
+          if (!consumeWsrCommandBeforeModel({ agent, messages: [message] })) modelCalls += 1;
+          agent.session.append("turn/end", { turn: 0, reason: "rejected" });
+        },
+      };
+      sessions.push({ agent, events });
+      return agent;
+    };
+    const used = createAgent(`session-${label}`);
+    await recordWsrCommandInput(used, label, [], () => `message-${label}`);
+    if (label === "success") {
+      presentToDshSession(used, {
+        schemaVersion: "wsr.presentation@1.0.0", correlation: label, kind: "action-output", data: { content: { text: "Action output" } },
+      }, () => `presentation-action-${label}`);
+    }
+    presentToDshSession(used, {
+      schemaVersion: "wsr.presentation@1.0.0", correlation: label, kind: presentationKind, data: { code: label },
+    }, () => `presentation-final-${label}`);
+    const fresh = createAgent(`session-${label}-new`);
+
+    const usedTypes = sessions[0].events.map(({ type }) => type);
+    const presentationKinds = sessions[0].events
+      .filter(({ type }) => type === "command/done")
+      .map(({ data }) => JSON.parse(data.text).kind);
+    assert.equal(usedTypes.filter((type) => type === "user/message").length, 1, label);
+    assert.deepEqual(presentationKinds, label === "success" ? ["action-output", "terminal-result"] : [presentationKind], label);
+    assert.ok(usedTypes.indexOf("user/message") < usedTypes.indexOf("command/done"), label);
+    assert.deepEqual({ blank: !usedTypes.includes("turn/start"), turns: usedTypes.filter((type) => type === "turn/start").length }, { blank: false, turns: 1 }, label);
+    assert.deepEqual({ blank: !sessions[1].events.some(({ type }) => type === "turn/start"), turns: 0 }, { blank: true, turns: 0 }, label);
+    assert.notEqual(used.id, fresh.id, label);
+    assert.equal(modelCalls, 0, label);
+  }
 });
 
 test("creates a clean Git baseline containing the existing workspace when create first needs a worktree", async () => {

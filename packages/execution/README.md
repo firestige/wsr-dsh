@@ -21,6 +21,6 @@ and exact MIT provenance are documented under
 `src/client/delivery-inventory/UPSTREAM.md`.
 
 The compatible `wsr-execution@^0.2.0` peer comes from the immutable GitHub
-`0.2.6` release asset recorded in `package.json`, not ambient npm resolution. Install that
+`0.2.7` release asset recorded in `package.json`, not ambient npm resolution. Install that
 asset as an explicit DSH profile root alongside this adapter; its required
-SHA-256 is `0b889b707b5fdc84d934e6c807ce101b4edaa356409253a1f48d6ffca7f53420`.
+SHA-256 is `bb3718360946d114251def2f1a975ee783974c2c0d959dbb4289e8955f4b5acc`.

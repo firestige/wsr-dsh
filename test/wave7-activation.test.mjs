@@ -31,40 +31,42 @@ test("Execution and Studio activate one Host and one generated browser module ea
     ],
     platform: "web",
   });
-  const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.2.6/wsr-execution-0.2.6.tgz";
+  const ownerAsset = "https://github.com/firestige/wsr-execution/releases/download/0.2.7/wsr-execution-0.2.7.tgz";
   assert.equal(execution.dependencies?.["wsr-execution"], undefined);
   assert.equal(execution.peerDependencies["wsr-execution"], "^0.2.0");
   assert.deepEqual(execution.wsr.ownerAsset, {
     url: ownerAsset,
-    sha256: "8aee92d34018a9e48ec52630faf9774f02e563b846d910a77e8adab165eb468e",
+    sha256: "bb3718360946d114251def2f1a975ee783974c2c0d959dbb4289e8955f4b5acc",
   });
   const rootManifest = await json("package.json");
   assert.equal(rootManifest.devDependencies["wsr-execution"], ownerAsset);
   assert.equal(execution.dependencies["@deepseek-ai/dsh-client-ui-workspace"], "0.1.1-rc.2");
-  assert.equal(execution.wsr.ownerRevision, "0e8d937570de451f32764a99e9f6c5dfdb55474f");
+  assert.equal(execution.wsr.ownerRevision, "de2335c7a869aff7c010100bcb809fe2d499dced");
 
   const lock = await json("package-lock.json");
   const owner = lock.packages["node_modules/wsr-execution"];
-  assert.equal(owner.version, "0.2.6");
+  assert.equal(owner.version, "0.2.7");
   assert.equal(owner.resolved, ownerAsset);
-  assert.equal(owner.integrity, "sha512-XYU+V4ZKRF7CACm+PcvHQFbOJAoM6SgFDpR6DAEv10wl8xKNbmpYvd0hJeegZdO+beyzDZHj37D98Fsm74HSaQ==");
+  assert.equal(owner.integrity, "sha512-62APEeTLDR4OSXZT6qOrhHK1TLT1iglTjl/Bkel6cgq0+UZlFfkvGgvTvfvcI9BlloCAtWr55LA9DGRrciz+oQ==");
 
   const compatibility = await json("config/dsh-compatibility.json");
   assert.deepEqual(compatibility.executionOwner, {
     schemaVersion: "execution.owner-release@1.0.0",
     package: "wsr-execution",
     repository: "firestige/wsr-execution",
-    version: "0.2.6",
-    release: "0.2.6",
+    version: "0.2.7",
+    release: "0.2.7",
     coordinate: ownerAsset,
-    assetSha256: "8aee92d34018a9e48ec52630faf9774f02e563b846d910a77e8adab165eb468e",
-    revision: "0e8d937570de451f32764a99e9f6c5dfdb55474f",
-    qualificationCoordinate: "https://github.com/firestige/wsr-execution/releases/download/0.2.6/release-qualification.json",
+    assetSha256: "bb3718360946d114251def2f1a975ee783974c2c0d959dbb4289e8955f4b5acc",
+    revision: "de2335c7a869aff7c010100bcb809fe2d499dced",
+    qualificationCoordinate: "https://github.com/firestige/wsr-execution/releases/download/0.2.7/release-qualification.json",
     projection: "execution.delivery-control-plane@1.0.0",
   });
 
   const cleanQualifier = await readFile(join(root, "scripts/qualify-clean-profile.mjs"), "utf8");
-  assert.match(cleanQualifier, /executionOwner\.coordinate/u);
+  assert.match(cleanQualifier, /resolveQualificationExecutionAsset/u);
+  const qualificationAsset = await readFile(join(root, "scripts/lib/qualification-execution-asset.mjs"), "utf8");
+  assert.match(qualificationAsset, /compatibility\.executionOwner\.coordinate/u);
   assert.doesNotMatch(cleanQualifier, /releases\/download\/0\.2\.1\/wsr-execution-0\.2\.1\.tgz/u);
   assert.match(cleanQualifier, /ownerRequired: true,[\s\S]*id: "execution"/u);
   assert.match(cleanQualifier, /ownerRequired: true,[\s\S]*id: "suite"/u);

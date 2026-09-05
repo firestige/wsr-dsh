@@ -1,7 +1,7 @@
 import { projectDeliveryInventory } from "./model.js";
 
 const STYLE_ID = "dsh-wsr-execution-delivery-inventory";
-const CSS = ".wsr-sidebar-resources{min-height:0;flex:1;display:flex;flex-direction:column;gap:4px}.wsr-sidebar-resource{min-height:0;display:flex;flex-direction:column}.wsr-sidebar-resource:first-child{flex:1}.wsr-sidebar-resource-header{box-sizing:border-box;width:100%;height:36px;cursor:pointer;color:var(--dsw-alias-label-tertiary);background:transparent;border:0;border-radius:8px;display:flex;align-items:center;gap:6px;padding:0 8px;font-size:13px;text-align:left}.wsr-sidebar-resource-header:hover{background:var(--dsw-alias-interactive-bg-hover)}.wsr-delivery-row{box-sizing:border-box;width:100%;height:32px;cursor:pointer;color:var(--dsw-alias-label-primary);background:transparent;border:0;border-radius:8px;display:flex;align-items:center;gap:6px;padding:0 8px;font-size:14px;line-height:20px;text-align:left}.wsr-delivery-row:hover,.wsr-delivery-row[aria-current=page]{background:var(--dsw-alias-interactive-bg-hover)}.wsr-delivery-row:disabled{cursor:default}.wsr-delivery-row>span:first-child{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden;flex:1}.wsr-delivery-status{color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:20px}.wsr-delivery-status-recoverable{color:var(--dsw-alias-state-warning-primary)}";
+const CSS = ".wsr-sidebar-resources{box-sizing:border-box;height:100%;min-height:0;flex:1 1 0;overflow:hidden;display:flex;flex-direction:column;gap:4px}.wsr-sidebar-resource{min-height:36px;flex:0 0 auto;overflow:hidden;display:flex;flex-direction:column}.wsr-sidebar-resource[data-expanded=true]{min-height:0;flex:1 1 0}.wsr-sidebar-resource-content{min-height:0;flex:1 1 auto;overflow:auto;overscroll-behavior:contain}.wsr-sidebar-resource-header{box-sizing:border-box;width:100%;height:36px;flex:0 0 36px;cursor:pointer;color:var(--dsw-alias-label-tertiary);background:transparent;border:0;border-radius:8px;display:flex;align-items:center;gap:6px;padding:0 8px;font-size:13px;text-align:left}.wsr-sidebar-resource-header:hover{background:var(--dsw-alias-interactive-bg-hover)}.wsr-delivery-row{box-sizing:border-box;width:100%;height:32px;cursor:pointer;color:var(--dsw-alias-label-primary);background:transparent;border:0;border-radius:8px;display:flex;align-items:center;gap:6px;padding:0 8px;font-size:14px;line-height:20px;text-align:left}.wsr-delivery-row:hover,.wsr-delivery-row[aria-current=page]{background:var(--dsw-alias-interactive-bg-hover)}.wsr-delivery-row:disabled{cursor:default}.wsr-delivery-row>span:first-child{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden;flex:1}.wsr-delivery-status{color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:20px}.wsr-delivery-status-recoverable{color:var(--dsw-alias-state-warning-primary)}";
 
 function installStyle() {
   if (typeof document === "undefined" || document.getElementById(STYLE_ID) !== null) return;
@@ -50,13 +50,14 @@ export function createSidebarResources(React, WorkspaceBrowser, inventory) {
       },
     }, React.createElement("span", { "aria-hidden": "true" }, expanded ? "▾" : "▸"), label);
     return React.createElement("div", { className: "wsr-sidebar-resources", "data-wsr-sidebar-resources": "true" },
-      React.createElement("section", { className: "wsr-sidebar-resource", "aria-label": "Workspace" },
+      React.createElement("section", { className: "wsr-sidebar-resource", "data-expanded": workspaceExpanded, "aria-label": "Workspace" },
         header("wsr-sidebar-workspace", "Workspace", workspaceExpanded, "workspace"),
-        workspaceExpanded && React.createElement("div", { id: "wsr-sidebar-workspace" }, React.createElement(WorkspaceBrowser, props))),
-      React.createElement("section", { className: "wsr-sidebar-resource", "aria-label": "Delivery" },
+        workspaceExpanded && React.createElement("div", { id: "wsr-sidebar-workspace", className: "wsr-sidebar-resource-content" }, React.createElement(WorkspaceBrowser, props))),
+      React.createElement("section", { className: "wsr-sidebar-resource", "data-expanded": deliveryExpanded, "aria-label": "Delivery" },
         header("wsr-sidebar-delivery", "Delivery", deliveryExpanded, "delivery"),
         deliveryExpanded && React.createElement("div", {
-          id: "wsr-sidebar-delivery", role: view.kind === "error" ? "alert" : "region", "aria-live": "polite",
+          id: "wsr-sidebar-delivery", className: "wsr-sidebar-resource-content",
+          role: view.kind === "error" ? "alert" : "region", "aria-live": "polite",
         }, view.kind === "ready"
           ? React.createElement("div", { role: "list", "aria-label": "Deliveries" }, view.rows.map((row) => React.createElement("button", {
               key: row.deliveryId, type: "button", role: "listitem", className: "wsr-delivery-row",
