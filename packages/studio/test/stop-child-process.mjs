@@ -1,3 +1,6 @@
+import { rm } from "node:fs/promises";
+import { setTimeout as wait } from "node:timers/promises";
+
 function hasExited(child) {
   return child.exitCode !== null || child.signalCode !== null;
 }
@@ -26,5 +29,21 @@ export async function stopChildProcess(child, options = {}) {
   child.kill("SIGKILL");
   if (!await waitForExit(child, killTimeoutMs)) {
     throw new Error("CHILD_PROCESS_TERMINATION_TIMEOUT");
+  }
+}
+
+export async function removeRunDirectory(path, options = {}) {
+  const remove = options.remove ?? rm;
+  const delay = options.delay ?? wait;
+  const maxAttempts = options.maxAttempts ?? 6;
+  const retryDelayMs = options.retryDelayMs ?? 100;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      await remove(path, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      if (error?.code !== "ENOTEMPTY" || attempt === maxAttempts) throw error;
+      await delay(retryDelayMs * attempt);
+    }
   }
 }

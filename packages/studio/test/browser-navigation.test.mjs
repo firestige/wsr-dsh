@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp } from "node:fs/promises";
 import { createServer as createNetServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
 
-import { stopChildProcess } from "./stop-child-process.mjs";
+import { removeRunDirectory, stopChildProcess } from "./stop-child-process.mjs";
 
 const root = resolve(import.meta.dirname, "../../..");
 const chromeBinary = process.env.WSR_CHROME_BINARY ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -159,6 +159,6 @@ test("real Chrome follows Dashboard to exact Evidence and Trace while preserving
     cdp?.close();
     await stopChildProcess(chrome);
     await stopChildProcess(server);
-    await rm(temporary, { recursive: true, force: true });
+    await removeRunDirectory(temporary);
   }
 });
