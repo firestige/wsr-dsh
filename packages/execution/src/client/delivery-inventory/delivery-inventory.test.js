@@ -130,9 +130,15 @@ test("Harness composition owns the single slot and renders Workspace as a child 
   assert.equal(registrations[0].component.name, "WsrSidebarResources");
   const tree = registrations[0].component({ useSessions: (select) => select({ current: "session-b" }), open() {} });
   assert.equal(tree.children[0].props["aria-label"], "Workspace");
+  assert.equal(tree.children[0].props["data-expanded"], true);
   assert.equal(tree.children[1].props["aria-label"], "Delivery");
+  assert.equal(tree.children[1].props["data-expanded"], true);
+  assert.equal(tree.children[0].children[1].props.className, "wsr-sidebar-resource-content");
+  assert.equal(tree.children[1].children[1].props.className, "wsr-sidebar-resource-content");
   assert.equal(tree.children[0].children[1].children[0].type, WorkspaceBrowser);
   const deliveryHeader = tree.children[1].children[0];
+  assert.equal(deliveryHeader.props["aria-controls"], "wsr-sidebar-delivery");
+  assert.equal(deliveryHeader.props["aria-expanded"], true);
   let prevented = false;
   deliveryHeader.props.onKeyDown({ key: "Enter", preventDefault() { prevented = true; } });
   assert.equal(prevented, true);
@@ -140,6 +146,17 @@ test("Harness composition owns the single slot and renders Workspace as a child 
 
   const source = await readFile(new URL("./sidebar.js", import.meta.url), "utf8");
   assert.doesNotMatch(source, /querySelector|appendChild|insertBefore|\/wsr list|\.command\(/u);
+});
+
+test("sidebar resources negotiate bounded height and keep overflow inside each expanded content region", async () => {
+  const source = await readFile(new URL("./sidebar.js", import.meta.url), "utf8");
+
+  assert.match(source, /\.wsr-sidebar-resources\{[^}]*height:100%[^}]*overflow:hidden/u);
+  assert.match(source, /\.wsr-sidebar-resource\{[^}]*flex:0 0 auto[^}]*overflow:hidden/u);
+  assert.match(source, /\.wsr-sidebar-resource\[data-expanded=true\]\{[^}]*flex:1 1 0/u);
+  assert.match(source, /\.wsr-sidebar-resource-content\{[^}]*min-height:0[^}]*flex:1 1 auto[^}]*overflow:auto/u);
+  assert.match(source, /\.wsr-sidebar-resource-header\{[^}]*flex:0 0 36px/u);
+  assert.doesNotMatch(source, /\.wsr-sidebar-resource:first-child/u);
 });
 
 test("fixed upstream Workspace UI coordinate and MIT attribution are exact", async () => {

@@ -572,6 +572,159 @@ try {
   if (shell.ready !== "complete" || (terminalFixture ? shell.terminalRows.length !== 3 : !shell.empty) || !shell.adjacent) {
     throw new Error(`HARNESS_DELIVERY_READ_FAILED: ${JSON.stringify(shell)}`);
   }
+  const setSidebarDisclosure = async (id, expanded) => {
+    const selector = `button[aria-controls=${JSON.stringify(id)}]`;
+    await waitFor(async () => cdp.evaluate(`(() => {
+      const button = document.querySelector(${JSON.stringify(selector)});
+      if (!button) return undefined;
+      if (button.getAttribute('aria-expanded') !== ${JSON.stringify(String(expanded))}) button.click();
+      return button.getAttribute('aria-expanded') === ${JSON.stringify(String(expanded))};
+    })()`), `HARNESS_SIDEBAR_DISCLOSURE_${id}_${expanded ? "EXPAND" : "COLLAPSE"}_FAILED`);
+  };
+  const expandHostSidebar = async () => {
+    await waitFor(async () => cdp.evaluate(`(() => {
+      const resources = document.querySelector('[data-wsr-sidebar-resources="true"]');
+      if (resources?.getBoundingClientRect().width > 100) return true;
+      const shell = document.querySelector('[data-sidebar-collapsed="true"]');
+      if (shell) {
+        const toggle = [...document.querySelectorAll('button')].find((node) => /打开侧边栏|Open sidebar/i.test(node.getAttribute('aria-label') ?? ''));
+        if (!toggle) return undefined;
+        toggle.click();
+        return false;
+      }
+      return undefined;
+    })()`), "HARNESS_SIDEBAR_HOST_EXPAND_FAILED", 3_000);
+  };
+  const measureSidebar = async (label) => {
+    const geometry = await cdp.evaluate(`(() => {
+      const root = document.querySelector('[data-wsr-sidebar-resources="true"]');
+      const workspaceSection = root?.querySelector('section[aria-label="Workspace"]');
+      const deliverySection = root?.querySelector('section[aria-label="Delivery"]');
+      const workspaceHeader = root?.querySelector('button[aria-controls="wsr-sidebar-workspace"]');
+      const deliveryHeader = root?.querySelector('button[aria-controls="wsr-sidebar-delivery"]');
+      const workspaceContent = document.getElementById('wsr-sidebar-workspace');
+      const deliveryContent = document.getElementById('wsr-sidebar-delivery');
+      if (!root || !workspaceSection || !deliverySection || !workspaceHeader || !deliveryHeader
+        || !workspaceContent || !deliveryContent) return null;
+      root.querySelectorAll('[data-wsr-sidebar-qualification]').forEach((node) => node.remove());
+      const workspaceOverflow = document.createElement('div');
+      workspaceOverflow.dataset.wsrSidebarQualification = 'workspace-overflow';
+      workspaceOverflow.style.height = '1800px';
+      workspaceOverflow.style.flex = '0 0 1800px';
+      workspaceOverflow.setAttribute('aria-hidden', 'true');
+      workspaceContent.append(workspaceOverflow);
+      const deliveryList = deliveryContent.querySelector('[role="list"]') ?? deliveryContent;
+      const deliveryOverflow = document.createElement('div');
+      deliveryOverflow.dataset.wsrSidebarQualification = 'delivery-overflow';
+      deliveryOverflow.style.height = '1800px';
+      deliveryOverflow.setAttribute('aria-hidden', 'true');
+      deliveryList.append(deliveryOverflow);
+      const rect = (node) => {
+        const value = node.getBoundingClientRect();
+        return { top: value.top, bottom: value.bottom, left: value.left, right: value.right, height: value.height, width: value.width };
+      };
+      const rootRect = rect(root);
+      const workspaceSectionRect = rect(workspaceSection);
+      const deliverySectionRect = rect(deliverySection);
+      const workspaceHeaderBefore = rect(workspaceHeader);
+      const deliveryHeaderBefore = rect(deliveryHeader);
+      workspaceContent.scrollTop = 120;
+      deliveryContent.scrollTop = 140;
+      const workspaceHeaderAfter = rect(workspaceHeader);
+      const deliveryHeaderAfter = rect(deliveryHeader);
+      const style = (node) => getComputedStyle(node);
+      return {
+        viewport: { width: innerWidth, height: innerHeight }, root: rootRect,
+        sections: { workspace: workspaceSectionRect, delivery: deliverySectionRect },
+        headers: { workspaceBefore: workspaceHeaderBefore, workspaceAfter: workspaceHeaderAfter,
+          deliveryBefore: deliveryHeaderBefore, deliveryAfter: deliveryHeaderAfter },
+        content: {
+          workspace: { clientHeight: workspaceContent.clientHeight, scrollHeight: workspaceContent.scrollHeight,
+            scrollTop: workspaceContent.scrollTop, overflowY: style(workspaceContent).overflowY },
+          delivery: { clientHeight: deliveryContent.clientHeight, scrollHeight: deliveryContent.scrollHeight,
+            scrollTop: deliveryContent.scrollTop, overflowY: style(deliveryContent).overflowY },
+        },
+        documentOverflow: document.documentElement.scrollHeight > document.documentElement.clientHeight,
+      };
+    })()`);
+    if (geometry === null
+      || geometry.root.height <= 0
+      || geometry.headers.workspaceBefore.top < geometry.root.top - 1
+      || geometry.headers.deliveryBefore.bottom > geometry.root.bottom + 1
+      || geometry.sections.workspace.bottom > geometry.sections.delivery.top + 1
+      || geometry.content.workspace.scrollHeight <= geometry.content.workspace.clientHeight
+      || geometry.content.delivery.scrollHeight <= geometry.content.delivery.clientHeight
+      || geometry.content.workspace.scrollTop <= 0 || geometry.content.delivery.scrollTop <= 0
+      || geometry.content.workspace.overflowY !== "auto" || geometry.content.delivery.overflowY !== "auto"
+      || Math.abs(geometry.headers.workspaceBefore.top - geometry.headers.workspaceAfter.top) > 1
+      || Math.abs(geometry.headers.deliveryBefore.top - geometry.headers.deliveryAfter.top) > 1
+      || geometry.documentOverflow) {
+      throw new Error(`${label}: ${JSON.stringify(geometry)}`);
+    }
+    return geometry;
+  };
+  await setSidebarDisclosure("wsr-sidebar-workspace", true);
+  await setSidebarDisclosure("wsr-sidebar-delivery", true);
+  await cdp.command("Emulation.setDeviceMetricsOverride", { width: 720, height: 420, deviceScaleFactor: 1, mobile: false });
+  await expandHostSidebar();
+  const sidebarNarrow = await measureSidebar("HARNESS_SIDEBAR_NARROW_GEOMETRY_FAILED");
+  await cdp.command("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  await expandHostSidebar();
+  const sidebarWide = await measureSidebar("HARNESS_SIDEBAR_WIDE_GEOMETRY_FAILED");
+
+  const workspaceHeader = await cdp.evaluate(`(() => {
+    const button = document.querySelector('button[aria-controls="wsr-sidebar-workspace"]');
+    button.focus();
+    return document.activeElement === button;
+  })()`);
+  if (!workspaceHeader) throw new Error("HARNESS_SIDEBAR_WORKSPACE_FOCUS_FAILED");
+  await cdp.command("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+  await cdp.command("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+  const workspaceCollapsed = await waitFor(async () => cdp.evaluate(`(() => {
+    const button = document.querySelector('button[aria-controls="wsr-sidebar-workspace"]');
+    const delivery = document.querySelector('section[aria-label="Delivery"]');
+    const root = document.querySelector('[data-wsr-sidebar-resources="true"]');
+    if (button?.getAttribute('aria-expanded') !== 'false') return undefined;
+    const buttonRect = button.getBoundingClientRect();
+    const deliveryRect = delivery.getBoundingClientRect();
+    const rootRect = root.getBoundingClientRect();
+    return { focused: document.activeElement === button, hiddenContentAbsent: document.getElementById('wsr-sidebar-workspace') === null,
+      stored: localStorage.getItem('wsr.sidebar.workspace.expanded.v1'),
+      bounded: buttonRect.top >= rootRect.top - 1 && deliveryRect.bottom <= rootRect.bottom + 1 };
+  })()`), "HARNESS_SIDEBAR_WORKSPACE_COLLAPSE_FAILED");
+  if (!workspaceCollapsed.focused || !workspaceCollapsed.hiddenContentAbsent || workspaceCollapsed.stored !== "false" || !workspaceCollapsed.bounded) {
+    throw new Error(`HARNESS_SIDEBAR_WORKSPACE_COLLAPSE_INVALID: ${JSON.stringify(workspaceCollapsed)}`);
+  }
+  await setSidebarDisclosure("wsr-sidebar-workspace", true);
+  await setSidebarDisclosure("wsr-sidebar-delivery", false);
+  const deliveryCollapsed = await cdp.evaluate(`(() => {
+    const button = document.querySelector('button[aria-controls="wsr-sidebar-delivery"]');
+    const workspace = document.querySelector('section[aria-label="Workspace"]');
+    const root = document.querySelector('[data-wsr-sidebar-resources="true"]');
+    const buttonRect = button.getBoundingClientRect();
+    const workspaceRect = workspace.getBoundingClientRect();
+    const rootRect = root.getBoundingClientRect();
+    return { expanded: button.getAttribute('aria-expanded'), hiddenContentAbsent: document.getElementById('wsr-sidebar-delivery') === null,
+      stored: localStorage.getItem('wsr.sidebar.delivery.expanded.v1'),
+      bounded: workspaceRect.top >= rootRect.top - 1 && buttonRect.bottom <= rootRect.bottom + 1 };
+  })()`);
+  if (deliveryCollapsed.expanded !== "false" || !deliveryCollapsed.hiddenContentAbsent || deliveryCollapsed.stored !== "false" || !deliveryCollapsed.bounded) {
+    throw new Error(`HARNESS_SIDEBAR_DELIVERY_COLLAPSE_INVALID: ${JSON.stringify(deliveryCollapsed)}`);
+  }
+  const sidebarDocumentOrigin = await cdp.evaluate(`performance.timeOrigin`);
+  await cdp.command("Page.reload", { ignoreCache: true });
+  const sidebarPersistence = await waitFor(async () => cdp.evaluate(`(() => {
+    const workspace = document.querySelector('button[aria-controls="wsr-sidebar-workspace"]');
+    const delivery = document.querySelector('button[aria-controls="wsr-sidebar-delivery"]');
+    if (performance.timeOrigin === ${JSON.stringify(sidebarDocumentOrigin)} || !workspace || !delivery) return undefined;
+    return { workspace: workspace.getAttribute('aria-expanded'), delivery: delivery.getAttribute('aria-expanded'),
+      deliveryHidden: document.getElementById('wsr-sidebar-delivery') === null };
+  })()`), "HARNESS_SIDEBAR_PERSISTENCE_FAILED", 30_000);
+  if (sidebarPersistence.workspace !== "true" || sidebarPersistence.delivery !== "false" || !sidebarPersistence.deliveryHidden) {
+    throw new Error(`HARNESS_SIDEBAR_PERSISTENCE_INVALID: ${JSON.stringify(sidebarPersistence)}`);
+  }
+  await setSidebarDisclosure("wsr-sidebar-delivery", true);
+  const sidebarQualification = { narrow: sidebarNarrow, wide: sidebarWide, workspaceCollapsed, deliveryCollapsed, persistence: sidebarPersistence };
   let terminalView;
   if (terminalFixture) {
     await cdp.command("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
@@ -1009,7 +1162,7 @@ try {
       csp: csp === "" ? "absent-in-dsh-0.1.1-rc.2" : createHash("sha256").update(csp).digest("hex"),
       activation: ["wsr-execution", "wsr-studio"],
     },
-    browser: { deliveryInventory: terminalFixture ? shell.terminalRows : "empty-ready", terminalView: terminalView ?? null, commandDiagnostic, keyboardDisclosure: `${before.expanded}->${after}`, tabOrder: shell.tabOrder, studio,
+    browser: { deliveryInventory: terminalFixture ? shell.terminalRows : "empty-ready", terminalView: terminalView ?? null, commandDiagnostic, keyboardDisclosure: `${before.expanded}->${after}`, sidebarQualification, tabOrder: shell.tabOrder, studio,
       evaluate: "single-adjustable-dashboard-compare-metric-receipt-fact-trace", dashboard, savedDashboard,
       themes: { dark: dashboard.coreTheme, light: lightTheme ? "light" : "invalid" }, storedLocation, urlLocation, refreshRecovery: restored,
       screenshots: {
