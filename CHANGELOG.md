@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.12 — 2026-09-05
+
+- Preserve the host-owned `/wsr` command turn through success and controlled failures, constrain Delivery sidebar resources to their available width with accessible expansion, and restore exact Studio drill-down navigation from Evidence views.
+- Bind the adapter to immutable `wsr-execution@0.2.7`, including exact Workflow Source selection that ignores unrelated malformed release assets while failing closed on invalid target assets.
+- Publish `dsh-wsr-execution@0.2.10`, `dsh-wsr-studio@0.1.4`, and the compatible `dsh-wsr@0.2.11` suite.
+
 ## 0.2.10 — 2026-09-04
 
 - Archive a successful terminal abandon directly from the authoritative Execution result and frozen Session binding, eliminating the circular stale-projection dependency after slot release.
