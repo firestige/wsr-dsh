@@ -74,18 +74,55 @@ export function createStudioTheme(mode) {
     mode,
     density: "compact",
     containerBorderStyle: "solid",
-    surfaces: Object.freeze({
-      section: "var(--dsw-alias-bg-layer-1)",
-      panel: "var(--dsw-alias-bg-layer-1)",
-      raised: "var(--dsw-alias-bg-layer-2)",
-      inset: "var(--dsw-alias-bg-base)",
+    palette: Object.freeze({
+      surface: Object.freeze({
+        section: "var(--dsw-specific-sidebar-fill)",
+        panel: "var(--dsw-alias-bg-layer-1)",
+        raised: "var(--dsw-alias-bg-layer-2)",
+        inset: "var(--dsw-alias-bg-base)",
+      }),
+      content: Object.freeze({
+        primary: "var(--dsw-alias-label-primary)",
+        secondary: "var(--dsw-alias-label-secondary)",
+        muted: "var(--dsw-alias-label-dimmed)",
+        inverse: "var(--dsw-alias-label-primary-inverted)",
+      }),
+      border: Object.freeze({
+        default: "var(--dsw-alias-border-l2)",
+        strong: "var(--dsw-alias-border-l3)",
+      }),
+      interaction: Object.freeze({
+        accent: "var(--dsw-alias-state-business-primary)",
+        selection: "var(--dsw-alias-interactive-bg-active)",
+        disabled: "var(--dsw-alias-label-dimmed)",
+        focusRing: "var(--dsw-alias-state-business-primary)",
+      }),
+      status: Object.freeze({
+        available: "var(--dsw-alias-state-success-primary)",
+        attention: "var(--dsw-alias-state-warning-primary)",
+        unavailable: "var(--dsw-alias-label-dimmed)",
+        expired: "var(--dsw-alias-state-warn-label)",
+        incompatible: "var(--dsw-alias-state-error-secondary)",
+        error: "var(--dsw-alias-state-error-primary)",
+      }),
+      data: Object.freeze([
+        "var(--dsw-alias-state-business-primary)",
+        "var(--dsw-alias-state-success-primary)",
+        "var(--dsw-alias-state-warning-primary)",
+        "var(--dsw-alias-state-error-primary)",
+      ]),
     }),
-    traceIndentGuides: Object.freeze([
-      "var(--dsw-alias-label-dimmed)",
-      "oklch(75% 0.17 145)",
-      "var(--dsw-alias-state-warning-primary)",
-      "var(--dsw-alias-state-error-primary)",
-    ]),
+    typography: Object.freeze({
+      fontFamily: "var(--dsw-font-family)",
+      codeFontFamily: "var(--dsw-font-family-mono)",
+      h1: "18px",
+      h2: "13px",
+      subtitle1: "13px",
+      body1: "11px",
+      body2: "10px",
+      caption: "9px",
+      overline: "8px",
+    }),
   });
 }
 
@@ -169,7 +206,7 @@ export function createStudioLayoutStore(storage) {
 }
 
 const hostStyles = `
-#wsr-studio-view { --wsr-surface-section:var(--dsw-alias-bg-layer-1); --wsr-surface-panel:var(--dsw-alias-bg-layer-1); --wsr-surface-raised:var(--dsw-alias-bg-layer-2); --wsr-surface-inset:var(--dsw-alias-bg-base); --wsr-shape-panel:10px; --wsr-shape-control:7px; --wsr-type-page-title:18px; --wsr-type-section-title:13px; --wsr-type-body:11px; --wsr-type-label:10px; --wsr-type-caption:9px; --wsr-type-code:9px; --wsr-type-micro:8px; }
+#wsr-studio-view { --wsr-shape-panel:10px; --wsr-shape-control:7px; }
 #wsr-studio-view, #wsr-studio-view > *, #wsr-studio-view .studio-page-copy { min-width:0; max-width:100%; }
 #wsr-studio-view [data-wsr-studio-region="header"] { overflow:hidden; }
 #wsr-studio-view .studio-product-row, #wsr-studio-view .studio-page-row { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; }
@@ -314,7 +351,7 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
     React.useEffect(() => {
       if (snapshot.drilldown.phase !== "idle") return;
       if (snapshot.route.page === "facts" && snapshot.result !== undefined) {
-        void controller.loadMetricFacts(snapshot.route.metric, snapshot.route.scope);
+        void controller.loadMetricFacts(snapshot.route.metric, snapshot.route.scope, snapshot.route.side);
       }
       if (snapshot.route.page === "trace") void controller.loadTrace({
         trace_id: snapshot.route.traceId,
@@ -394,6 +431,18 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
         setStudioPage("dashboard");
       }
     };
+    const exactEvidenceTarget = snapshot.exactTargets.evidence;
+    const exactTraceTarget = snapshot.exactTargets.trace;
+    const evidenceUnavailableReason = exactEvidenceTarget === undefined
+      ? "EXACT_EVIDENCE_TARGET_NOT_ESTABLISHED"
+      : exactEvidenceTarget.status === "unavailable"
+        ? "EXACT_EVIDENCE_TARGET_UNAVAILABLE"
+        : undefined;
+    const traceUnavailableReason = exactTraceTarget === undefined
+      ? "EXACT_TRACE_TARGET_NOT_ESTABLISHED"
+      : exactTraceTarget.status === "unavailable"
+        ? "EXACT_TRACE_TARGET_UNAVAILABLE"
+        : undefined;
     const pageIdentity = studioPage === "selection"
       ? { eyebrow: "New evaluation", title: "Select task population", detail: "Choose exact Task identities; display names are recognition only." }
       : snapshot.route.page === "trace"
@@ -423,7 +472,7 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
           snapshot.route.page === "trace" ? React.createElement(React.Fragment, null,
             React.createElement(Typography, { variant: "caption" }, "/"), React.createElement(Typography, { variant: "caption" }, "Trace")) : null),
         React.createElement("nav", { className: "studio-controls", "aria-label": "Studio views" },
-          React.createElement(Button, { appearance: "ghost", className: "studio-view-link", type: "button", "aria-current": studioPage === "selection" ? "page" : undefined, onClick: () => {
+          React.createElement(Button, { appearance: "ghost", className: "studio-view-link", type: "button", disabled: false, "aria-current": studioPage === "selection" ? "page" : undefined, onClick: () => {
             setSelectionRequested(true);
             setStudioPage("selection");
           } }, "Select"),
@@ -432,8 +481,24 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
             setSelectionRequested(false);
             setStudioPage("dashboard");
           } }, "Dashboard"),
-          React.createElement(Button, { appearance: "ghost", className: "studio-view-link", type: "button", disabled: snapshot.route.page !== "facts", "aria-current": snapshot.route.page === "facts" ? "page" : undefined }, "Evidence"),
-          React.createElement(Button, { appearance: "ghost", className: "studio-view-link", type: "button", disabled: snapshot.route.page !== "trace", "aria-current": snapshot.route.page === "trace" ? "page" : undefined }, "Recorded Trace"))),
+          React.createElement(Button, {
+            appearance: "ghost", className: "studio-view-link", type: "button",
+            disabled: evidenceUnavailableReason !== undefined,
+            "aria-current": snapshot.route.page === "facts" ? "page" : undefined,
+            "data-navigation-state": evidenceUnavailableReason === undefined ? "available" : "unavailable",
+            "data-unavailable-reason": evidenceUnavailableReason,
+            title: evidenceUnavailableReason,
+            onClick: () => controller.restoreExactEvidence(),
+          }, "Evidence"),
+          React.createElement(Button, {
+            appearance: "ghost", className: "studio-view-link", type: "button",
+            disabled: traceUnavailableReason !== undefined,
+            "aria-current": snapshot.route.page === "trace" ? "page" : undefined,
+            "data-navigation-state": traceUnavailableReason === undefined ? "available" : "unavailable",
+            "data-unavailable-reason": traceUnavailableReason,
+            title: traceUnavailableReason,
+            onClick: () => controller.restoreExactTrace(),
+          }, "Recorded Trace"))),
       React.createElement("div", { className: "studio-page-row" },
         React.createElement("div", { className: "studio-page-copy" },
           React.createElement(Typography, { as: "span", className: "studio-eyebrow", variant: "eyebrow" }, pageIdentity.eyebrow),
@@ -453,10 +518,13 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
             } }, "Change evaluation")) : null,
           studioPage === "dashboard" && snapshot.route.page === "trace" ? React.createElement(React.Fragment, null,
             React.createElement(Button, { appearance: "outline", type: "button", onClick: () => controller.backToResults() }, "Back to Dashboard"),
-            presentation.metrics[0] === undefined ? null : React.createElement(Button, { appearance: "outline", type: "button", onClick: () => {
-              controller.openFacts(presentation.metrics[0].coordinate);
-              void controller.loadMetricFacts(presentation.metrics[0].coordinate);
-            } }, "Open Evidence"),
+            React.createElement(Button, {
+              appearance: "outline", type: "button",
+              disabled: evidenceUnavailableReason !== undefined,
+              "data-unavailable-reason": evidenceUnavailableReason,
+              title: evidenceUnavailableReason,
+              onClick: () => controller.restoreExactEvidence(),
+            }, "Open Evidence"),
             React.createElement(Button, { appearance: "solid", tone: "primary", type: "button", onClick: () => navigator.clipboard?.writeText(snapshot.route.traceId) }, "Copy trace identity")) : null,
           studioPage === "dashboard" && editingDashboard
             ? React.createElement(React.Fragment, null,
@@ -585,7 +653,7 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
                   React.createElement(Bi.DashboardMetricPanel, {
                     result,
                     size: placement.desktop >= 12 ? "WIDE" : placement.desktop >= 6 ? "MEDIUM" : "SMALL",
-                    onEvidence: () => controller.openFacts(metric.coordinate),
+                    onEvidence: () => controller.openFacts(metric.coordinate, "result", side),
                   }));
               }));
               })),
@@ -601,7 +669,7 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
                 afterError: snapshot.result.right?.tag === "SIDE_ERROR" ? snapshot.result.right : undefined,
                 delta,
                 onRetryFailedSide: () => controller.refresh(),
-                onEvidence: (_side) => controller.openFacts(delta.metric_coordinate),
+                onEvidence: (side) => controller.openFacts(delta.metric_coordinate, "result", side),
                 visualizer: Bi.selectDefaultVisualizer({
                   metric_id: delta.metric_coordinate.slice(0, delta.metric_coordinate.lastIndexOf("@")),
                   metric_version: delta.metric_coordinate.slice(delta.metric_coordinate.lastIndexOf("@") + 1),
@@ -647,8 +715,8 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
                 loadedAsFact: reference.loadedAsFact,
               })),
               onScopeChange: (scope) => {
-                controller.openFacts(snapshot.route.metric, scope);
-                void controller.loadMetricFacts(snapshot.route.metric, scope);
+                controller.openFacts(snapshot.route.metric, scope, snapshot.route.side);
+                void controller.loadMetricFacts(snapshot.route.metric, scope, snapshot.route.side);
               },
               onOpenTrace: (traceId, spanId) => {
                 controller.openTrace(traceId, spanId);
@@ -662,11 +730,12 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
             ? React.createElement("p", { role: presentation.trace.length > 0 ? "alert" : "status" },
               presentation.trace.length > 0 ? "Studio received an incompatible formal Trace shape" : "No recorded Trace items")
             : React.createElement(Bi.BiSurface, { theme },
-              recorded.status === "INVALID" ? React.createElement("p", { role: "alert" }, recorded.errors.join("; ")) : null,
-              React.createElement(Bi[STUDIO_TRACE_VIEWS.find(({ id }) => id === traceView)?.renderer ?? "TraceWaterfall"], {
-                trace: recorded,
-                viewNavigation: traceViewNavigation,
-              }))) : null),
+              React.createElement("div", { "data-studio-trace-hierarchy": "navigation-header-content" },
+                recorded.status === "INVALID" ? React.createElement("p", { role: "alert" }, recorded.errors.join("; ")) : null,
+                traceViewNavigation,
+                React.createElement(Bi[STUDIO_TRACE_VIEWS.find(({ id }) => id === traceView)?.renderer ?? "TraceWaterfall"], {
+                  trace: recorded,
+                })))) : null),
       studioPage === "dashboard" && snapshot.route.page === "results" && snapshot.result !== undefined ? React.createElement(Surface, { as: "footer", border: "dashed", level: "raised", "data-wsr-studio-region": "footer" },
         React.createElement(Typography, { as: "strong", variant: "label" }, presentation.trace.length > 0 ? "Recorded Trace is available" : "Recorded Trace availability follows current Evidence"),
         React.createElement(Typography, { variant: "caption" }, " · exact recorded identities only; no inferred ordering")) : null));

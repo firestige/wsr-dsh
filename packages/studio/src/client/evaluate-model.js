@@ -1,4 +1,6 @@
 const STORAGE_KEY = "wsr.studio.location@1";
+const EVIDENCE_TARGET_STORAGE_KEY = "wsr.studio.exact-evidence@1";
+const TRACE_TARGET_STORAGE_KEY = "wsr.studio.exact-trace@1";
 const MAX_URL_BYTES = 8 * 1024;
 const TASK_ID = /^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,127}$/u;
 const TRACE_ID = /^[a-f0-9]{32}$/u;
@@ -54,6 +56,7 @@ export function serializeStudioLocation(route) {
   if (route.page === "facts") {
     params.set("metric", route.metric);
     params.set("scope", route.scope);
+    if (route.side !== undefined) params.set("side", route.side);
     return bounded(`/evaluate/facts?${params}`);
   }
   if (route.page === "trace" && TRACE_ID.test(route.traceId) && (route.spanId === undefined || SPAN_ID.test(route.spanId))) {
@@ -101,11 +104,13 @@ export function parseStudioLocation(relativeUrl) {
   const baseKeys = selection.mode === "single" ? ["v", "task"] : ["v", "mode", "left_task", "right_task"];
   if (url.pathname === "/evaluate" && only(url.searchParams, baseKeys)) return { page: "results", selection };
   if (url.pathname === "/evaluate/receipt" && only(url.searchParams, baseKeys)) return { page: "receipt", selection };
-  if (url.pathname === "/evaluate/facts" && only(url.searchParams, [...baseKeys, "metric", "scope"])) {
+  if (url.pathname === "/evaluate/facts" && only(url.searchParams, [...baseKeys, "metric", "scope", "side"])) {
     const metric = url.searchParams.get("metric");
     const scope = url.searchParams.get("scope");
-    if (metric !== null && metric.length <= 256 && ["result", "related", "read-set"].includes(scope)) {
-      return { page: "facts", selection, metric, scope };
+    const side = url.searchParams.get("side") ?? undefined;
+    if (metric !== null && metric.length <= 256 && ["result", "related", "read-set"].includes(scope) &&
+        (side === undefined || (selection.mode === "compare" && ["left", "right"].includes(side)) || (selection.mode === "single" && side === "single"))) {
+      return { page: "facts", selection, metric, scope, ...(side === undefined ? {} : { side }) };
     }
   }
   if (url.pathname.startsWith("/evaluate/trace/") && only(url.searchParams, [...baseKeys, "span"])) {
@@ -207,9 +212,29 @@ function initialRoute(storage, context) {
     : { page: "select" };
 }
 
+function storedExactTarget(storage, key, page, selection) {
+  const saved = storage?.getItem(key);
+  if (saved === null || saved === undefined || selection === undefined) return undefined;
+  const parsed = parseStudioLocation(saved);
+  return parsed.page === page && JSON.stringify(parsed.selection) === JSON.stringify(selection)
+    ? { ...parsed, status: "available" }
+    : undefined;
+}
+
+function clearStoredExactTargets(storage) {
+  storage?.setItem(EVIDENCE_TARGET_STORAGE_KEY, "");
+  storage?.setItem(TRACE_TARGET_STORAGE_KEY, "");
+}
+
 export function createEvaluateController({ gateway, storage, initialContext, catalogCoordinates } = {}) {
   if (gateway === undefined || typeof gateway.call !== "function") throw new Error("STUDIO_GATEWAY_REQUIRED");
   const route = initialRoute(storage, initialContext);
+  const storedEvidence = storedExactTarget(storage, EVIDENCE_TARGET_STORAGE_KEY, "facts", route.selection);
+  const storedTrace = storedExactTarget(storage, TRACE_TARGET_STORAGE_KEY, "trace", route.selection);
+  const initialExactTargets = {
+    ...(storedEvidence === undefined && route.page !== "facts" ? {} : { evidence: storedEvidence ?? { ...route, status: "available" } }),
+    ...(storedTrace === undefined && route.page !== "trace" ? {} : { trace: storedTrace ?? { ...route, status: "available" } }),
+  };
   let snapshot = {
     phase: "idle",
     route,
@@ -217,6 +242,7 @@ export function createEvaluateController({ gateway, storage, initialContext, cat
     recentSelection: route.selection,
     taskList: { phase: "idle", items: [] },
     drilldown: { phase: "idle", facts: [], trace: [] },
+    exactTargets: initialExactTargets,
     result: undefined,
     error: undefined,
     refreshing: false,
@@ -236,7 +262,8 @@ export function createEvaluateController({ gateway, storage, initialContext, cat
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
     setSelection(selection) {
       bodyFor(selection);
-      publish({ selection, recentSelection: selection, route: { page: "results", selection }, phase: "idle", error: undefined });
+      publish({ selection, recentSelection: selection, route: { page: "results", selection }, phase: "idle", error: undefined, exactTargets: {} });
+      clearStoredExactTargets(storage);
       storage?.setItem(STORAGE_KEY, serializeStudioLocation({ page: "results", selection }));
     },
     clearSelection() {
@@ -250,7 +277,9 @@ export function createEvaluateController({ gateway, storage, initialContext, cat
         error: undefined,
         refreshing: false,
         drilldown: { phase: "idle", facts: [], trace: [] },
+        exactTargets: {},
       };
+      clearStoredExactTargets(storage);
       storage?.setItem(STORAGE_KEY, serializeStudioLocation(nextRoute));
       for (const listener of listeners) listener();
     },
@@ -285,7 +314,17 @@ export function createEvaluateController({ gateway, storage, initialContext, cat
       }
       const phase = answer.value?.mode === "COMPARE" && answer.value.status === "PARTIAL_COMPARE" ? "partial" : "ready";
       const nextRoute = { page: "results", selection: snapshot.selection };
-      snapshot = { ...snapshot, phase, refreshing: false, error: undefined, result: answer.value, route: nextRoute };
+      snapshot = {
+        ...snapshot,
+        phase,
+        refreshing: false,
+        error: undefined,
+        result: answer.value,
+        route: nextRoute,
+        drilldown: { phase: "idle", facts: [], trace: [] },
+        exactTargets: {},
+      };
+      clearStoredExactTargets(storage);
       storage?.setItem(STORAGE_KEY, serializeStudioLocation(nextRoute));
       for (const listener of listeners) listener();
     },
@@ -294,18 +333,32 @@ export function createEvaluateController({ gateway, storage, initialContext, cat
       publish({ drilldown: { ...snapshot.drilldown, phase: "loading", error: undefined } });
       const answer = await gateway.call("facts/read", filters);
       if (!answer.ok) {
-        publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: answer.error } });
+        publish({
+          drilldown: { ...snapshot.drilldown, phase: "error", error: answer.error },
+          exactTargets: snapshot.route.page === "facts"
+            ? { ...snapshot.exactTargets, evidence: { ...snapshot.exactTargets.evidence, status: "unavailable" } }
+            : snapshot.exactTargets,
+        });
         return;
       }
-      publish({ drilldown: { ...snapshot.drilldown, phase: "ready", facts: answer.value.items ?? [], error: undefined } });
+      const facts = answer.value.items ?? [];
+      publish({
+        drilldown: { ...snapshot.drilldown, phase: "ready", facts, error: undefined },
+        exactTargets: snapshot.route.page === "facts"
+          ? { ...snapshot.exactTargets, evidence: { ...snapshot.exactTargets.evidence, status: facts.length === 0 ? "unavailable" : "available" } }
+          : snapshot.exactTargets,
+      });
     },
-    async loadMetricFacts(metricCoordinate, scope = "result") {
+    async loadMetricFacts(metricCoordinate, scope = "result", side) {
       if (!["result", "related", "read-set"].includes(scope) || snapshot.result === undefined) return;
-      const sides = sideResults(snapshot.result);
+      const sides = sideResults(snapshot.result).filter((candidate) => side === undefined || candidate.side === side);
       const metric = sides.flatMap(({ value }) => value.metric_results ?? [])
         .find((candidate) => `${candidate.metric_id}@${candidate.metric_version}` === metricCoordinate);
       if (metric === undefined) {
-        publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: incompatibleResponse } });
+        publish({
+          drilldown: { ...snapshot.drilldown, phase: "error", error: incompatibleResponse },
+          exactTargets: { ...snapshot.exactTargets, evidence: { ...snapshot.exactTargets.evidence, status: "unavailable" } },
+        });
         return;
       }
       const deliveryIds = [...new Set(sides.flatMap(({ value }) => value.receipt?.task_population ?? [])
@@ -321,11 +374,17 @@ export function createEvaluateController({ gateway, storage, initialContext, cat
       for (const delivery_id of deliveryIds) {
         const answer = await gateway.call("facts/read", { delivery_id, limit: 200 });
         if (!answer.ok) {
-          publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: answer.error } });
+          publish({
+            drilldown: { ...snapshot.drilldown, phase: "error", error: answer.error },
+            exactTargets: { ...snapshot.exactTargets, evidence: { ...snapshot.exactTargets.evidence, status: "unavailable" } },
+          });
           return;
         }
         if (!Array.isArray(answer.value?.items)) {
-          publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: incompatibleResponse } });
+          publish({
+            drilldown: { ...snapshot.drilldown, phase: "error", error: incompatibleResponse },
+            exactTargets: { ...snapshot.exactTargets, evidence: { ...snapshot.exactTargets.evidence, status: "unavailable" } },
+          });
           return;
         }
         facts.push(...answer.value.items);
@@ -334,28 +393,58 @@ export function createEvaluateController({ gateway, storage, initialContext, cat
       const selected = scope === "related" ? facts.filter((fact) => !matches(fact)) : facts.filter(matches);
       const returned = new Set(facts.flatMap((fact) => [fact?.id, fact?.provenance?.accepted_digest]));
       const references = [...wanted].sort().map((identity) => ({ identity, loadedAsFact: returned.has(identity) }));
-      publish({ drilldown: { ...snapshot.drilldown, phase: "ready", facts: selected, references, error: undefined } });
+      publish({
+        drilldown: { ...snapshot.drilldown, phase: "ready", facts: selected, references, error: undefined },
+        exactTargets: { ...snapshot.exactTargets, evidence: { ...snapshot.exactTargets.evidence, status: selected.length === 0 ? "unavailable" : "available" } },
+      });
     },
     async loadTrace(filters) {
       publish({ drilldown: { ...snapshot.drilldown, phase: "loading", error: undefined } });
       const answer = await gateway.call("traces/read", filters);
       if (!answer.ok) {
-        publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: answer.error } });
+        publish({
+          drilldown: { ...snapshot.drilldown, phase: "error", error: answer.error },
+          exactTargets: { ...snapshot.exactTargets, trace: { ...snapshot.exactTargets.trace, status: "unavailable" } },
+        });
         return;
       }
-      publish({ drilldown: { ...snapshot.drilldown, phase: "ready", trace: answer.value.items ?? [], error: undefined } });
+      const trace = answer.value.items ?? [];
+      publish({
+        drilldown: { ...snapshot.drilldown, phase: "ready", trace, error: undefined },
+        exactTargets: { ...snapshot.exactTargets, trace: { ...snapshot.exactTargets.trace, status: trace.length === 0 ? "unavailable" : "available" } },
+      });
     },
     openReceipt() {
       if (snapshot.selection === undefined || snapshot.result === undefined) return;
       persist({ page: "receipt", selection: snapshot.selection });
     },
-    openFacts(metric, scope = "result") {
+    openFacts(metric, scope = "result", side) {
       if (snapshot.selection === undefined) return;
-      persist({ page: "facts", selection: snapshot.selection, metric, scope });
+      const nextRoute = { page: "facts", selection: snapshot.selection, metric, scope, ...(side === undefined ? {} : { side }) };
+      snapshot = { ...snapshot, exactTargets: { ...snapshot.exactTargets, evidence: { ...nextRoute, status: "available" } } };
+      storage?.setItem(EVIDENCE_TARGET_STORAGE_KEY, serializeStudioLocation(nextRoute));
+      persist(nextRoute);
     },
     openTrace(traceId, spanId) {
       if (snapshot.selection === undefined) return;
-      persist({ page: "trace", selection: snapshot.selection, traceId, ...(spanId === undefined ? {} : { spanId }) });
+      const nextRoute = { page: "trace", selection: snapshot.selection, traceId, ...(spanId === undefined ? {} : { spanId }) };
+      snapshot = { ...snapshot, exactTargets: { ...snapshot.exactTargets, trace: { ...nextRoute, status: "available" } } };
+      storage?.setItem(TRACE_TARGET_STORAGE_KEY, serializeStudioLocation(nextRoute));
+      persist(nextRoute);
+    },
+    restoreExactEvidence() {
+      if (snapshot.exactTargets.evidence?.status === "unavailable") return;
+      if (snapshot.exactTargets.evidence !== undefined) {
+        const { status: _status, ...route } = snapshot.exactTargets.evidence;
+        persist(route);
+      }
+    },
+    restoreExactTrace() {
+      if (snapshot.exactTargets.trace?.status === "unavailable") return;
+      if (snapshot.exactTargets.trace !== undefined) {
+        const { status: _status, ...route } = snapshot.exactTargets.trace;
+        persist(route);
+      }
     },
     backToResults() {
       if (snapshot.selection === undefined) persist({ page: "select" });

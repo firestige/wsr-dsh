@@ -50,6 +50,7 @@ test("deep links round-trip bounded single, compare, receipt, Fact and Trace vie
     { page: "results", selection: { mode: "compare", leftTaskIds: ["task-a"], rightTaskIds: ["task-b"] } },
     { page: "receipt", selection: { mode: "single", taskIds: ["task-a"] } },
     { page: "facts", selection: { mode: "single", taskIds: ["task-a"] }, metric: "delivery-cycle-time-ms@2.0.0", scope: "result" },
+    { page: "facts", selection: { mode: "compare", leftTaskIds: ["task-a"], rightTaskIds: ["task-b"] }, metric: "delivery-cycle-time-ms@2.0.0", scope: "result", side: "right" },
     { page: "trace", selection: { mode: "single", taskIds: ["task-a"] }, traceId: "a".repeat(32), spanId: "b".repeat(16) },
   ];
   for (const route of routes) {
@@ -57,6 +58,56 @@ test("deep links round-trip bounded single, compare, receipt, Fact and Trace vie
   }
   assert.deepEqual(parseStudioLocation("/builder"), { page: "invalid", reason: "UNKNOWN_STUDIO_ROUTE" });
   assert.deepEqual(parseStudioLocation(`/evaluate?v=1&task=${"x".repeat(129)}`), { page: "invalid", reason: "INVALID_SELECTION" });
+});
+
+test("an exact compare Evidence target preserves side while top navigation restores it", () => {
+  const controller = createEvaluateController({
+    gateway: { async call() { return { ok: true, value: { items: [] } }; } },
+  });
+  controller.setSelection({ mode: "compare", leftTaskIds: ["task-a"], rightTaskIds: ["task-b"] });
+  controller.openFacts("delivery-cycle-time-ms@2.0.0", "result", "right");
+  controller.backToResults();
+  controller.restoreExactEvidence();
+
+  assert.deepEqual(controller.getSnapshot().route, {
+    page: "facts",
+    selection: { mode: "compare", leftTaskIds: ["task-a"], rightTaskIds: ["task-b"] },
+    metric: "delivery-cycle-time-ms@2.0.0",
+    scope: "result",
+    side: "right",
+  });
+});
+
+test("a newly computed evaluation invalidates prior exact drill-down targets", async () => {
+  const controller = createEvaluateController({
+    gateway: { async call() { return { ok: true, value: singleResult() }; } },
+    initialContext: { taskId: "task-a" },
+  });
+  await controller.evaluate();
+  controller.openFacts("delivery-cycle-time-ms@2.0.0", "result", "single");
+  controller.openTrace("a".repeat(32), "b".repeat(16));
+
+  await controller.evaluate();
+
+  assert.deepEqual(controller.getSnapshot().exactTargets, {});
+});
+
+test("session storage restores both established exact drill-down targets for the same selection", () => {
+  const values = new Map();
+  const storage = {
+    getItem(key) { return values.get(key) ?? null; },
+    setItem(key, value) { values.set(key, value); },
+  };
+  const first = createEvaluateController({ gateway: { async call() { return { ok: true, value: { items: [] } }; } }, storage });
+  first.setSelection({ mode: "single", taskIds: ["task-a"] });
+  first.openFacts("delivery-cycle-time-ms@2.0.0", "result", "single");
+  first.openTrace("a".repeat(32), "b".repeat(16));
+
+  const restored = createEvaluateController({ gateway: { async call() { return { ok: true, value: { items: [] } }; } }, storage });
+
+  assert.equal(restored.getSnapshot().exactTargets.evidence.metric, "delivery-cycle-time-ms@2.0.0");
+  assert.equal(restored.getSnapshot().exactTargets.evidence.side, "single");
+  assert.equal(restored.getSnapshot().exactTargets.trace.traceId, "a".repeat(32));
 });
 
 test("an explicit formal Task context seeds selection without adding repository or Workspace context", async () => {

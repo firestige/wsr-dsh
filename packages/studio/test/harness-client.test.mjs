@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import test from "node:test";
+import { createBiTheme as createCoreBiTheme } from "wsr-ui-core";
 
 import {
   createDefaultStudioLayout,
@@ -74,7 +75,7 @@ test("the Host accepts memoized Core components from the packaged browser bundle
   assert.doesNotThrow(() => createStudioClientPlugin({ React: {}, Bi: memoizedBi }));
 });
 
-test("the Host owns a versioned responsive dashboard layout and creates the platform theme", () => {
+test("the Host owns a versioned responsive dashboard layout and creates the platform theme through the public Core palette", () => {
   const layout = createDefaultStudioLayout();
   assert.equal(layout.schemaVersion, "wsr-dsh.studio-layout@1");
   assert.deepEqual(layout.columns, { desktop: 12, tablet: 6, mobile: 1 });
@@ -92,22 +93,60 @@ test("the Host owns a versioned responsive dashboard layout and creates the plat
     { id: "delivery-terminal-outcome-rate", desktop: { w: 12, h: 4 }, tablet: { w: 6, h: 4 }, mobile: { w: 1, h: 4 } },
     { id: "operational-token-usage", desktop: { w: 12, h: 4 }, tablet: { w: 6, h: 4 }, mobile: { w: 1, h: 4 } },
   ]);
-  assert.deepEqual(createStudioTheme("dark"), {
+  const theme = createCoreBiTheme(createStudioTheme("dark"));
+  assert.deepEqual(theme, {
     mode: "dark",
     density: "compact",
     containerBorderStyle: "solid",
-    surfaces: {
-      section: "var(--dsw-alias-bg-layer-1)",
-      panel: "var(--dsw-alias-bg-layer-1)",
-      raised: "var(--dsw-alias-bg-layer-2)",
-      inset: "var(--dsw-alias-bg-base)",
+    palette: {
+      surface: {
+        section: "var(--dsw-specific-sidebar-fill)",
+        panel: "var(--dsw-alias-bg-layer-1)",
+        raised: "var(--dsw-alias-bg-layer-2)",
+        inset: "var(--dsw-alias-bg-base)",
+      },
+      content: {
+        primary: "var(--dsw-alias-label-primary)",
+        secondary: "var(--dsw-alias-label-secondary)",
+        muted: "var(--dsw-alias-label-dimmed)",
+        inverse: "var(--dsw-alias-label-primary-inverted)",
+      },
+      border: {
+        default: "var(--dsw-alias-border-l2)",
+        strong: "var(--dsw-alias-border-l3)",
+      },
+      interaction: {
+        accent: "var(--dsw-alias-state-business-primary)",
+        selection: "var(--dsw-alias-interactive-bg-active)",
+        disabled: "var(--dsw-alias-label-dimmed)",
+        focusRing: "var(--dsw-alias-state-business-primary)",
+      },
+      status: {
+        available: "var(--dsw-alias-state-success-primary)",
+        attention: "var(--dsw-alias-state-warning-primary)",
+        unavailable: "var(--dsw-alias-label-dimmed)",
+        expired: "var(--dsw-alias-state-warn-label)",
+        incompatible: "var(--dsw-alias-state-error-secondary)",
+        error: "var(--dsw-alias-state-error-primary)",
+      },
+      data: [
+        "var(--dsw-alias-state-business-primary)",
+        "var(--dsw-alias-state-success-primary)",
+        "var(--dsw-alias-state-warning-primary)",
+        "var(--dsw-alias-state-error-primary)",
+      ],
     },
-    traceIndentGuides: [
-      "var(--dsw-alias-label-dimmed)",
-      "oklch(75% 0.17 145)",
-      "var(--dsw-alias-state-warning-primary)",
-      "var(--dsw-alias-state-error-primary)",
-    ],
+    typography: {
+      fontFamily: "var(--dsw-font-family)",
+      codeFontFamily: "var(--dsw-font-family-mono)",
+      h1: "18px",
+      h2: "13px",
+      subtitle1: "13px",
+      body1: "11px",
+      body2: "10px",
+      caption: "9px",
+      overline: "8px",
+    },
   });
 });
 
@@ -362,24 +401,107 @@ test("AVAILABLE and UNAVAILABLE results use focused dashboard panels without raw
   const regions = elements.filter((element) => element.props?.["data-wsr-studio-region"]);
   assert.deepEqual(regions.map((element) => element.props["data-wsr-studio-region"]), ["header", "main", "footer"]);
   const surface = elements.find((element) => element.type === "wsr-bi-surface");
-  assert.deepEqual(surface.props.theme, {
-    mode: "light",
-    density: "compact",
-    containerBorderStyle: "solid",
-    surfaces: {
-      section: "var(--dsw-alias-bg-layer-1)",
-      panel: "var(--dsw-alias-bg-layer-1)",
-      raised: "var(--dsw-alias-bg-layer-2)",
-      inset: "var(--dsw-alias-bg-base)",
-    },
-    traceIndentGuides: [
-      "var(--dsw-alias-label-dimmed)",
-      "oklch(75% 0.17 145)",
-      "var(--dsw-alias-state-warning-primary)",
-      "var(--dsw-alias-state-error-primary)",
-    ],
-  });
+  assert.deepEqual(surface.props.theme, createStudioTheme("light"));
   assert.equal(elements.some((element) => element.props?.["data-wsr-dashboard-layout"] === "wsr-dsh.studio-layout@1"), true);
+});
+
+test("all four Studio navigation items expose real handlers and exact-target availability", async () => {
+  const components = new Map();
+  const result = {
+    api_version: 1,
+    mode: "SINGLE",
+    result: {
+      tag: "SIDE_RESULT",
+      receipt: { selection: { selection_version: 1, task_ids: ["task-a"] } },
+      metric_results: [{ metric_id: "delivery-cycle-time-ms", metric_version: "2.0.0", slices: [] }],
+    },
+  };
+  const ctx = {
+    connection: { rpc: { call: async (_channel, endpoint) => endpoint === "evaluations/compute"
+      ? { ok: true, value: result }
+      : { ok: true, value: { items: [] } } } },
+    slots: {
+      inject(_name, factory) { factory(); },
+      register(options, component) { components.set(options.name, component); return () => undefined; },
+    },
+  };
+  const React = {
+    createElement(type, props, ...children) { return { type, props: props ?? {}, children }; },
+    useEffect() {},
+    useState(initial) { return [typeof initial === "function" ? initial() : initial, () => undefined]; },
+    useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot(); },
+  };
+  const runtime = createStudioClientPlugin({ React, Primitives: { Button: "button" }, Bi, initialContext: { taskId: "task-a" } }).apply(ctx);
+  await runtime.controller.evaluate();
+
+  const navigation = () => elementsOf(components.get("conversation.view")())
+    .filter((element) => element.type === "wsr-button" && ["Select", "Dashboard", "Evidence", "Recorded Trace"].includes(textOf(element)));
+  let buttons = Object.fromEntries(navigation().map((button) => [textOf(button), button]));
+  assert.deepEqual(Object.keys(buttons), ["Select", "Dashboard", "Evidence", "Recorded Trace"]);
+  assert.equal(buttons.Select.props.disabled, false);
+  assert.equal(buttons.Dashboard.props.disabled, false);
+  assert.equal(typeof buttons.Select.props.onClick, "function");
+  assert.equal(typeof buttons.Dashboard.props.onClick, "function");
+  assert.equal(buttons.Evidence.props.disabled, true);
+  assert.equal(buttons.Evidence.props["data-unavailable-reason"], "EXACT_EVIDENCE_TARGET_NOT_ESTABLISHED");
+  assert.equal(buttons["Recorded Trace"].props.disabled, true);
+  assert.equal(buttons["Recorded Trace"].props["data-unavailable-reason"], "EXACT_TRACE_TARGET_NOT_ESTABLISHED");
+
+  runtime.controller.openFacts("delivery-cycle-time-ms@2.0.0", "result");
+  buttons = Object.fromEntries(navigation().map((button) => [textOf(button), button]));
+  assert.equal(buttons.Evidence.props.disabled, false);
+  assert.equal(typeof buttons.Evidence.props.onClick, "function");
+  buttons.Dashboard.props.onClick();
+  buttons = Object.fromEntries(navigation().map((button) => [textOf(button), button]));
+  buttons.Evidence.props.onClick();
+  assert.deepEqual(runtime.controller.getSnapshot().route, {
+    page: "facts",
+    selection: { mode: "single", taskIds: ["task-a"] },
+    metric: "delivery-cycle-time-ms@2.0.0",
+    scope: "result",
+  });
+
+  const traceId = "a".repeat(32);
+  const spanId = "b".repeat(16);
+  runtime.controller.openTrace(traceId, spanId);
+  runtime.controller.backToResults();
+  buttons = Object.fromEntries(navigation().map((button) => [textOf(button), button]));
+  assert.equal(buttons["Recorded Trace"].props.disabled, false);
+  assert.equal(typeof buttons["Recorded Trace"].props.onClick, "function");
+  buttons["Recorded Trace"].props.onClick();
+  assert.deepEqual(runtime.controller.getSnapshot().route, {
+    page: "trace",
+    selection: { mode: "single", taskIds: ["task-a"] },
+    traceId,
+    spanId,
+  });
+});
+
+test("failed exact drill-down remains typed unavailable and does not guess another target", async () => {
+  const components = new Map();
+  const React = {
+    createElement(type, props, ...children) { return { type, props: props ?? {}, children }; },
+    useEffect() {},
+    useState(initial) { return [typeof initial === "function" ? initial() : initial, () => undefined]; },
+    useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot(); },
+  };
+  const ctx = {
+    connection: { rpc: { call: async () => ({ ok: false, error: { code: "downstream-unavailable", message: "Trace unavailable" } }) } },
+    slots: {
+      inject(_name, factory) { factory(); },
+      register(options, component) { components.set(options.name, component); return () => undefined; },
+    },
+  };
+  const runtime = createStudioClientPlugin({ React, Primitives: { Button: "button" }, Bi, initialContext: { taskId: "task-a" } }).apply(ctx);
+  const exactTraceId = "c".repeat(32);
+  runtime.controller.openTrace(exactTraceId);
+  await runtime.controller.loadTrace({ trace_id: exactTraceId, limit: 200 });
+  runtime.controller.backToResults();
+  const traceButton = elementsOf(components.get("conversation.view")())
+    .find((element) => element.type === "wsr-button" && textOf(element) === "Recorded Trace");
+  assert.equal(traceButton.props.disabled, true);
+  assert.equal(traceButton.props["data-unavailable-reason"], "EXACT_TRACE_TARGET_UNAVAILABLE");
+  assert.equal(runtime.controller.getSnapshot().exactTargets.trace.traceId, exactTraceId);
 });
 
 test("compare, receipt, Fact and recorded Trace routes use shared BI foundations", async () => {
@@ -463,9 +585,12 @@ test("compare, receipt, Fact and recorded Trace routes use shared BI foundations
   assert.equal(traceRenderer !== undefined, true);
   assert.equal(elementsOf(rendered).some((element) => element.type === "wsr-metric-panel"), false);
   assert.equal(elementsOf(rendered).some((element) => element.type === "wsr-compare-result"), false);
-  assert.match(textOf(traceRenderer.props.viewNavigation), /Waterfall/);
-  assert.match(textOf(traceRenderer.props.viewNavigation), /Tree/);
-  assert.match(textOf(traceRenderer.props.viewNavigation), /Statistics/);
+  const hierarchy = elementsOf(rendered).find((element) => element.props?.["data-studio-trace-hierarchy"] === "navigation-header-content");
+  assert.match(textOf(hierarchy.children[1]), /Waterfall/);
+  assert.match(textOf(hierarchy.children[1]), /Tree/);
+  assert.match(textOf(hierarchy.children[1]), /Statistics/);
+  assert.equal(hierarchy.children[2], traceRenderer);
+  assert.equal(traceRenderer.props.viewNavigation, undefined);
 });
 
 test("the browser source has no direct downstream transport, credential, or mutation escape hatch", async () => {
@@ -497,10 +622,11 @@ test("the Host trace assembly preserves the frozen page-family action and segmen
 
 test("the Host theme maps Core surfaces directly to DSH semantic background aliases", async () => {
   const source = await readFile(resolve(import.meta.dirname, "../src/client/studio.js"), "utf8");
-  assert.match(source, /--wsr-surface-section:var\(--dsw-alias-bg-layer-1\)/u);
-  assert.match(source, /--wsr-surface-panel:var\(--dsw-alias-bg-layer-1\)/u);
-  assert.match(source, /--wsr-surface-raised:var\(--dsw-alias-bg-layer-2\)/u);
-  assert.match(source, /--wsr-surface-inset:var\(--dsw-alias-bg-base\)/u);
+  assert.match(source, /section:\s*"var\(--dsw-specific-sidebar-fill\)"/u);
+  assert.match(source, /panel:\s*"var\(--dsw-alias-bg-layer-1\)"/u);
+  assert.match(source, /raised:\s*"var\(--dsw-alias-bg-layer-2\)"/u);
+  assert.match(source, /inset:\s*"var\(--dsw-alias-bg-base\)"/u);
+  assert.doesNotMatch(source, /#wsr-studio-view \{[^}]*--wsr-surface-/u);
   assert.doesNotMatch(source, /--studio-(?:surface|raised|filter-surface):color-mix/u);
 });
 
@@ -527,10 +653,10 @@ test("the Select page composes Core semantic assets and keeps only Host layout g
   assert.match(source, /React\.createElement\(ButtonGroup, \{ segmented: true, className: "studio-mode"/u);
   assert.match(source, /React\.createElement\(TextInput, \{[^}]*inputKind: "search"/u);
   assert.match(source, /React\.createElement\(StatusBadge, \{ status: current\.includes\(task\.task_id\) \? "selected" : "available"/u);
-  assert.match(source, /--wsr-type-section-title:13px/u);
-  assert.match(source, /--wsr-type-caption:9px/u);
+  assert.match(source, /h2:\s*"13px"/u);
+  assert.match(source, /caption:\s*"9px"/u);
   assert.match(source, /--wsr-shape-panel:10px/u);
-  assert.match(source, /--wsr-surface-panel:var\(--dsw-alias-bg-layer-1\)/u);
+  assert.match(source, /panel:\s*"var\(--dsw-alias-bg-layer-1\)"/u);
 });
 
 test("Single mode replaces the selected Task instead of accumulating a population", () => {

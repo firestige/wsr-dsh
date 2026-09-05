@@ -6802,6 +6802,8 @@ var styles_default = `/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss
 
 // packages/studio/src/client/evaluate-model.js
 var STORAGE_KEY = "wsr.studio.location@1";
+var EVIDENCE_TARGET_STORAGE_KEY = "wsr.studio.exact-evidence@1";
+var TRACE_TARGET_STORAGE_KEY = "wsr.studio.exact-trace@1";
 var MAX_URL_BYTES = 8 * 1024;
 var TASK_ID = /^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,127}$/u;
 var TRACE_ID = /^[a-f0-9]{32}$/u;
@@ -6849,6 +6851,7 @@ function serializeStudioLocation(route) {
   if (route.page === "facts") {
     params.set("metric", route.metric);
     params.set("scope", route.scope);
+    if (route.side !== void 0) params.set("side", route.side);
     return bounded(`/evaluate/facts?${params}`);
   }
   if (route.page === "trace" && TRACE_ID.test(route.traceId) && (route.spanId === void 0 || SPAN_ID.test(route.spanId))) {
@@ -6890,11 +6893,12 @@ function parseStudioLocation(relativeUrl) {
   const baseKeys = selection2.mode === "single" ? ["v", "task"] : ["v", "mode", "left_task", "right_task"];
   if (url.pathname === "/evaluate" && only(url.searchParams, baseKeys)) return { page: "results", selection: selection2 };
   if (url.pathname === "/evaluate/receipt" && only(url.searchParams, baseKeys)) return { page: "receipt", selection: selection2 };
-  if (url.pathname === "/evaluate/facts" && only(url.searchParams, [...baseKeys, "metric", "scope"])) {
+  if (url.pathname === "/evaluate/facts" && only(url.searchParams, [...baseKeys, "metric", "scope", "side"])) {
     const metric = url.searchParams.get("metric");
     const scope = url.searchParams.get("scope");
-    if (metric !== null && metric.length <= 256 && ["result", "related", "read-set"].includes(scope)) {
-      return { page: "facts", selection: selection2, metric, scope };
+    const side2 = url.searchParams.get("side") ?? void 0;
+    if (metric !== null && metric.length <= 256 && ["result", "related", "read-set"].includes(scope) && (side2 === void 0 || selection2.mode === "compare" && ["left", "right"].includes(side2) || selection2.mode === "single" && side2 === "single")) {
+      return { page: "facts", selection: selection2, metric, scope, ...side2 === void 0 ? {} : { side: side2 } };
     }
   }
   if (url.pathname.startsWith("/evaluate/trace/") && only(url.searchParams, [...baseKeys, "span"])) {
@@ -6973,9 +6977,25 @@ function initialRoute(storage, context) {
   }
   return context?.taskId !== void 0 && TASK_ID.test(context.taskId) ? { page: "results", selection: { mode: "single", taskIds: [context.taskId] } } : { page: "select" };
 }
+function storedExactTarget(storage, key, page, selection2) {
+  const saved = storage?.getItem(key);
+  if (saved === null || saved === void 0 || selection2 === void 0) return void 0;
+  const parsed = parseStudioLocation(saved);
+  return parsed.page === page && JSON.stringify(parsed.selection) === JSON.stringify(selection2) ? { ...parsed, status: "available" } : void 0;
+}
+function clearStoredExactTargets(storage) {
+  storage?.setItem(EVIDENCE_TARGET_STORAGE_KEY, "");
+  storage?.setItem(TRACE_TARGET_STORAGE_KEY, "");
+}
 function createEvaluateController({ gateway, storage, initialContext, catalogCoordinates } = {}) {
   if (gateway === void 0 || typeof gateway.call !== "function") throw new Error("STUDIO_GATEWAY_REQUIRED");
   const route = initialRoute(storage, initialContext);
+  const storedEvidence = storedExactTarget(storage, EVIDENCE_TARGET_STORAGE_KEY, "facts", route.selection);
+  const storedTrace = storedExactTarget(storage, TRACE_TARGET_STORAGE_KEY, "trace", route.selection);
+  const initialExactTargets = {
+    ...storedEvidence === void 0 && route.page !== "facts" ? {} : { evidence: storedEvidence ?? { ...route, status: "available" } },
+    ...storedTrace === void 0 && route.page !== "trace" ? {} : { trace: storedTrace ?? { ...route, status: "available" } }
+  };
   let snapshot = {
     phase: "idle",
     route,
@@ -6983,6 +7003,7 @@ function createEvaluateController({ gateway, storage, initialContext, catalogCoo
     recentSelection: route.selection,
     taskList: { phase: "idle", items: [] },
     drilldown: { phase: "idle", facts: [], trace: [] },
+    exactTargets: initialExactTargets,
     result: void 0,
     error: void 0,
     refreshing: false
@@ -7005,7 +7026,8 @@ function createEvaluateController({ gateway, storage, initialContext, catalogCoo
     },
     setSelection(selection2) {
       bodyFor(selection2);
-      publish({ selection: selection2, recentSelection: selection2, route: { page: "results", selection: selection2 }, phase: "idle", error: void 0 });
+      publish({ selection: selection2, recentSelection: selection2, route: { page: "results", selection: selection2 }, phase: "idle", error: void 0, exactTargets: {} });
+      clearStoredExactTargets(storage);
       storage?.setItem(STORAGE_KEY, serializeStudioLocation({ page: "results", selection: selection2 }));
     },
     clearSelection() {
@@ -7018,8 +7040,10 @@ function createEvaluateController({ gateway, storage, initialContext, catalogCoo
         result: void 0,
         error: void 0,
         refreshing: false,
-        drilldown: { phase: "idle", facts: [], trace: [] }
+        drilldown: { phase: "idle", facts: [], trace: [] },
+        exactTargets: {}
       };
+      clearStoredExactTargets(storage);
       storage?.setItem(STORAGE_KEY, serializeStudioLocation(nextRoute));
       for (const listener of listeners) listener();
     },
@@ -7054,7 +7078,17 @@ function createEvaluateController({ gateway, storage, initialContext, catalogCoo
       }
       const phase = answer.value?.mode === "COMPARE" && answer.value.status === "PARTIAL_COMPARE" ? "partial" : "ready";
       const nextRoute = { page: "results", selection: snapshot.selection };
-      snapshot = { ...snapshot, phase, refreshing: false, error: void 0, result: answer.value, route: nextRoute };
+      snapshot = {
+        ...snapshot,
+        phase,
+        refreshing: false,
+        error: void 0,
+        result: answer.value,
+        route: nextRoute,
+        drilldown: { phase: "idle", facts: [], trace: [] },
+        exactTargets: {}
+      };
+      clearStoredExactTargets(storage);
       storage?.setItem(STORAGE_KEY, serializeStudioLocation(nextRoute));
       for (const listener of listeners) listener();
     },
@@ -7065,17 +7099,27 @@ function createEvaluateController({ gateway, storage, initialContext, catalogCoo
       publish({ drilldown: { ...snapshot.drilldown, phase: "loading", error: void 0 } });
       const answer = await gateway.call("facts/read", filters);
       if (!answer.ok) {
-        publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: answer.error } });
+        publish({
+          drilldown: { ...snapshot.drilldown, phase: "error", error: answer.error },
+          exactTargets: snapshot.route.page === "facts" ? { ...snapshot.exactTargets, evidence: { ...snapshot.exactTargets.evidence, status: "unavailable" } } : snapshot.exactTargets
+        });
         return;
       }
-      publish({ drilldown: { ...snapshot.drilldown, phase: "ready", facts: answer.value.items ?? [], error: void 0 } });
+      const facts = answer.value.items ?? [];
+      publish({
+        drilldown: { ...snapshot.drilldown, phase: "ready", facts, error: void 0 },
+        exactTargets: snapshot.route.page === "facts" ? { ...snapshot.exactTargets, evidence: { ...snapshot.exactTargets.evidence, status: facts.length === 0 ? "unavailable" : "available" } } : snapshot.exactTargets
+      });
     },
-    async loadMetricFacts(metricCoordinate, scope = "result") {
+    async loadMetricFacts(metricCoordinate, scope = "result", side2) {
       if (!["result", "related", "read-set"].includes(scope) || snapshot.result === void 0) return;
-      const sides = sideResults(snapshot.result);
+      const sides = sideResults(snapshot.result).filter((candidate) => side2 === void 0 || candidate.side === side2);
       const metric = sides.flatMap(({ value }) => value.metric_results ?? []).find((candidate) => `${candidate.metric_id}@${candidate.metric_version}` === metricCoordinate);
       if (metric === void 0) {
-        publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: incompatibleResponse } });
+        publish({
+          drilldown: { ...snapshot.drilldown, phase: "error", error: incompatibleResponse },
+          exactTargets: { ...snapshot.exactTargets, evidence: { ...snapshot.exactTargets.evidence, status: "unavailable" } }
+        });
         return;
       }
       const deliveryIds = [...new Set(sides.flatMap(({ value }) => value.receipt?.task_population ?? []).flatMap((task) => task.memberships ?? []).map((membership) => membership.delivery_id).filter((id2) => boundedText(id2, 256)))].sort();
@@ -7087,11 +7131,17 @@ function createEvaluateController({ gateway, storage, initialContext, catalogCoo
       for (const delivery_id of deliveryIds) {
         const answer = await gateway.call("facts/read", { delivery_id, limit: 200 });
         if (!answer.ok) {
-          publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: answer.error } });
+          publish({
+            drilldown: { ...snapshot.drilldown, phase: "error", error: answer.error },
+            exactTargets: { ...snapshot.exactTargets, evidence: { ...snapshot.exactTargets.evidence, status: "unavailable" } }
+          });
           return;
         }
         if (!Array.isArray(answer.value?.items)) {
-          publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: incompatibleResponse } });
+          publish({
+            drilldown: { ...snapshot.drilldown, phase: "error", error: incompatibleResponse },
+            exactTargets: { ...snapshot.exactTargets, evidence: { ...snapshot.exactTargets.evidence, status: "unavailable" } }
+          });
           return;
         }
         facts.push(...answer.value.items);
@@ -7100,28 +7150,58 @@ function createEvaluateController({ gateway, storage, initialContext, catalogCoo
       const selected = scope === "related" ? facts.filter((fact) => !matches(fact)) : facts.filter(matches);
       const returned = new Set(facts.flatMap((fact) => [fact?.id, fact?.provenance?.accepted_digest]));
       const references = [...wanted].sort().map((identity4) => ({ identity: identity4, loadedAsFact: returned.has(identity4) }));
-      publish({ drilldown: { ...snapshot.drilldown, phase: "ready", facts: selected, references, error: void 0 } });
+      publish({
+        drilldown: { ...snapshot.drilldown, phase: "ready", facts: selected, references, error: void 0 },
+        exactTargets: { ...snapshot.exactTargets, evidence: { ...snapshot.exactTargets.evidence, status: selected.length === 0 ? "unavailable" : "available" } }
+      });
     },
     async loadTrace(filters) {
       publish({ drilldown: { ...snapshot.drilldown, phase: "loading", error: void 0 } });
       const answer = await gateway.call("traces/read", filters);
       if (!answer.ok) {
-        publish({ drilldown: { ...snapshot.drilldown, phase: "error", error: answer.error } });
+        publish({
+          drilldown: { ...snapshot.drilldown, phase: "error", error: answer.error },
+          exactTargets: { ...snapshot.exactTargets, trace: { ...snapshot.exactTargets.trace, status: "unavailable" } }
+        });
         return;
       }
-      publish({ drilldown: { ...snapshot.drilldown, phase: "ready", trace: answer.value.items ?? [], error: void 0 } });
+      const trace = answer.value.items ?? [];
+      publish({
+        drilldown: { ...snapshot.drilldown, phase: "ready", trace, error: void 0 },
+        exactTargets: { ...snapshot.exactTargets, trace: { ...snapshot.exactTargets.trace, status: trace.length === 0 ? "unavailable" : "available" } }
+      });
     },
     openReceipt() {
       if (snapshot.selection === void 0 || snapshot.result === void 0) return;
       persist({ page: "receipt", selection: snapshot.selection });
     },
-    openFacts(metric, scope = "result") {
+    openFacts(metric, scope = "result", side2) {
       if (snapshot.selection === void 0) return;
-      persist({ page: "facts", selection: snapshot.selection, metric, scope });
+      const nextRoute = { page: "facts", selection: snapshot.selection, metric, scope, ...side2 === void 0 ? {} : { side: side2 } };
+      snapshot = { ...snapshot, exactTargets: { ...snapshot.exactTargets, evidence: { ...nextRoute, status: "available" } } };
+      storage?.setItem(EVIDENCE_TARGET_STORAGE_KEY, serializeStudioLocation(nextRoute));
+      persist(nextRoute);
     },
     openTrace(traceId, spanId) {
       if (snapshot.selection === void 0) return;
-      persist({ page: "trace", selection: snapshot.selection, traceId, ...spanId === void 0 ? {} : { spanId } });
+      const nextRoute = { page: "trace", selection: snapshot.selection, traceId, ...spanId === void 0 ? {} : { spanId } };
+      snapshot = { ...snapshot, exactTargets: { ...snapshot.exactTargets, trace: { ...nextRoute, status: "available" } } };
+      storage?.setItem(TRACE_TARGET_STORAGE_KEY, serializeStudioLocation(nextRoute));
+      persist(nextRoute);
+    },
+    restoreExactEvidence() {
+      if (snapshot.exactTargets.evidence?.status === "unavailable") return;
+      if (snapshot.exactTargets.evidence !== void 0) {
+        const { status: _status, ...route2 } = snapshot.exactTargets.evidence;
+        persist(route2);
+      }
+    },
+    restoreExactTrace() {
+      if (snapshot.exactTargets.trace?.status === "unavailable") return;
+      if (snapshot.exactTargets.trace !== void 0) {
+        const { status: _status, ...route2 } = snapshot.exactTargets.trace;
+        persist(route2);
+      }
     },
     backToResults() {
       if (snapshot.selection === void 0) persist({ page: "select" });
@@ -7199,18 +7279,55 @@ function createStudioTheme(mode) {
     mode,
     density: "compact",
     containerBorderStyle: "solid",
-    surfaces: Object.freeze({
-      section: "var(--dsw-alias-bg-layer-1)",
-      panel: "var(--dsw-alias-bg-layer-1)",
-      raised: "var(--dsw-alias-bg-layer-2)",
-      inset: "var(--dsw-alias-bg-base)"
+    palette: Object.freeze({
+      surface: Object.freeze({
+        section: "var(--dsw-specific-sidebar-fill)",
+        panel: "var(--dsw-alias-bg-layer-1)",
+        raised: "var(--dsw-alias-bg-layer-2)",
+        inset: "var(--dsw-alias-bg-base)"
+      }),
+      content: Object.freeze({
+        primary: "var(--dsw-alias-label-primary)",
+        secondary: "var(--dsw-alias-label-secondary)",
+        muted: "var(--dsw-alias-label-dimmed)",
+        inverse: "var(--dsw-alias-label-primary-inverted)"
+      }),
+      border: Object.freeze({
+        default: "var(--dsw-alias-border-l2)",
+        strong: "var(--dsw-alias-border-l3)"
+      }),
+      interaction: Object.freeze({
+        accent: "var(--dsw-alias-state-business-primary)",
+        selection: "var(--dsw-alias-interactive-bg-active)",
+        disabled: "var(--dsw-alias-label-dimmed)",
+        focusRing: "var(--dsw-alias-state-business-primary)"
+      }),
+      status: Object.freeze({
+        available: "var(--dsw-alias-state-success-primary)",
+        attention: "var(--dsw-alias-state-warning-primary)",
+        unavailable: "var(--dsw-alias-label-dimmed)",
+        expired: "var(--dsw-alias-state-warn-label)",
+        incompatible: "var(--dsw-alias-state-error-secondary)",
+        error: "var(--dsw-alias-state-error-primary)"
+      }),
+      data: Object.freeze([
+        "var(--dsw-alias-state-business-primary)",
+        "var(--dsw-alias-state-success-primary)",
+        "var(--dsw-alias-state-warning-primary)",
+        "var(--dsw-alias-state-error-primary)"
+      ])
     }),
-    traceIndentGuides: Object.freeze([
-      "var(--dsw-alias-label-dimmed)",
-      "oklch(75% 0.17 145)",
-      "var(--dsw-alias-state-warning-primary)",
-      "var(--dsw-alias-state-error-primary)"
-    ])
+    typography: Object.freeze({
+      fontFamily: "var(--dsw-font-family)",
+      codeFontFamily: "var(--dsw-font-family-mono)",
+      h1: "18px",
+      h2: "13px",
+      subtitle1: "13px",
+      body1: "11px",
+      body2: "10px",
+      caption: "9px",
+      overline: "8px"
+    })
   });
 }
 function createStudioDashboardState(panelIds) {
@@ -7281,7 +7398,7 @@ function createStudioLayoutStore(storage) {
   });
 }
 var hostStyles = `
-#wsr-studio-view { --wsr-surface-section:var(--dsw-alias-bg-layer-1); --wsr-surface-panel:var(--dsw-alias-bg-layer-1); --wsr-surface-raised:var(--dsw-alias-bg-layer-2); --wsr-surface-inset:var(--dsw-alias-bg-base); --wsr-shape-panel:10px; --wsr-shape-control:7px; --wsr-type-page-title:18px; --wsr-type-section-title:13px; --wsr-type-body:11px; --wsr-type-label:10px; --wsr-type-caption:9px; --wsr-type-code:9px; --wsr-type-micro:8px; }
+#wsr-studio-view { --wsr-shape-panel:10px; --wsr-shape-control:7px; }
 #wsr-studio-view, #wsr-studio-view > *, #wsr-studio-view .studio-page-copy { min-width:0; max-width:100%; }
 #wsr-studio-view [data-wsr-studio-region="header"] { overflow:hidden; }
 #wsr-studio-view .studio-product-row, #wsr-studio-view .studio-page-row { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; }
@@ -7406,7 +7523,7 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
     React2.useEffect(() => {
       if (snapshot.drilldown.phase !== "idle") return;
       if (snapshot.route.page === "facts" && snapshot.result !== void 0) {
-        void controller.loadMetricFacts(snapshot.route.metric, snapshot.route.scope);
+        void controller.loadMetricFacts(snapshot.route.metric, snapshot.route.scope, snapshot.route.side);
       }
       if (snapshot.route.page === "trace") void controller.loadTrace({
         trace_id: snapshot.route.traceId,
@@ -7478,6 +7595,10 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
         setStudioPage("dashboard");
       }
     };
+    const exactEvidenceTarget = snapshot.exactTargets.evidence;
+    const exactTraceTarget = snapshot.exactTargets.trace;
+    const evidenceUnavailableReason = exactEvidenceTarget === void 0 ? "EXACT_EVIDENCE_TARGET_NOT_ESTABLISHED" : exactEvidenceTarget.status === "unavailable" ? "EXACT_EVIDENCE_TARGET_UNAVAILABLE" : void 0;
+    const traceUnavailableReason = exactTraceTarget === void 0 ? "EXACT_TRACE_TARGET_NOT_ESTABLISHED" : exactTraceTarget.status === "unavailable" ? "EXACT_TRACE_TARGET_UNAVAILABLE" : void 0;
     const pageIdentity = studioPage === "selection" ? { eyebrow: "New evaluation", title: "Select task population", detail: "Choose exact Task identities; display names are recognition only." } : snapshot.route.page === "trace" ? { eyebrow: "Recorded Evidence \xB7 exact identity", title: "Recorded Trace", detail: `${snapshot.route.traceId} \xB7 current evaluation \xB7 no inferred causality` } : snapshot.route.page === "facts" ? { eyebrow: "Evaluation Evidence", title: "Evidence", detail: "Exact recorded Facts and provenance for the current evaluation." } : snapshot.route.page === "receipt" ? { eyebrow: "Resolved evaluation context", title: "Evaluation receipt", detail: "Exact selection and resolved read-set identities." } : { eyebrow: `${snapshot.result?.mode === "COMPARE" ? "Compare" : "Single"} evaluation`, title: "Current evaluation", detail: "Current receipt \xB7 exact selection" };
     const traceViewDefinition = STUDIO_TRACE_VIEWS.find(({ id: id2 }) => id2 === traceView) ?? STUDIO_TRACE_VIEWS[0];
     const traceViewNavigation = React2.createElement(
@@ -7523,7 +7644,7 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
           React2.createElement(
             "nav",
             { className: "studio-controls", "aria-label": "Studio views" },
-            React2.createElement(Button, { appearance: "ghost", className: "studio-view-link", type: "button", "aria-current": studioPage === "selection" ? "page" : void 0, onClick: () => {
+            React2.createElement(Button, { appearance: "ghost", className: "studio-view-link", type: "button", disabled: false, "aria-current": studioPage === "selection" ? "page" : void 0, onClick: () => {
               setSelectionRequested(true);
               setStudioPage("selection");
             } }, "Select"),
@@ -7532,8 +7653,28 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
               setSelectionRequested(false);
               setStudioPage("dashboard");
             } }, "Dashboard"),
-            React2.createElement(Button, { appearance: "ghost", className: "studio-view-link", type: "button", disabled: snapshot.route.page !== "facts", "aria-current": snapshot.route.page === "facts" ? "page" : void 0 }, "Evidence"),
-            React2.createElement(Button, { appearance: "ghost", className: "studio-view-link", type: "button", disabled: snapshot.route.page !== "trace", "aria-current": snapshot.route.page === "trace" ? "page" : void 0 }, "Recorded Trace")
+            React2.createElement(Button, {
+              appearance: "ghost",
+              className: "studio-view-link",
+              type: "button",
+              disabled: evidenceUnavailableReason !== void 0,
+              "aria-current": snapshot.route.page === "facts" ? "page" : void 0,
+              "data-navigation-state": evidenceUnavailableReason === void 0 ? "available" : "unavailable",
+              "data-unavailable-reason": evidenceUnavailableReason,
+              title: evidenceUnavailableReason,
+              onClick: () => controller.restoreExactEvidence()
+            }, "Evidence"),
+            React2.createElement(Button, {
+              appearance: "ghost",
+              className: "studio-view-link",
+              type: "button",
+              disabled: traceUnavailableReason !== void 0,
+              "aria-current": snapshot.route.page === "trace" ? "page" : void 0,
+              "data-navigation-state": traceUnavailableReason === void 0 ? "available" : "unavailable",
+              "data-unavailable-reason": traceUnavailableReason,
+              title: traceUnavailableReason,
+              onClick: () => controller.restoreExactTrace()
+            }, "Recorded Trace")
           )
         ),
         React2.createElement(
@@ -7570,10 +7711,14 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
               React2.Fragment,
               null,
               React2.createElement(Button, { appearance: "outline", type: "button", onClick: () => controller.backToResults() }, "Back to Dashboard"),
-              presentation.metrics[0] === void 0 ? null : React2.createElement(Button, { appearance: "outline", type: "button", onClick: () => {
-                controller.openFacts(presentation.metrics[0].coordinate);
-                void controller.loadMetricFacts(presentation.metrics[0].coordinate);
-              } }, "Open Evidence"),
+              React2.createElement(Button, {
+                appearance: "outline",
+                type: "button",
+                disabled: evidenceUnavailableReason !== void 0,
+                "data-unavailable-reason": evidenceUnavailableReason,
+                title: evidenceUnavailableReason,
+                onClick: () => controller.restoreExactEvidence()
+              }, "Open Evidence"),
               React2.createElement(Button, { appearance: "solid", tone: "primary", type: "button", onClick: () => navigator.clipboard?.writeText(snapshot.route.traceId) }, "Copy trace identity")
             ) : null,
             studioPage === "dashboard" && editingDashboard ? React2.createElement(
@@ -7771,7 +7916,7 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
                     React2.createElement(Bi2.DashboardMetricPanel, {
                       result,
                       size: placement.desktop >= 12 ? "WIDE" : placement.desktop >= 6 ? "MEDIUM" : "SMALL",
-                      onEvidence: () => controller.openFacts(metric.coordinate)
+                      onEvidence: () => controller.openFacts(metric.coordinate, "result", side2)
                     })
                   );
                 })
@@ -7789,7 +7934,7 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
                 afterError: snapshot.result.right?.tag === "SIDE_ERROR" ? snapshot.result.right : void 0,
                 delta,
                 onRetryFailedSide: () => controller.refresh(),
-                onEvidence: (_side) => controller.openFacts(delta.metric_coordinate),
+                onEvidence: (side2) => controller.openFacts(delta.metric_coordinate, "result", side2),
                 visualizer: Bi2.selectDefaultVisualizer({
                   metric_id: delta.metric_coordinate.slice(0, delta.metric_coordinate.lastIndexOf("@")),
                   metric_version: delta.metric_coordinate.slice(delta.metric_coordinate.lastIndexOf("@") + 1),
@@ -7838,8 +7983,8 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
                 loadedAsFact: reference.loadedAsFact
               })),
               onScopeChange: (scope) => {
-                controller.openFacts(snapshot.route.metric, scope);
-                void controller.loadMetricFacts(snapshot.route.metric, scope);
+                controller.openFacts(snapshot.route.metric, scope, snapshot.route.side);
+                void controller.loadMetricFacts(snapshot.route.metric, scope, snapshot.route.side);
               },
               onOpenTrace: (traceId, spanId) => {
                 controller.openTrace(traceId, spanId);
@@ -7859,11 +8004,15 @@ function StudioView(React2, Primitives2, Bi2, sharedStyles, controller, explicit
           ) : React2.createElement(
             Bi2.BiSurface,
             { theme },
-            recorded.status === "INVALID" ? React2.createElement("p", { role: "alert" }, recorded.errors.join("; ")) : null,
-            React2.createElement(Bi2[STUDIO_TRACE_VIEWS.find(({ id: id2 }) => id2 === traceView)?.renderer ?? "TraceWaterfall"], {
-              trace: recorded,
-              viewNavigation: traceViewNavigation
-            })
+            React2.createElement(
+              "div",
+              { "data-studio-trace-hierarchy": "navigation-header-content" },
+              recorded.status === "INVALID" ? React2.createElement("p", { role: "alert" }, recorded.errors.join("; ")) : null,
+              traceViewNavigation,
+              React2.createElement(Bi2[STUDIO_TRACE_VIEWS.find(({ id: id2 }) => id2 === traceView)?.renderer ?? "TraceWaterfall"], {
+                trace: recorded
+              })
+            )
           )
         ) : null
       ),
