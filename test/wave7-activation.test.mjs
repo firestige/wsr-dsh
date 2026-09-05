@@ -64,7 +64,9 @@ test("Execution and Studio activate one Host and one generated browser module ea
   });
 
   const cleanQualifier = await readFile(join(root, "scripts/qualify-clean-profile.mjs"), "utf8");
-  assert.match(cleanQualifier, /executionOwner\.coordinate/u);
+  assert.match(cleanQualifier, /resolveQualificationExecutionAsset/u);
+  const qualificationAsset = await readFile(join(root, "scripts/lib/qualification-execution-asset.mjs"), "utf8");
+  assert.match(qualificationAsset, /compatibility\.executionOwner\.coordinate/u);
   assert.doesNotMatch(cleanQualifier, /releases\/download\/0\.2\.1\/wsr-execution-0\.2\.1\.tgz/u);
   assert.match(cleanQualifier, /ownerRequired: true,[\s\S]*id: "execution"/u);
   assert.match(cleanQualifier, /ownerRequired: true,[\s\S]*id: "suite"/u);
