@@ -413,7 +413,7 @@ function StudioView(React, Primitives, Bi, sharedStyles, controller, explicitThe
       "data-wsr-studio-view": "evaluate", style: viewStyle,
     },
     React.createElement("style", { "data-wsr-studio-host-styles": "wsr-dsh@1" }, hostStyles),
-    sharedStyles === undefined ? null : React.createElement("style", { "data-wsr-bi-styles": "wsr-ui-core@0.1.0-rc.1" }, sharedStyles),
+    sharedStyles === undefined ? null : React.createElement("style", { "data-wsr-bi-styles": "wsr-ui-core@0.1.0" }, sharedStyles),
     React.createElement(Surface, { as: "header", level: "section", "data-wsr-studio-region": "header" },
       React.createElement("div", { className: "studio-product-row" },
         React.createElement("div", { className: "studio-breadcrumbs" },
