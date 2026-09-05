@@ -280,7 +280,7 @@ test("the native Studio tab exposes a non-modal Evidence view without Session re
   assert.equal(view.props["aria-modal"], undefined);
   assert.equal(view.props.id, "wsr-studio-view");
   const elements = elementsOf(rendered);
-  const coreStyles = elements.filter((element) => element.props?.["data-wsr-bi-styles"] === "wsr-ui-core@0.1.0-rc.1");
+  const coreStyles = elements.filter((element) => element.props?.["data-wsr-bi-styles"] === "wsr-ui-core@0.1.0");
   assert.equal(coreStyles.length, 1);
   assert.equal(textOf(coreStyles[0]), ".wsr-bi{}");
   const main = elements.find((element) => element.props?.["data-wsr-studio-region"] === "main");

@@ -25,11 +25,11 @@ test("the repository admits independently versioned compatible bundles", async (
     "dsh-wsr-studio",
     "dsh-wsr",
   ]);
-  assert.equal(report.version, "0.2.10");
+  assert.equal(report.version, "0.2.11");
   assert.deepEqual(report.packageVersions, {
     "dsh-wsr-execution": "0.2.9",
-    "dsh-wsr-studio": "0.1.2",
-    "dsh-wsr": "0.2.9",
+    "dsh-wsr-studio": "0.1.3",
+    "dsh-wsr": "0.2.10",
   });
   assert.equal(report.dshVersion, "0.1.1-rc.2");
   assert.deepEqual(report.displayNames, {
@@ -74,7 +74,7 @@ test("the suite composes compatible Execution and Studio versions without an act
 
   assert.deepEqual(suite.dependencies, {
     "dsh-wsr-execution": "^0.2.9",
-    "dsh-wsr-studio": "^0.1.2",
+    "dsh-wsr-studio": "^0.1.3",
   });
   assert.equal(suite.wsr.displayName, undefined);
   assert.equal(suite.main, undefined);
@@ -237,10 +237,10 @@ test("clean-profile command failures preserve package-manager stdout and stderr"
 test("local suite qualification resolves independently versioned dependencies only from supplied archives", () => {
   assert.deepEqual(localSuiteOverrides({
     execution: "/tmp/dsh-wsr-execution-0.2.9.tgz",
-    studio: "/tmp/dsh-wsr-studio-0.1.2.tgz",
+    studio: "/tmp/dsh-wsr-studio-0.1.3.tgz",
   }), {
     "dsh-wsr-execution@0.2.9": "file:/tmp/dsh-wsr-execution-0.2.9.tgz",
-    "dsh-wsr-studio@0.1.2": "file:/tmp/dsh-wsr-studio-0.1.2.tgz",
+    "dsh-wsr-studio@0.1.3": "file:/tmp/dsh-wsr-studio-0.1.3.tgz",
   });
   assert.deepEqual(localSuiteOverrides({
     execution: "/tmp/dsh-wsr-execution.tgz",

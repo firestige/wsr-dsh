@@ -13,7 +13,7 @@
     {
       "name": "dsh-wsr-studio",
       "displayName": "WSR Studio",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "summary": "Read Evidence and Evolution evaluation views through the loopback Host gateway.",
       "icon": "./icon.svg",
       "license": "Apache-2.0",
@@ -22,7 +22,7 @@
     {
       "name": "dsh-wsr",
       "displayName": "WSR suite",
-      "version": "0.2.9",
+      "version": "0.2.10",
       "summary": "Install the qualified compatible WSR Execution and Studio pair.",
       "icon": "./icon.svg",
       "license": "Apache-2.0",

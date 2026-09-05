@@ -1,6 +1,6 @@
 {
   "name": "wsr-dsh-monorepo",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "private": true,
   "type": "module",
   "packageManager": "npm@11.6.2",
