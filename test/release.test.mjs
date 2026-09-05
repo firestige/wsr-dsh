@@ -110,6 +110,7 @@ test("release workflows reuse candidate qualification, npm OIDC, and the scoped 
   assert.doesNotMatch(candidate, /workflow_dispatch:|workflow_call:/u);
   assert.match(candidate, /release\/request\.json/u);
   assert.match(candidate, /release-qualification\.json/u);
+  assert.match(candidate, /- run: npm test\n\s+env:\n\s+WSR_CHROME_BINARY: \/usr\/bin\/google-chrome/u);
   assert.match(candidate, /qualify:clean-profile/u);
   assert.match(candidate, /qualify:real-harness/u);
   assert.match(candidate, /release:owner:verify/u);
