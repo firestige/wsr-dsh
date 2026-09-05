@@ -181,6 +181,16 @@ export function recordConsumedActionReply(agent, message) {
   agent.session.append("user/message", message, { surfaceOp: "append" });
 }
 
+export function consumeWsrCommandBeforeModel(payload) {
+  const messages = Array.isArray(payload?.messages)
+    ? payload.messages.filter((message) => message?.source?.kind === "user")
+    : [];
+  const command = messages.find((message) => message.source?.workflowCommand === "wsr");
+  if (command === undefined) return false;
+  recordConsumedActionReply(payload.agent, command);
+  return true;
+}
+
 const PRESENTATION_VERSION = "wsr.presentation@1.0.0";
 const PRESENTATION_KINDS = new Set(["command-accepted", "delivery-running", "delivery-list", "delivery-status", "action-output", "action-input-request", "terminal-result", "error"]);
 
@@ -502,7 +512,7 @@ function commandTurn(rawInput) {
 }
 
 export async function recordWsrCommandInput(agent, rawInput, attachments = [], createId = () => `message-workflow-execution-${randomUUID()}`) {
-  if (agent === null || typeof agent !== "object" || typeof agent.session?.append !== "function"
+  if (agent === null || typeof agent !== "object" || typeof agent.followup !== "function" || typeof agent.whenIdle !== "function"
     || typeof rawInput !== "string" || !Array.isArray(attachments) || typeof createId !== "function") {
     throw new TypeError("DSH_INTAKE_USER_INPUT_INVALID");
   }
@@ -515,7 +525,8 @@ export async function recordWsrCommandInput(agent, rawInput, attachments = [], c
       ...attachments,
     ]),
   });
-  agent.session.append("user/message", message, { surfaceOp: "append" });
+  agent.followup(message);
+  await agent.whenIdle();
   return message;
 }
 
@@ -615,11 +626,7 @@ export async function apply(ctx, config) {
   }));
   const preStep = ctx.on?.("agent/pre-step", async (payload, next) => {
     const messages = payload.messages.filter((message) => message.source?.kind === "user");
-    const command = messages.find((message) => message.source?.workflowCommand === "wsr");
-    if (command !== undefined) {
-      recordConsumedActionReply(payload.agent, command);
-      return { kind: "reject" };
-    }
+    if (consumeWsrCommandBeforeModel(payload)) return { kind: "reject" };
     if (await runtime.bindings.bySession(String(payload.agent.id)) === undefined) return next();
     if (messages.length !== 1) return next();
     try {
